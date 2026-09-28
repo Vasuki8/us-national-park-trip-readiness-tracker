@@ -1,6 +1,6 @@
 # Pilot Foundation Implementation Plan
 
-> Execute inline under the owner's development authorization. Record exact checks in PROJECT_STATUS.md. Steps marked complete describe implementation work; the full M1 release still has separate source/integration gates.
+> Executed inline under the owner's development authorization. Exact checks are recorded in PROJECT_STATUS.md. This increment is implemented and CI-verified; the full M1 release still has separate source/integration gates.
 
 **Goal:** A usable five-park development pilot that never presents missing live data as operating conditions.
 **Architecture:** Astro static HTML, small TypeScript browser scripts, pure clock-injected readiness decisions, Python/uv collectors producing validated snapshots.
@@ -32,8 +32,8 @@ Test malformed and leap dates, exact boundaries, unknown area/time, exception ha
 
 - [x] Write synthetic tests for complete pagination, empty success versus failure, bad URLs, duplicate IDs, mismatched parks, record drops and preserved clocks.
 - [x] Implement fixed-host private-header transport, bounded retries, redirects disabled and atomic writes.
-- [x] Run Python tests, including query-secret rejection and previous-clock consistency regressions.
-- [ ] Verify a real NPS response with an owner-controlled private key before claiming live integration.
+- [x] Run 20 Python tests, including query-secret rejection and previous-clock consistency regressions.
+- [ ] Verify a real NPS response with an owner-controlled private key before claiming live integration. This is a later release gate, not completed by synthetic tests.
 
 ## Task 3 — Static interface and complete verification
 
@@ -43,9 +43,10 @@ Test malformed and leap dates, exact boundaries, unknown area/time, exception ha
 - [x] Write generated-HTML and browser assertions before the interface implementation.
 - [x] Implement directory, five park pages, source panels, checklist and disclosure routes.
 - [x] Add noindex/ad-free gates and meaningful no-JavaScript links; disable controls that cannot function without scripts.
-- [x] Pin dependencies and generate the initial npm lockfile on GitHub Actions without lifecycle scripts.
-- [ ] Verify full Astro check/build and all 18 static/6 browser cases on GitHub Actions; record exact outcomes.
-- [x] Open feature PR #1, leave main unmerged and production undeployed.
+- [x] Pin dependencies and generate actual npm lockfiles on GitHub Actions without lifecycle scripts; remove the temporary write-enabled bootstrap after completion.
+- [x] Repair explicit Node type configuration detected by full Astro checking and retain a toolchain regression test.
+- [x] Verify full installation, Astro check/build, 35 Node tests, 20 Python tests, 18 static-output tests and 6 browser tests. All 79 passed in Actions run 36479129760 for implementation head 7c39fb34291a6d334355cd883f250604d7ee5154.
+- [x] Open draft PR #1, leave main unmerged and production undeployed, and update PROJECT_STATUS.md with exact evidence and remaining gates.
 
 ## Scope rulings
 
