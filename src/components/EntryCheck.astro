@@ -1,0 +1,17 @@
+---
+import { rulesFor, type parks } from '../lib/data';
+interface Props { park: (typeof parks)[number] }
+const { park } = Astro.props;
+---
+<section class="panel" aria-labelledby="entry-title" id="trip-context" data-rules={JSON.stringify(rulesFor(park.code))} data-park={park.code} data-timezone={park.timezone}>
+  <div class="panel-heading"><span class="step-number">01</span><div><p class="eyebrow">Match the rule to your visit</p><h2 id="entry-title">Entry guidance</h2></div></div>
+  <p>Check one day of first-entry travel by private vehicle. This is not a booking or availability check.</p>
+  <form id="trip-form">
+    <div class="form-grid"><div class="field"><label for="trip-date">Visit date</label><input type="date" id="trip-date" required /></div><div class="field"><label for="trip-time">Arrival time <span class="optional">(optional)</span></label><input type="time" id="trip-time" /></div><div class="field wide"><label for="trip-area">Planned area</label><select id="trip-area"><option value="">Choose an area</option>{park.areas.map((area) => <option value={area.id}>{area.label}</option>)}</select></div></div>
+    <p class="small muted">Use time at the park: {park.timezone}. For Bear Lake Road, use your arrival at the corridor. Time is needed only for rules with a daily window.</p>
+    <label class="checkbox-row special-case"><input type="checkbox" id="special-case" /><span>I have an existing camping/service reservation or wilderness permit, plan to re-enter, or am not arriving by private vehicle.</span></label>
+    <button class="button" type="submit" id="check-entry" disabled>Check entry guidance</button>
+  </form>
+  <div class="decision" id="entry-decision" role="status" aria-live="polite" data-state="needs-input"><strong id="decision-title">Start with your visit date</strong><p id="decision-detail">Results use stored source reviews, not live reservation systems. Your selections stay on this page and are not saved or sent.</p></div>
+  <noscript><p class="note">Interactive date checking requires JavaScript. Stored guidance and official source links remain available below.</p></noscript>
+</section>

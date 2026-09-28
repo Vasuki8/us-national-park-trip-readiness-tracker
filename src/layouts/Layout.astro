@@ -1,0 +1,34 @@
+---
+import '../styles/global.css';
+interface Props { title: string; description?: string }
+const { title, description = 'Independent, source-backed planning checks for five U.S. national parks. Development pilot; not live condition monitoring.' } = Astro.props;
+const path = Astro.url.pathname;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light" />
+    <title>{title} · Park Readiness</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="pilot-bar"><div class="wrap"><strong>Development pilot</strong><span>Planning guidance, not live conditions.</span></div></div>
+    <header class="site-header wrap">
+      <a class="brand" href="/" aria-label="Park Readiness home"><span class="brand-mark" aria-hidden="true">↗</span><span>Park <strong>Readiness</strong></span></a>
+      <nav aria-label="Main navigation">
+        <a href="/parks/" aria-current={path.startsWith('/parks/') ? 'page' : undefined}>Explore parks</a>
+        <a href="/how-it-works/" aria-current={path === '/how-it-works/' ? 'page' : undefined}>How it works</a>
+        <a href="/sources/" aria-current={path === '/sources/' ? 'page' : undefined}>Sources</a>
+      </nav>
+    </header>
+    <main id="main" class="wrap"><slot /></main>
+    <footer class="site-footer wrap">
+      <div><a class="brand footer-brand" href="/">Park <strong>Readiness</strong></a><p>Know what is checked. Know what is still unknown.</p><p class="small">Independent project. Not affiliated with or endorsed by the National Park Service.<br />Not an emergency service or a guarantee of access, conditions or safety.</p></div>
+      <nav aria-label="Footer navigation"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/terms/">Use & limitations</a><a href="/corrections/">Report a correction</a><a href="/changes/">Change history</a></nav>
+    </footer>
+  </body>
+</html>

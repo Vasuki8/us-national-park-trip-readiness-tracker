@@ -1,0 +1,9 @@
+[project]
+name = "park-trip-readiness"
+version = "0.1.0"
+description = "Conservative official-source collection for the park readiness pilot"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false

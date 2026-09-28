@@ -1,0 +1,13 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Directory from '../components/Directory.astro';
+---
+<Layout title="A little preparation. A better park trip.">
+  <section class="hero">
+    <div class="hero-copy"><p class="eyebrow">Before you go</p><h1>Know what to check.<br /><em>Then go explore.</em></h1><p class="lead">Entry rules, official notices and your own trip checklist. One place to start—with a clear line between what is reviewed and what is still unknown.</p><a class="button" href="#directory-title">Find a park <span aria-hidden="true">↓</span></a><p class="small muted hero-footnote">Five-park pilot · Free to use · No account needed</p></div>
+    <aside class="hero-note" aria-label="What this pilot covers"><p class="eyebrow">A more useful starting point</p><h2>Not a green light.<br />A clearer checklist.</h2><div class="coverage-line"><span>Park planning pages</span><strong>05</strong></div><div class="coverage-line"><span>Parks with stored entry guidance</span><strong>02</strong></div><div class="coverage-line"><span>Live condition monitoring</span><strong class="text-status">Not active</strong></div><p class="small">Every reviewed entry rule links back to NPS. Missing data stays visible. No numerical safety score.</p></aside>
+  </section>
+  <div class="principles"><div><span class="step-number">01</span><strong>Choose your destination</strong><p>Start with a covered park and your intended visit.</p></div><div><span class="step-number">02</span><strong>Review what applies</strong><p>Match your date, area and arrival time to stored guidance.</p></div><div><span class="step-number">03</span><strong>Check the official source</strong><p>Confirm current conditions before you leave.</p></div></div>
+  <Directory />
+  <section class="callout"><div><p class="eyebrow">Trust, before coverage</p><h2>“Not checked” is useful information.</h2><p>Roads, facilities, weather and activity permits are not yet normalized in this pilot. We show those gaps instead of implying everything is open.</p></div><a class="text-link" href="/how-it-works/">Understand the limits <span aria-hidden="true">↗</span></a></section>
+</Layout>

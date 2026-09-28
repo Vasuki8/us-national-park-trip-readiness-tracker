@@ -1,0 +1,123 @@
+[
+  {
+    "code": "yose",
+    "slug": "yosemite",
+    "name": "Yosemite",
+    "states": [
+      "California"
+    ],
+    "timezone": "America/Los_Angeles",
+    "summary": "Keep entrance reservations, activity permits and road access separate in your plans.",
+    "areas": [
+      {
+        "id": "general",
+        "label": "General park visit"
+      },
+      {
+        "id": "valley",
+        "label": "Yosemite Valley"
+      },
+      {
+        "id": "tioga",
+        "label": "Tioga Road area"
+      },
+      {
+        "id": "wawona",
+        "label": "Wawona"
+      }
+    ],
+    "official_url": "https://www.nps.gov/yose/planyourvisit/index.htm",
+    "conditions_url": "https://www.nps.gov/yose/planyourvisit/conditions.htm",
+    "entry_url": "https://www.nps.gov/yose/planyourvisit/reservations.htm"
+  },
+  {
+    "code": "romo",
+    "slug": "rocky-mountain",
+    "name": "Rocky Mountain",
+    "states": [
+      "Colorado"
+    ],
+    "timezone": "America/Denver",
+    "summary": "Check your intended area and arrival time together, especially for Bear Lake Road.",
+    "areas": [
+      {
+        "id": "rest",
+        "label": "Rest of park (excluding Bear Lake Road)"
+      },
+      {
+        "id": "bear-lake",
+        "label": "Bear Lake Road Corridor"
+      }
+    ],
+    "official_url": "https://www.nps.gov/romo/planyourvisit/index.htm",
+    "conditions_url": "https://www.nps.gov/romo/planyourvisit/conditions.htm",
+    "entry_url": "https://www.nps.gov/romo/planyourvisit/timed-entry-permit-system.htm"
+  },
+  {
+    "code": "yell",
+    "slug": "yellowstone",
+    "name": "Yellowstone",
+    "states": [
+      "Wyoming",
+      "Montana",
+      "Idaho"
+    ],
+    "timezone": "America/Denver",
+    "summary": "Start with the official conditions page before committing to a driving itinerary.",
+    "areas": [
+      {
+        "id": "general",
+        "label": "General park visit"
+      }
+    ],
+    "official_url": "https://www.nps.gov/yell/planyourvisit/index.htm",
+    "conditions_url": "https://www.nps.gov/yell/planyourvisit/conditions.htm",
+    "entry_url": "https://www.nps.gov/yell/planyourvisit/index.htm"
+  },
+  {
+    "code": "zion",
+    "slug": "zion",
+    "name": "Zion",
+    "states": [
+      "Utah"
+    ],
+    "timezone": "America/Denver",
+    "summary": "Check access to the places and activities you intend to visit, not just park entry.",
+    "areas": [
+      {
+        "id": "general",
+        "label": "General park visit"
+      }
+    ],
+    "official_url": "https://www.nps.gov/zion/planyourvisit/index.htm",
+    "conditions_url": "https://www.nps.gov/zion/planyourvisit/conditions.htm",
+    "entry_url": "https://www.nps.gov/zion/planyourvisit/index.htm"
+  },
+  {
+    "code": "grca",
+    "slug": "grand-canyon",
+    "name": "Grand Canyon",
+    "states": [
+      "Arizona"
+    ],
+    "timezone": "America/Phoenix",
+    "summary": "Confirm the conditions for your destination rather than treating the whole park as one location.",
+    "areas": [
+      {
+        "id": "general",
+        "label": "General park visit"
+      },
+      {
+        "id": "south-rim",
+        "label": "South Rim"
+      },
+      {
+        "id": "north-rim",
+        "label": "North Rim"
+      }
+    ],
+    "official_url": "https://www.nps.gov/grca/planyourvisit/index.htm",
+    "conditions_url": "https://www.nps.gov/grca/planyourvisit/conditions.htm",
+    "entry_url": "https://www.nps.gov/grca/planyourvisit/index.htm"
+  }
+]

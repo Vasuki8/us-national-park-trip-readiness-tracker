@@ -1,0 +1,8 @@
+<section class="panel checklist-panel" aria-labelledby="checklist-title">
+  <div class="panel-heading"><span class="step-number">02</span><div><p class="eyebrow">Your review, your record</p><h2 id="checklist-title">Before-you-go checklist</h2></div></div>
+  <p>You mark these yourself. We do not verify bookings, permits or conditions. Changing trip details resets these checks.</p>
+  <div class="checklist">
+    {['Review entry rules for my date and arrival', 'Check official road and facility conditions', 'Confirm activity permits and overnight arrangements', 'Check a forecast for my actual destination', 'Save official information for the trip'].map((item) => <label class="checkbox-row"><input type="checkbox" data-check disabled /><span>{item}</span></label>)}
+  </div>
+  <p id="checklist-progress" class="checklist-progress" role="status" aria-live="polite">0 of 5 items reviewed by you</p><button type="button" class="button secondary" id="reset-checklist" disabled>Reset checklist</button><p class="small muted">Page-only state. Nothing is saved after a fresh page load.</p>
+</section>

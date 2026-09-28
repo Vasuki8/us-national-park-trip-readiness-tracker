@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "park_code": "grca",
+  "provider": "NPS",
+  "source_url": "https://developer.nps.gov/api/v1/alerts?parkCode=grca",
+  "collection_status": "never_checked",
+  "coverage_status": "not_collected",
+  "last_checked_at": null,
+  "last_successful_fetch_at": null,
+  "source_updated_at": null,
+  "published_at": null,
+  "records": [],
+  "error_code": null
+}
