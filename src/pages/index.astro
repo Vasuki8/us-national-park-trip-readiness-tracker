@@ -1,11 +1,15 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Directory from '../components/Directory.astro';
+import { coverageInput } from '../lib/data';
+import { summarizeCoverage } from '../lib/source-coverage';
+const coverage = summarizeCoverage(coverageInput, new Date());
+const count = (value: number) => String(value).padStart(2, '0');
 ---
 <Layout title="A little preparation. A better park trip.">
-  <section class="hero">
-    <div class="hero-copy"><p class="eyebrow">Before you go</p><h1>Know what to check.<br /><em>Then go explore.</em></h1><p class="lead">Entry rules, official notices and your own trip checklist. One place to start—with a clear line between what is reviewed and what is still unknown.</p><a class="button" href="#directory-title">Find a park <span aria-hidden="true">↓</span></a><p class="small muted hero-footnote">Five-park pilot · Free to use · No account needed</p></div>
-    <aside class="hero-note" aria-label="What this pilot covers"><p class="eyebrow">A more useful starting point</p><h2>Not a green light.<br />A clearer checklist.</h2><div class="coverage-line"><span>Park planning pages</span><strong>05</strong></div><div class="coverage-line"><span>Parks with stored entry guidance</span><strong>02</strong></div><div class="coverage-line"><span>Live condition monitoring</span><strong class="text-status">Not active</strong></div><p class="small">Every reviewed entry rule links back to NPS. Missing data stays visible. No numerical safety score.</p></aside>
+  <section class="hero" data-coverage={JSON.stringify(coverageInput)}>
+    <div class="hero-copy"><p class="eyebrow">Before you go</p><h1>Know what to check.<br /><em>Then go explore.</em></h1><p class="lead">Entry rules, official notices and your own trip checklist. One place to start—with a clear line between what is reviewed and what is still unknown.</p><a class="button" href="#directory-title">Find a park <span aria-hidden="true">↓</span></a><p class="small muted hero-footnote">{coverage.parkCount}-park pilot · Free to use · No account needed</p></div>
+    <aside class="hero-note" aria-label="What this pilot covers"><p class="eyebrow">A more useful starting point</p><h2>Not a green light.<br />A clearer checklist.</h2><div class="coverage-line"><span>Park planning pages</span><strong data-coverage-metric="parkCount">{count(coverage.parkCount)}</strong></div><div class="coverage-line"><span>Parks with stored source reviews</span><strong data-coverage-metric="storedReviewParks">{count(coverage.storedReviewParks)}</strong></div><div class="coverage-line"><span>Parks with dated rules stored</span><strong data-coverage-metric="datedRuleParks">{count(coverage.datedRuleParks)}</strong></div><div class="coverage-line"><span>Recent successful alert checks</span><strong data-coverage-metric="recentAlertParks">{count(coverage.recentAlertParks)}</strong></div><p class="small">Stored reviews are not live monitoring. Undated guidance is not a rule for your travel date. Missing coverage stays visible.</p></aside>
   </section>
   <div class="principles"><div><span class="step-number">01</span><strong>Choose your destination</strong><p>Start with a covered park and your intended visit.</p></div><div><span class="step-number">02</span><strong>Review what applies</strong><p>Match your date, area and arrival time to stored guidance.</p></div><div><span class="step-number">03</span><strong>Check the official source</strong><p>Confirm current conditions before you leave.</p></div></div>
   <Directory />

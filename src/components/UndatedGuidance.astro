@@ -1,0 +1,15 @@
+---
+import type { EntryNote } from '../../scripts/validate-entry-notes';
+interface Props { notes: EntryNote[] }
+const { notes } = Astro.props;
+---
+{notes.map((note) => <article class="source-item" data-undated-guidance>
+  <p class="eyebrow">Dates not published</p>
+  <h3>General-entry source observation</h3>
+  <p>{note.summary}</p>
+  <p class="note">{note.limitation}</p>
+  <details><summary>View supporting text and evidence</summary><blockquote>{note.evidence.excerpt}</blockquote><p class="small break-word">Excerpt SHA-256: <code>{note.evidence.content_hash}</code></p><p class="small">This hash identifies the stored excerpt, not the complete source page. No effective date range or publisher-update time is inferred.</p></details>
+  <p class="small muted">Reviewed from the official page: <time datetime={note.reviewed_at}>{note.reviewed_at}</time>.<br />Re-review due: <time datetime={new Date(Date.parse(note.reviewed_at) + 168 * 3_600_000).toISOString()}>{new Date(Date.parse(note.reviewed_at) + 168 * 3_600_000).toISOString()}</time>.</p>
+  <p class="small review-status" data-reviewed={note.review_status === 'reviewed' ? note.reviewed_at : undefined}>{note.review_status === 'reviewed' ? 'Stored review only. Verify current guidance directly.' : 'This source observation requires editorial review; do not rely on it.'}</p>
+  <a class="text-link" href={note.evidence.url}>Read the official source <span aria-hidden="true">↗</span></a>
+</article>)}

@@ -1,23 +1,26 @@
 ---
-import { parks, rulesFor } from '../lib/data';
+import { parks, coverageInput, buildInfo } from '../lib/data';
+import { summarizeCoverage } from '../lib/source-coverage';
 const states = [...new Set(parks.flatMap((park) => park.states))].sort();
+const coverage = summarizeCoverage(coverageInput, new Date());
 ---
-<section class="directory" aria-labelledby="directory-title">
-  <div class="section-heading"><div><p class="eyebrow">The first five</p><h2 id="directory-title">Find your park</h2></div><p class="muted">A focused pilot, not a visitation ranking.</p></div>
+<section class="directory" aria-labelledby="directory-title" data-coverage={JSON.stringify(coverageInput)}>
+  <div class="section-heading"><div><p class="eyebrow">Pilot coverage</p><h2 id="directory-title">Find your park</h2></div><p class="muted">A focused pilot, not a visitation ranking.</p></div>
   <div class="filters">
     <div class="field search-field"><label for="park-search">Search parks</label><input type="search" id="park-search" placeholder="Try Yosemite or California" autocomplete="off" /></div>
     <div class="field"><label for="state-filter">Filter by state</label><select id="state-filter"><option value="">All states</option>{states.map((state) => <option value={state}>{state}</option>)}</select></div>
   </div>
-  <p id="search-count" class="small muted" role="status" aria-live="polite">5 parks in this pilot</p>
+  <p id="search-count" class="small muted" role="status" aria-live="polite">{parks.length} parks in this pilot</p>
   <div class="park-grid">
     {parks.map((park, index) => <article class="park-card" data-park-card data-search={`${park.name} ${park.code} ${park.states.join(' ')}`.toLowerCase()} data-states={JSON.stringify(park.states)}>
-      <div class="card-top"><span class="park-number">0{index + 1}</span><span class="code-label">NPS · {park.code.toUpperCase()}</span></div>
+      <div class="card-top"><span class="park-number">{String(index + 1).padStart(2, '0')}</span><span class="code-label">NPS · {park.code.toUpperCase()}</span></div>
       <p class="eyebrow card-state">{park.states.join(' · ')}</p><h3><a href={`/parks/${park.slug}/`}>{park.name}<span aria-hidden="true">↗</span></a></h3>
       <p class="card-summary">{park.summary}</p>
-      <div class="card-bottom"><span class="tag">{rulesFor(park.code).length ? 'Stored entry guidance' : 'Entry review pending'}</span><span class="small muted">Alerts not collected</span></div>
+      <div class="card-bottom"><span class="tag" data-entry-label={park.code}>{coverage.rows.find((row) => row.code === park.code)?.entryLabel}</span><span class="small muted" data-alert-label={park.code}>{coverage.rows.find((row) => row.code === park.code)?.alertLabel}</span></div>
     </article>)}
   </div>
   <p id="empty-search" class="empty-state" hidden>No parks match your search. Try another name or clear the state filter.</p>
-  <noscript><p class="note">All five parks are listed above. Interactive search requires JavaScript.</p></noscript>
+  <p class="small muted">Stored reviews and recently checked feeds are different kinds of coverage. Neither confirms access or safe conditions.</p>
+  <noscript><p class="note">All {parks.length} parks are listed above. Search and automatic age-label updates require JavaScript. Labels were calculated at build time: {buildInfo.built_at}. Check source dates on each park page and confirm directly with NPS.</p></noscript>
 </section>
-<script>import '../scripts/directory';</script>
+<script>import '../scripts/directory'; import '../scripts/coverage';</script>
