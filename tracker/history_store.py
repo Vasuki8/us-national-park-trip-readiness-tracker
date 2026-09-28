@@ -19,6 +19,7 @@ MAX_ARCHIVE_ENTRIES = 65536
 MAX_RECONSTRUCTED_BYTES = 64 * 1024 * 1024
 BUNDLE_FIELDS = {'schema_version', 'sequence', 'previous_id', 'header', 'record_refs', 'comparison', 'changes'}
 REF_FIELDS = {'content_hash', 'observed_first_at', 'observed_changed_at'}
+_UNSET_HEAD = object()
 
 def _identifier(value: object) -> str:
     require(isinstance(value, str) and re.fullmatch('[a-f0-9]{64}', value) is not None, 'invalid_object_id')
@@ -173,13 +174,19 @@ class HistoryStore:
         head, _ = self._paths(code)
         self._write(head, canonical({'schema_version': 1, 'observation_id': identifier}), immutable=False)
 
-    def append(self, snapshot: dict) -> str:
+    def append(self, snapshot: dict, *, expected_head: object = _UNSET_HEAD) -> str:
         """Append an already-collected snapshot. Never collect, export or publish website data."""
+        if expected_head is not _UNSET_HEAD and expected_head is not None:
+            _identifier(expected_head)
         current = validate_snapshot(snapshot)
         code = current['park_code']
         with self._writer():
             entries = self.read(code)
             prior = entries[-1] if entries else None
+            if expected_head is not _UNSET_HEAD:
+                head = prior['observation_id'] if prior else None
+                retry = prior is not None and prior['snapshot'] == current and prior['previous_id'] == expected_head
+                require(head == expected_head or retry, 'archive_head_changed')
             difference = compare(prior['snapshot'] if prior else None, current)
             if difference['comparison'] == 'duplicate':
                 return prior['observation_id']
