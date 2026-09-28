@@ -1,84 +1,81 @@
 # Project status and handoff
 
-Updated: 2026-09-28. Milestone: **M1 foundation and source-coverage continuation CI-verified; full public M1 release incomplete**.
+Updated: 2026-09-28. **Development foundation, source coverage and private evidence/history capability implemented. Full public M1 release remains incomplete.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.
-Branch: `feat/pilot-foundation`. Draft pull request: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/1
-The feature is not merged into main. No production deployment is configured.
+Branch: `feat/pilot-foundation`. Draft PR: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/1
+Main remains at the initial README commit `a9d9c19e8307828c5bdb6f331e24ca3fe7afffce`. No merge or production deployment was performed.
 
-## Owner-approved direction
+## Standing product direction
 
-AdSense-first eventual public product, light theme, no paid data dependency. Pilot five parks before expanding to 20. Trustworthy displayed data precedes traffic expansion, monetization and production indexing. No safety scores or all-clear claims.
+AdSense-first eventual public product, light theme, no paid data dependency. Validate five pilot parks before expanding to 20. Trustworthy displayed data comes before traffic expansion, indexing or advertising. No safety scores, all-clear inference, guessed exemptions or year extrapolation.
 
-## Implemented
+## Existing product preserved
 
-- Static Astro directory and five park pages, search/state filters, responsive light design, source/methodology and disclosure pages: 14 HTML pages plus a build manifest.
-- Three official-page-reviewed 2026 entry rules: Yosemite, Rocky Mountain rest-of-park, Rocky Mountain Bear Lake Road. Evidence includes an exact excerpt hash and review time, not a falsely attributed publisher-update time.
-- General-entry source observations for Yellowstone, Zion and Grand Canyon, reviewed on 2026-09-28. Their cited statements do not publish effective date ranges, so they remain separate undated notes with null dates, not executable annual rules. All five parks now have stored entry-source evidence; only two have dated rules for the checker.
-- One-day first-entry private-vehicle guidance with park-local date/time inputs, area-specific rules, annual bounds, conservative exact-end-time handling, unresolved exceptions, and seven-day review expiration.
-- Data-derived homepage/directory coverage: stored reviews, dated rules, and recent successful feed checks are separate. Directory labels recalculate age in the browser. Stale, future, failed, quarantined, duplicate or conflicting metadata cannot appear as a recent successful check.
-- Undated source panels work without JavaScript and explicitly warn that the statement is not a determination for the visitor's dates. The date evaluator remains unchanged and never consumes those notes. Notes are validated at the Astro server/build boundary and included in the site snapshot hash.
-- Self-reported checklist that resets when trip details change. No persistent storage or booking verification.
-- Five explicit never-collected alert snapshots; no live operational condition claims.
-- Python/uv collector with bounded paging/retries, private API-key header, redirects disabled, source/park validation, suspicious-drop quarantine, retained last-good values and atomic writes.
-- Read-only NPS preflight with bounded five-park requests, safe scalar diagnostics and no site-data writes. First run received no key; live integration is blocked, not verified.
-- Read-only PR CI with core/data tests, Python tests, Astro type checking/build, static-output tests, and Chromium interaction/mobile/no-JavaScript checks.
+The Astro site has 14 HTML pages plus a build manifest, a searchable five-park directory, responsive light styling, source panels and a self-reported checklist. All five parks have stored entry-source evidence. Only Yosemite and Rocky Mountain have dated rules for the checker; Yellowstone, Zion and Grand Canyon have undated observations, never executable annual rules. Coverage labels derive from data and expire in the browser. Human review, collection, effective, build and publication clocks are distinct.
 
-## Verified implementation
+All five committed alert snapshots remain `never_checked`. Weather, booking inventory, complete permit/road/facility coverage and a real public change feed are not active. No source review or collection timestamp was advanced during this increment.
 
-Implementation head: `94bb7afdd1f2297f12a9a2f922ee57d5d71b1914`.
-GitHub Actions run **36482305462**, Verify pilot #7, completed successfully on 2026-09-28. Job: **109130664677**.
-Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36482305462
+## New: private evidence and observation history
 
-The runner tested GitHub's temporary PR merge ref `bfb3625d56678c3d49bf6bcaa638182d26100319`, combining that feature head with main `a9d9c19e8307828c5bdb6f331e24ca3fe7afffce`. This did not merge the feature into main.
+- `tracker/history_model.py`: strict validation of the existing normalized alert contract and pure semantic comparison. First successful collection is a baseline; later differences are added/edited/no-longer-present-in-feed, never reopening claims. Unchanged/reordered records produce no semantic events. Failed/quarantined attempts retain the accepted baseline and cannot rewrite records or their clocks.
+- `tracker/history_store.py`: deduplicated content-addressed source text and immutable, hash-linked per-park observations. Verified reads reconstruct exact normalized records and recompute differences. An exclusive writer lock and atomic head replacement separate completed history from orphaned staging objects. Identical retries are idempotent; older/conflicting observations, damaged objects, unsafe paths and suspicious record drops fail closed.
+- `tracker/history.py`: explicit offline `record` and `report` commands. They do not use keys, make network requests, modify source snapshots or publish website data. Reports have bounded output with explicit omitted counts and exclude provider notice text and raw exception messages. The CLI blocks archive destinations inside website/source/Git directories.
+- `state/` is ignored by Git. No actual NPS alert history, credentials or private archive was committed. This adds capability, not populated live history or scheduled persistence.
+- Resource bounds cover on-disk objects, observation count and reconstructed snapshot size. Nothing is automatically pruned or repaired.
+
+Usage, storage layout, retention bounds and operator recovery are in `docs/EVIDENCE_HISTORY.md`. The scope/plan is `docs/superpowers/plans/2026-09-28-evidence-history.md`.
+
+## Verification
+
+Code/test head: `f43ee4ccd644d3f89868857658767f6b78654e85`.
+Verification run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36485050775
+**Verify pilot #10 completed successfully.** Job `109139807159` tested temporary PR merge ref `b463e71be02168238add619ffdc823e4c3c909e2` against unchanged main.
 
 | Check | Verified result |
 |---|---|
-| Reproducible installation, npm ci | Passed |
-| Node core/data/toolchain/source-coverage tests | 50 passed; 0 failed |
-| Python collector/transport/preflight tests | 31 passed |
+| Reproducible npm installation | Passed |
+| Node core/data/source-coverage tests | 50 passed |
+| Python collector/preflight/history tests | 89 passed |
 | Astro check | 18 files; 0 errors, 0 warnings, 0 hints |
-| Static build | 14 HTML pages and build.json generated |
-| Static-output tests | 18 passed; 0 failed |
+| Static build | 14 HTML pages plus build.json |
+| Generated-output tests | 18 passed |
 | Chromium browser tests | 10 passed |
-| Total automated tests | 109 passed |
+| **Total automated tests** | **167 passed; 58 added in this increment** |
 
-The four new browser cases verify five stored-source parks versus two dated-rule parks, all three undated observations remaining unresolved for a 2027 visit, expiry of directory labels on an already-open page, and useful undated evidence with JavaScript disabled. Existing filtering, annual/stale rules, area/time boundaries, checklist, 360px overflow and no-JavaScript cases remain green. No comprehensive accessibility audit or independent visual inspection is claimed.
+Artifact `pilot-verification`, ID `10998886129`, contains the existing static build/browser screenshots and lockfile, not private archives. Seven-day retention. ZIP SHA-256: `365dde340056ea5bfc2e055fbe3e45d7ed870f6981be0dc1742ca84e27a40960`.
+Artifact: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36485050775/artifacts/10998886129
 
-Artifact: `pilot-verification`, ID `10996179659`, retained for seven days. It contains the static build, browser screenshots and package-lock.json.
-Artifact: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36482305462/artifacts/10996179659
-ZIP SHA-256: `97220df1c1910f4305228418b76f44df52496a696602d97cd771a188ce227363`.
+The earlier implementation `03d70ccb7f895d580e83b729a3425d17a16ef9ef` passed full workflow 36484859597. The follow-up changes only add an abrupt-process-exit regression test; application implementation is identical. Handoff-only commits after the recorded test head must be verified through their own CI. A successful temporary PR merge test is not an actual merge into main.
 
-This final handoff/README/plan update changes documentation only. Inspect the CI for later commits; the recorded result proves the implementation above, not future changes.
+Local verification covered 55 tests on Python 3.13/Linux in an isolated partial workspace, including actual subprocess termination. Full GitHub CI supplies the unchanged collector for three additional integration tests and runs the complete existing Node/Astro/static/browser suites on Python 3.12. Do not present the local partial workspace as a complete repository clone: direct container GitHub DNS was unavailable. All new Python code/test blob hashes were checked against the uploaded Git objects.
 
-## Live-data gate: owner action required
+Review was an author self-review, not independent approval. The review added and tested two missing safeguards: reconstructed-memory growth despite evidence deduplication, and forbidden website/source output destinations. No existing tests were removed or weakened. Initial model/store/CLI tests failed on absent modules before implementation; review regressions reproduced the missing behaviors before fixes. The abrupt-exit test passed against the implemented store without further production changes.
 
-The separate **Read-only NPS preflight** ran as run **36481482091**, job **109127917904**, at 2026-09-28T20:45:52Z. It reported `status: not_configured`, `gate_passed: false`, `publication_performed: false`, and `checks: []`. The job received an empty `NPS_API_KEY`. No API requests or snapshot writes occurred. A successful diagnostic workflow is not successful integration validation.
+The new tests cover baseline semantics, additions/edits/removals, failure/recovery, timestamps, replay conflicts, Unicode/hash integrity, exact schema/source validation, lost/corrupt evidence, forged semantic changes, isolated park chains, resource limits, CLI sanitization/truncation and actual collector compatibility using synthetic responses. The process-exit test confirms the previous head remains readable and that an abandoned lock requires explicit recovery after confirming its process is stopped. It is not a test of hardware power loss or network filesystems.
 
-Add an owner-controlled NPS key as a repository Actions secret named **NPS_API_KEY** and rerun the existing read-only preflight. Do not paste the key into chat, a URL, source code or an issue. An empty injected value does not reveal whether a secret is absent, misnamed, environment-only or inaccessible. See `docs/NPS_PREFLIGHT.md` for configuration, bounds and interpretation.
+## Live NPS gate: unchanged, not rechecked in this increment
 
-## Review and execution record
+The last observed read-only NPS preflight was run 36481482091, job 109127917904, at 2026-09-28T20:45:52Z. It received an empty `NPS_API_KEY` and reported `not_configured`, `gate_passed: false`, `publication_performed: false`, `checks: []`. No API request occurred. This result does not distinguish absent, misnamed, inaccessible or environment-only secrets, and it does not establish the current secret configuration.
 
-New deterministic tests were first observed failing locally, then passing. The staged commit `0dce38b` intentionally included browser contracts before the UI: run 36481488060 passed all existing cases and failed exactly the four missing new browser features. After UI implementation, full run 36482305462 passed all 109 tests. No failing test was removed or weakened to obtain green status.
-
-Author self-review checked type separation, build-time note validation, note-sensitive snapshot hashing, browser-only freshness metadata, safe text rendering, no-JavaScript evidence and secret/report boundaries. Comparison with base `83352bd` confirms no edits to the dated rules, existing evaluator, collector or production alert snapshots. No independent reviewer or field-conditions audit is claimed.
-
-The prior foundation passed 79 tests at `7c39fb3` in run 36479129760 and again after its documentation update at `83352bd` in run 36479734880. Earlier repairs addressed invalid calendar normalization, cross-park URLs, incoherent timestamps, credential-like queries and missing Node types. Dependency locks were generated by real package tooling; no new dependencies were added in this continuation. Action-runtime deprecation and npm install-script warnings remain non-blocking maintenance items.
-
-## Not activated / not verified
-
-No production deployment, scheduled collection, advertising, analytics, accounts or paid service. No live NPS API request verified, retained real-response fixture, weather integration, complete roads/facilities coverage, durable observation/change history, publication/rollback validation or automatic editorial source-change monitoring. All pages remain noindex.
-
-The additional general-entry reviews do not constitute complete readiness, permit or fee audits. Undated notes cannot establish access for a future date. The full source-backed M1 release remains incomplete.
+Once an owner-controlled repository Actions secret named `NPS_API_KEY` is configured, rerun the existing read-only preflight and inspect actual source shapes before accepting live records. Never paste keys into chat, URLs, source code or issues. Configuration and interpretation remain in `docs/NPS_PREFLIGHT.md`.
 
 ## Next coherent task
 
-Read PR #1, this handoff and the latest CI; preserve newer changes. Once the owner supplies the private Actions secret, rerun the read-only preflight, inspect actual API shapes privately and retain reviewed credential-free fixtures before publishing any collected records.
+Read the latest PR/head/CI first and preserve newer work. The private archive, semantic differ and offline CLI now exist; do not rebuild them or the earlier data-driven coverage layer.
 
-The next development task that does not need a key is durable evidence and change-history handling: retain accepted observations, distinguish additions/edits/removals, and preserve quarantine/last-good state without interpreting notice removal as reopening. Editorial source-change review must not automatically refresh a human review timestamp. Define and test those contracts before connecting a schedule. Homepage/directory coverage is now data-driven; do not redo that task.
+The next key-independent task is to connect candidate collection to archival in a staging-only orchestration path: record successful, failed and quarantined attempts coherently; recover from interruptions without advancing public data; expose safe operator status. Then define a validated public-history projection and its publication checks. No scheduler should run until archive persistence on operator-controlled storage is resolved: GitHub Actions checkouts are not durable private archives.
 
-After live compatibility, evidence retention and publication checks pass, validate production hosting and rollback. Indexing and advertising follow data quality, rights and publisher-disclosure gates. The PR remains draft and unmerged.
+When the NPS key is available, validate live transport and schema privately and retain reviewed credential-free fixtures. Private archival does not confer content-use approval for public redistribution. Public-history rendering, source-change review, rights checks, production hosting and rollback remain gates before indexing or ads.
 
-## Guardrails
+## Known limits and deferred work
 
-Never advance publisher-update or publication timestamps from build/collection clocks. Never infer opening status from a missing/removed notice. Never carry a 2026 rule into 2027 or assign an annual validity range to an undated source. Never generate indexable pages merely to increase page count. Never put private keys into site JSON, generated JavaScript, commit messages or logs. Purchases, hosting-account changes, provider-agreement acceptance and monetization activation are outside this increment.
+Local trusted filesystem only. Linux command/interruption cases are tested; Windows directory durability, sudden power loss, network filesystems, hostile same-user writers, off-host backup/restore and storage migration are not verified. Hashes detect damaged objects but are not signatures against a party controlling the whole archive. Raw HTTP response capture, automatic editorial source-change review and reviewed bulk-removal approval are not implemented. Existing Actions runtime and npm install-script warnings remain maintenance items; no dependency/workflow changes were made here.
+
+No deployment, scheduled collection, accounts, tracking, advertising or spending was activated. No independent visual/accessibility or field-conditions audit is claimed. PR #1 remains draft and unmerged; live-condition and public-release readiness must not be inferred from passing synthetic tests.
+
+## Verification lineage
+
+- Foundation: 79 tests at `7c39fb3` / run 36479129760 and handoff `83352bd` / run 36479734880.
+- Source coverage: 109 tests at `94bb7af` / run 36482305462 and handoff `f232154` / run 36482644929.
+- Private history: code `03d70cc` / run 36484859597; follow-up process-exit test and final recorded verification above.
