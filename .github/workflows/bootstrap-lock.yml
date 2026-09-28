@@ -1,4 +1,4 @@
-name: Initialize pilot lockfile
+name: Repair pilot type-definition lock
 on:
   push:
     branches: [feat/pilot-foundation]
@@ -17,13 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Generate dependency lock without lifecycle scripts
-        run: |
-          test ! -e package-lock.json
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Update lock without executing lifecycle scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - uses: actions/upload-artifact@v4
         with:
-          name: initial-npm-lock
+          name: repaired-npm-lock
           path: package-lock.json
           retention-days: 7
   commit-lock:
@@ -36,9 +34,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: initial-npm-lock
+          name: repaired-npm-lock
           path: lock
-      - name: Commit only the generated lockfile on the unchanged feature branch
+      - name: Commit only the corrected lockfile
         uses: actions/github-script@v7
         with:
           script: |
@@ -49,5 +47,6 @@ jobs:
             if (ref.object.sha !== context.sha) throw new Error('Branch moved; refusing to write');
             const content = fs.readFileSync('lock/package-lock.json');
             const lock = JSON.parse(content.toString('utf8'));
-            if (lock.name !== 'park-trip-readiness' || lock.lockfileVersion !== 3 || lock.packages[''].dependencies.astro !== '7.3.5') throw new Error('Unexpected lockfile');
-            await github.rest.repos.createOrUpdateFileContents({ ...context.repo, branch, path: 'package-lock.json', message: 'build: lock verified pilot dependency versions', content: content.toString('base64') });
+            if (lock.name !== 'park-trip-readiness' || lock.lockfileVersion !== 3 || lock.packages[''].devDependencies['@types/node'] !== '22.20.3') throw new Error('Unexpected lockfile');
+            const { data: old } = await github.rest.repos.getContent({ ...context.repo, ref: branch, path: 'package-lock.json' });
+            await github.rest.repos.createOrUpdateFileContents({ ...context.repo, branch, path: 'package-lock.json', sha: old.sha, message: 'build: lock explicitly declared Node development types', content: content.toString('base64') });
