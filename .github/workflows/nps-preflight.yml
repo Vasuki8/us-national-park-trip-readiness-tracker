@@ -1,0 +1,27 @@
+name: Read-only NPS preflight
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/pilot-foundation]
+    paths: [.github/workflows/nps-preflight.yml]
+permissions:
+  contents: read
+concurrency:
+  group: nps-read-only-preflight
+  cancel-in-progress: false
+jobs:
+  preflight:
+    if: github.repository == 'Vasuki8/us-national-park-trip-readiness-tracker' && github.ref == 'refs/heads/feat/pilot-foundation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read-only source diagnostic (no production writes)
+        env:
+          NPS_API_KEY: ${{ secrets.NPS_API_KEY }}
+        run: python -m tracker.preflight

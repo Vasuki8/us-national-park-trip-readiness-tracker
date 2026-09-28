@@ -1,0 +1,71 @@
+[
+  {
+    "id": "yell-general-entry",
+    "park_code": "yell",
+    "subject_type": "general_entry",
+    "period_status": "not_published",
+    "effective_from": null,
+    "effective_to": null,
+    "reviewed_at": "2026-09-28T20:40:20Z",
+    "review_status": "reviewed",
+    "summary": "The reviewed NPS permits page says no reservation is needed for general park entry. It separately directs visitors to overnight reservations and activity permits.",
+    "limitation": "The cited entry statement does not publish an effective date range. This is a stored source observation, not a determination for your travel dates. Fees, activity permits, overnight arrangements and access conditions need separate checks.",
+    "evidence": {
+      "url": "https://www.nps.gov/yell/planyourvisit/permitsandreservations.htm",
+      "excerpt": "Visiting Yellowstone does not require a reservation to enter",
+      "content_hash": "f8e2d03744a503a87bba8e156917ccc5b1e16db6e8997d10a1e7b92db009d149",
+      "hash_scope": "excerpt",
+      "reviewed_at": "2026-09-28T20:40:20Z",
+      "source_updated_at": null,
+      "method": "manual_official_page_review"
+    },
+    "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+    "rights_reviewed_at": "2026-09-28T20:40:20Z"
+  },
+  {
+    "id": "zion-general-entry",
+    "park_code": "zion",
+    "subject_type": "general_entry",
+    "period_status": "not_published",
+    "effective_from": null,
+    "effective_to": null,
+    "reviewed_at": "2026-09-28T20:40:20Z",
+    "review_status": "reviewed",
+    "summary": "The reviewed NPS page distinguishes entering the park or riding a shuttle from activities that require their own permits.",
+    "limitation": "The cited entry statement does not publish an effective date range. This is a stored source observation, not a determination for your travel dates. Fees, activity permits, overnight arrangements and access conditions need separate checks.",
+    "evidence": {
+      "url": "https://www.nps.gov/zion/planyourvisit/permitsandreservations.htm",
+      "excerpt": "No tickets, permits, or reservations needed to enter Zion National Park or ride the shuttle",
+      "content_hash": "ac39295d53f9271453038ae2cfe75eb368979884ae78adc3dba83a675ae02b22",
+      "hash_scope": "excerpt",
+      "reviewed_at": "2026-09-28T20:40:20Z",
+      "source_updated_at": null,
+      "method": "manual_official_page_review"
+    },
+    "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+    "rights_reviewed_at": "2026-09-28T20:40:20Z"
+  },
+  {
+    "id": "grca-general-entry",
+    "park_code": "grca",
+    "subject_type": "general_entry",
+    "period_status": "not_published",
+    "effective_from": null,
+    "effective_to": null,
+    "reviewed_at": "2026-09-28T20:40:20Z",
+    "review_status": "reviewed",
+    "summary": "The reviewed NPS operations page says general entry does not use reservations or timed entry. It separately publishes changing facility and area conditions.",
+    "limitation": "The cited entry statement does not publish an effective date range. This is a stored source observation, not a determination for your travel dates. Fees, activity permits, overnight arrangements and access conditions need separate checks.",
+    "evidence": {
+      "url": "https://www.nps.gov/grca/planyourvisit/grand-canyon-national-park-public-health-update.htm",
+      "excerpt": "Reservations are not required to enter Grand Canyon National Park. The park does not have timed entry.",
+      "content_hash": "daa124bf6faa2037c3819ccb6d270cd314ce052c047764c533367ef2c31e6e46",
+      "hash_scope": "excerpt",
+      "reviewed_at": "2026-09-28T20:40:20Z",
+      "source_updated_at": null,
+      "method": "manual_official_page_review"
+    },
+    "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+    "rights_reviewed_at": "2026-09-28T20:40:20Z"
+  }
+]
