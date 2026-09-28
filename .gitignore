@@ -11,3 +11,5 @@ __pycache__/
 !.env.example
 test-results/
 playwright-report/
+# Private operator evidence; never publish as static assets.
+state/
