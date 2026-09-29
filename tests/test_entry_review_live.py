@@ -47,9 +47,9 @@ class LiveEntryReviewTests(unittest.TestCase):
         self.store=EntryReviewStore(self.base/'review')
         self.packets=self.base/'packets'
 
-    def run_live(self, expected=None, failed_code=None, checked=CHECKED):
+    def run_live(self, expected=None, failed_code=None, checked=CHECKED, now=NOW):
         with patch('tracker.entry_review_live.capture_source',side_effect=capture_all(failed_code,checked)):
-            return run_live_capture(self.store,self.packets,expected_revision=expected,live=True,now=NOW)
+            return run_live_capture(self.store,self.packets,expected_revision=expected,live=True,now=now)
 
     def test_live_opt_in_and_expected_revision_are_checked_before_network(self):
         with patch('tracker.entry_review_live.capture_source') as capture:
@@ -85,7 +85,8 @@ class LiveEntryReviewTests(unittest.TestCase):
     def test_existing_ledger_requires_current_head_and_appends_complete_batch(self):
         first=self.run_live()
         checked='2026-09-29T14:30:00.000Z'
-        second=self.run_live(expected=first['ledger_revision'],checked=checked)
+        second=self.run_live(expected=first['ledger_revision'],checked=checked,
+          now=datetime(2026,9,29,15,30,tzinfo=timezone.utc))
         state=self.store.read()
         self.assertEqual(len(state['events']),2)
         self.assertEqual(second['ledger_revision'],state['revision'])
