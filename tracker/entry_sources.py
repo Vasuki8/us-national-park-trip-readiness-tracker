@@ -115,13 +115,22 @@ def inspect_entry_sources(records: object, captures: object, baselines: object, 
     require(set(current) == set(by_url), 'source_inventory_mismatch')
     for value in baselines:
         b = shape(value, 'schema_version source_url profile_id guidance_hashes checked_at reviewed_at context context_hash')
-        require(type(b['schema_version']) is int and b['schema_version'] == 1, 'invalid_baseline')
+        version = b['schema_version']
+        require(type(version) is int and version in (1, 2), 'invalid_baseline')
         url = b['source_url']; require(type(url) is str and url in by_url and url not in approved, 'baseline_inventory_mismatch')
         code = by_url[url]; require(b['profile_id'] == f'{PROFILE_VERSION}:{code}', 'baseline_revision_mismatch')
         expected = {r['id']: digest(r) for r in groups[code]}
         require(b['guidance_hashes'] == expected, 'baseline_revision_mismatch')
         checked, reviewed = instant(b['checked_at']), instant(b['reviewed_at'])
-        require(max(instant(r['reviewed_at']) for r in groups[code]) < checked <= reviewed < instant(current[url]['checked_at']) <= now, 'invalid_source_clock')
+        current_checked = instant(current[url]['checked_at'])
+        if version == 1:
+            require(max(instant(r['reviewed_at']) for r in groups[code]) < checked <= reviewed < current_checked <= now,
+                    'invalid_source_clock')
+        else:
+            # Explicit reconciliation reviews the retained capture, so capture <= approval.
+            # Every guidance record sharing the source is approved at that same review instant.
+            require(checked <= reviewed < current_checked <= now
+                    and all(instant(r['reviewed_at']) == reviewed for r in groups[code]), 'invalid_source_clock')
         ctx = context_value(b['context'], PROFILES[code]['heading'])
         require(b['context_hash'] == digest(ctx), 'baseline_evidence_mismatch')
         for r in groups[code]:
