@@ -202,6 +202,30 @@ This report is an evidence summary, not an authorization to launch. Removing `no
 
 Contract: `docs/RELEASE_READINESS.md`.
 
+## New: NPS alert preflight gate hardening
+
+The read-only keyed NPS alert preflight was rerun on the current feature branch after expanding its validation trigger to changes in the workflow, `tracker/preflight.py`, and `tracker/alerts.py`. It remains unscheduled and has read-only repository permissions.
+
+Current run **36607959537**, job **109541744290**, head **16dda2f20c504ada6d9740c1de38f458e47cb7f9**, returned:
+
+```json
+{"schema_version":1,"mode":"read_only","status":"not_configured","gate_passed":false,"publication_performed":false,"checks":[]}
+```
+
+The runner still received no usable `NPS_API_KEY`, so it made zero provider requests and changed no data. This establishes the current branch configuration state for that execution; it does not expose or directly inspect repository secrets.
+
+The preflight exit contract is now release-gate aligned:
+
+- `verified` / `gate_passed:true` → exit 0;
+- `needs_review` → exit 1;
+- `not_configured` or `invalid_configuration` → exit 2.
+
+Therefore the current preflight workflow is intentionally **red** while the key is unavailable. A successful Actions job can no longer visually imply that the alert integration is verified when `gate_passed:false`.
+
+The public alert snapshots are untouched and remain `never_checked`; this diagnostic does not publish or stage data. Configure the owner-controlled repository secret named exactly `NPS_API_KEY` before expecting this gate to pass. Do not send the key through chat, issues, or committed files.
+
+Contract and exact run evidence: `docs/NPS_PREFLIGHT.md`.
+
 ## TDD and self-review record
 
 The reconciliation contract was developed test-first.
@@ -218,9 +242,9 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`fb1ac56ee4bb73f8ae28aca914fd2d7fc22708c6`**.
+Code/test head: **`16dda2f20c504ada6d9740c1de38f458e47cb7f9`**.
 
-**Verify pilot #80, run `36605455842`, job `109533190872`, completed successfully.**
+**Verify pilot #84, run `36607969239`, job `109541772212`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
@@ -232,11 +256,11 @@ Code/test head: **`fb1ac56ee4bb73f8ae28aca914fd2d7fc22708c6`**.
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
-The release-readiness increment adds nine Python methods. RED #79 (`36605123475`) failed because `tracker.release_readiness` did not exist. #80 passed after the minimal read-only evaluator/CLI implementation.
+The release-readiness increment adds nine Python methods. RED #79 (`36605123475`) failed because `tracker.release_readiness` did not exist. #80 passed after the minimal read-only evaluator/CLI implementation. The later preflight-gate regression #83 (`36607734562`) then failed exactly because a missing key still returned exit 0; #84 passed after changing the preflight CLI so only `gate_passed:true` returns zero.
 
 Coverage proves the current repository cannot report release-ready, `never_checked` alerts cannot be described as an all-clear, all five schema-v2 source baselines plus zero holds are required for the private source-review gate, a verified backup must match the exact current ledger head, public guidance rights metadata does not self-certify broader source rights, all three indexing controls are detected, no network/filesystem write occurs during evaluation, and CLI text/JSON/error output remains path-safe.
 
-Verification artifact `pilot-verification`, ID **11050756880**, contains the production site build, existing screenshots and lockfile—not private ledgers, backups, captures, packets, or readiness evidence. CI-reported ZIP SHA-256: `fa3b9731ba2dcbb51fc0643a4bbbb61e4b2236d2c8b1912f19d453fa6fab84d8`.
+Verification artifact `pilot-verification`, ID **11051738824**, contains the production site build, existing screenshots and lockfile—not private ledgers, backups, captures, packets, or NPS credentials. CI-reported ZIP SHA-256: `011ea061ac8b935588957be1141dbedf118d6de8f27a5be68d1ed79912c60cba`.
 
 Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising state changed. This documentation-only handoff receives a separate CI run; do not infer it from #80.
 
@@ -256,7 +280,7 @@ The private ledger remains owner-only local POSIX storage, not hosted durable st
 
 Source-content redistribution/rights review remains separate from guidance review. Hashes prove internal consistency, not factual truth, source authenticity or permission to republish.
 
-The keyed NPS alerts API was not checked during this milestone. The last historical key diagnostic remains the earlier empty-key/no-request result; do not treat it as current configuration.
+The keyed NPS alerts preflight was rechecked on the current branch and is still blocked because the runner received no usable `NPS_API_KEY`. No provider request was made. See run 36607959537; do not treat its red conclusion as a product-test regression.
 
 No scheduler, deployment, indexing, advertising, tracking, account system, spending or provider agreement was activated. Neither pilot release milestone is declared complete.
 
@@ -272,4 +296,4 @@ The keyed NPS alert API remains a separate gate and should use the existing pref
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **541 tests** at `fb1ac56`, run #80. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **541 tests** at `16dda2f`, run #84. PR #1 remains draft and unmerged.
