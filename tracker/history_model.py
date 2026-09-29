@@ -61,14 +61,18 @@ def instant(value: object) -> datetime:
 def _text(value: object, *, empty: bool = False) -> None:
     require(isinstance(value, str) and len(value) <= 65536 and (empty or bool(value.strip())))
 
-def _source(value: object, code: str) -> None:
+def _source(value: object, _code: str) -> None:
+    if value is None:
+        return
     _text(value)
     require(not re.search(r'[\x00-\x20\x7f\\]', value), 'invalid_source')
     try:
         url = urlsplit(value)
-        require(url.scheme == 'https' and url.hostname in {'www.nps.gov', 'nps.gov', 'home.nps.gov'} and not url.username and not url.password and url.port in (None, 443), 'invalid_source')
+        host = (url.hostname or '').lower()
+        require(url.scheme == 'https' and (host == 'nps.gov' or host.endswith('.nps.gov'))
+                and not url.username and not url.password and url.port in (None, 443), 'invalid_source')
         path = unquote(url.path)
-        require(path.startswith(f'/{code}/') and posixpath.normpath(path) == path and '\\' not in path, 'invalid_source')
+        require((not path or posixpath.normpath(path) == path) and '\\' not in path, 'invalid_source')
         require(not re.search(r'api.?key|token|secret', unquote(url.query + url.fragment), re.I), 'invalid_source')
     except ValueError:
         raise HistoryError('invalid_source') from None
@@ -97,7 +101,8 @@ def validate_snapshot(value: object) -> dict:
     for item in records:
         require(isinstance(item, dict) and set(item) == RECORD_FIELDS)
         for key in SEMANTIC_FIELDS:
-            _text(item[key], empty=key == 'description')
+            if key != 'url':
+                _text(item[key], empty=key == 'description')
         require(len(item['id']) <= 256 and not re.search(r'[\x00-\x1f\x7f]', item['id']))
         require(item['id'] not in ids, 'duplicate_record_id'); ids.add(item['id'])
         _source(item['url'], code)
