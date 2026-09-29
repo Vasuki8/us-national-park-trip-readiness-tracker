@@ -57,8 +57,9 @@ def make_event(kind: str, request: object, state: dict, saved_at: str) -> dict:
         if kind == 'observation':
             value = shape(request, 'records captures baselines seed_register')
             if state['records']:
-                require(value['records'] == state['records'], 'review_guidance_revision_mismatch')
-                require(value['seed_register'] == state['events'][0]['request']['seed_register'], 'review_seed_mismatch')
+                # Canonical bytes preserve JSON types; Python equality conflates True and 1.
+                require(canonical(value['records']) == canonical(state['records']), 'review_guidance_revision_mismatch')
+                require(canonical(value['seed_register']) == canonical(state['events'][0]['request']['seed_register']), 'review_seed_mismatch')
             extraction = inspect_entry_sources(value['records'], value['captures'], value['baselines'], when)
             previous = next((e for e in reversed(state['events']) if e['kind'] == 'observation'), None)
             if previous:

@@ -92,7 +92,8 @@ class EntryReviewStore:
             require(canonical(event) == raw and digest(event) == identifier, 'review_digest_mismatch')
             require(isinstance(event, dict) and event.get('previous_revision') == state['revision'], 'invalid_review_chain')
             rebuilt = make_event(event.get('kind'), event.get('request'), state, event.get('saved_at'))
-            require(rebuilt == event, 'review_replay_mismatch')
+            # Compare JSON identity, not Python equality: True and 1 are distinct evidence.
+            require(canonical(rebuilt) == raw, 'review_replay_mismatch')
             state = apply_event(state, event, identifier)
         require(state['revision'] == meta[0][2], 'review_head_mismatch')
         return state
