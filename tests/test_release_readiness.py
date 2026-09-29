@@ -69,8 +69,8 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(self.gate(report,'hosting_rollback')['status'],'not_checked')
         self.assertEqual(self.gate(report,'indexing')['status'],'blocked')
         self.assertEqual(self.gate(report,'advertising')['status'],'blocked')
-        self.assertEqual(report['summary']['pass'],0)
-        self.assertEqual(report['summary']['blocked']+report['summary']['not_checked'],7)
+        self.assertEqual(report['summary']['pass'],1)
+        self.assertEqual(report['summary']['blocked']+report['summary']['not_checked'],6)
 
     def test_never_checked_alerts_can_never_be_described_as_clear_or_ready(self):
         report=evaluate_readiness(ROOT)
@@ -105,12 +105,14 @@ class ReleaseReadinessTests(unittest.TestCase):
         stale=evaluate_readiness(ROOT,private_state=state,backup_manifest=backup_manifest('9'*64))
         self.assertEqual(self.gate(stale,'storage_backup')['status'],'blocked')
 
-    def test_rights_metadata_does_not_self_certify_full_source_rights(self):
+    def test_exact_source_rights_manifest_can_pass_only_the_public_text_scope(self):
         gate=self.gate(evaluate_readiness(ROOT),'source_rights')
-        self.assertEqual(gate['status'],'not_checked')
+        self.assertEqual(gate['status'],'pass')
         self.assertEqual(gate['evidence']['guidance_records_with_rights_metadata'],6)
         self.assertEqual(gate['evidence']['guidance_records_total'],6)
-        self.assertIn('external',gate['reason'])
+        self.assertEqual(gate['evidence']['covered_guidance_records'],6)
+        self.assertTrue(gate['evidence']['commercial_notice_present'])
+        self.assertFalse(gate['evidence']['nps_marks_or_media_detected'])
 
     def test_indexing_gate_requires_all_three_release_controls_to_be_removed(self):
         gate=self.gate(evaluate_readiness(ROOT),'indexing')
