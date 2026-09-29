@@ -1,0 +1,36 @@
+---
+import '../../../src/styles/global.css';
+import HistoryTimeline from '../../../src/components/HistoryTimeline.astro';
+import parks from '../../../data/parks.json';
+import { bundle } from '../lib/bundle';
+---
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex, nofollow" /><meta name="color-scheme" content="light" /><title>Private candidate preview · Park Readiness</title></head>
+<body>
+  <a class="skip-link" href="#main">Skip to candidate data</a>
+  <header class="preview-banner" data-preview-banner><div class="wrap"><strong>Not published</strong><span>Private candidate data · Not approved for travel decisions</span></div></header>
+  <main id="main" class="wrap">
+    <section class="page-intro"><p class="eyebrow">Park Readiness / Operator preview</p><h1>Private candidate preview</h1>
+      <p class="lead">Inspect current candidate records and their matching history before considering a release. This build does not change the public website.</p>
+      <p class="note">{bundle.data_kind === 'synthetic' ? 'Synthetic test data — not actual park conditions.' : 'Unreviewed source data — not cleared for publication.'} A ready preview is not a successful live collection, source-content approval, or an all-clear.</p>
+      <p class="small muted">Bundle identity: <code data-preview-id>{bundle.bundle_id}</code></p>
+      <p class="small muted">Each park is pinned to its own committed observation. These are not simultaneous checks. Source, observation, build and publication times are not interchangeable.</p>
+    </section>
+    <nav class="preview-nav" aria-label="Jump to candidate park">{parks.map(park=><a href={`#candidate-${park.code}`}>{park.name}</a>)}</nav>
+    {bundle.views.map(view=>{
+      const park=parks.find(park=>park.code===view.snapshot.park_code)!;
+      return <section id={`candidate-${park.code}`} data-preview-park={park.code} class="candidate-park">
+        <header><p class="eyebrow">Candidate only · {park.states.join(' · ')}</p><h2>{park.name}</h2></header>
+        <div class="panel"><h3>Current candidate feed records</h3><p class="small muted">Collection state: <strong>{view.snapshot.collection_status}</strong>. Records retained after a failed check are not newly verified. Area and travel-date applicability remain unconfirmed.</p>
+          <p class="small muted">Observed check: {view.snapshot.last_checked_at ?? 'Never'}. Last successful check: {view.snapshot.last_successful_fetch_at ?? 'Never'}.</p>
+          {view.snapshot.records.length ? view.snapshot.records.map(item=><article data-current-record class="source-item"><h4>{item.title}</h4><p>{item.description}</p><a class="text-link" href={item.url}>Official notice source ↗</a></article>) : <p class="note">No records in this candidate. The collection state below distinguishes an empty successful feed from a park that has never been checked. Neither is an all-clear.</p>}
+        </div>
+        <HistoryTimeline history={view.history} snapshot={view.snapshot} conditionsUrl={park.conditions_url} />
+      </section>;
+    })}
+  </main>
+  <footer class="wrap preview-footer"><p class="small muted">Independent development preview, not an official NPS service. No deployment, booking, advertising or production-data promotion occurs here.</p></footer>
+</body></html>
+<style>
+.preview-banner{background:#f2e4c8;border-bottom:1px solid #d6c299;position:sticky;top:0;z-index:5;font-size:.8rem}.preview-banner>.wrap{display:flex;gap:14px;flex-wrap:wrap;padding-block:12px}.preview-banner strong{text-transform:uppercase;letter-spacing:.07em}.preview-nav{display:flex;flex-wrap:wrap;gap:12px 24px;margin:28px 0 42px;font-size:.9rem}.candidate-park{scroll-margin-top:90px;margin-bottom:52px}.candidate-park>header h2{font-family:Georgia,serif;font-size:2.1rem}.candidate-park .panel h3{font-size:1.2rem}.source-item h4{font-size:1rem;margin:0 0 10px;overflow-wrap:anywhere}.source-item p{white-space:pre-wrap;overflow-wrap:anywhere}.preview-footer{padding-block:20px;border-top:1px solid var(--line)}.page-intro code{display:block;overflow-wrap:anywhere}main{padding-bottom:20px}
+</style>
