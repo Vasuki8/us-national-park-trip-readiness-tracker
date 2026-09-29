@@ -318,13 +318,15 @@ Code/test head: **`df908a6b4d608ef5c57ca12a2b8bc872ac039bd4`**.
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
-The release-readiness increment adds nine Python methods. RED #79 (`36605123475`) failed because `tracker.release_readiness` did not exist. #80 passed after the minimal read-only evaluator/CLI implementation. The later preflight-gate regression #83 (`36607734562`) then failed exactly because a missing key still returned exit 0; #84 passed after changing the preflight CLI so only `gate_passed:true` returns zero.
+The source-rights increment adds three Node tests and five Python tests. RED #94 (`36618285770`) confirmed the manifest, footer notice, and passing rights gate were absent. RED #97 (`36618654174`) then confirmed the build-boundary validator itself was still missing. During implementation, #100–#102 exposed two malformed Python patch remnants in `release_readiness.py`; those were traced to duplicated/truncated generated edits and removed without weakening the rights policy. #103 passed the complete implementation.
 
-Coverage proves the current repository cannot report release-ready, `never_checked` alerts cannot be described as an all-clear, all five schema-v2 source baselines plus zero holds are required for the private source-review gate, a verified backup must match the exact current ledger head, public guidance rights metadata does not self-certify broader source rights, all three indexing controls are detected, no network/filesystem write occurs during evaluation, and CLI text/JSON/error output remains path-safe.
+Coverage verifies exact six-record/source pairing, official NPS policy URLs, the commercial U.S. Government-work notice, refusal of omitted/duplicated rights evidence, refusal of marks/media/third-party claims, absence of public NPS marks/media, and the source-rights readiness gate passing only for this exact text scope.
 
-Verification artifact `pilot-verification`, ID **11056593722**, contains the production site build, existing screenshots and lockfile—not private ledgers, backups, captures, packets, credentials, or deployed Pages state. CI-reported ZIP SHA-256: `f7b4fadbe2dc207049a37dc19a8080d3bfb6c36468d9ec0f18dd4cbf5cc9d12d`.
+Implementation verification artifact `pilot-verification`, ID **11056593722**, had CI-reported ZIP SHA-256 `f7b4fadbe2dc207049a37dc19a8080d3bfb6c36468d9ec0f18dd4cbf5cc9d12d`.
 
-Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising state changed. This documentation-only handoff receives a separate CI run; do not infer it from #80.
+The documentation head **`a0ebdc23a6b66391fcfea4b92cd04c714774b92e`** then passed **Verify pilot #105**, run `36620211515`, job `109583902805`, with the same 559-test suite/build. Its artifact ID was **11056884522**, ZIP SHA-256 `44217eeb7fb194eca35814ba951aa444366433db8787b78f4e836c870522c090`.
+
+Review was author self-review because no independent reviewer/subagent tool is available. No deployment, indexing, advertising, or live-data state changed. This final status-only handoff edit receives its own CI run.
 
 ## Previously verified real-page compatibility
 
