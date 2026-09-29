@@ -47,7 +47,7 @@ class LiveEntryReviewTests(unittest.TestCase):
         self.store=EntryReviewStore(self.base/'review')
         self.packets=self.base/'packets'
 
-    def run(self, expected=None, failed_code=None, checked=CHECKED):
+    def run_live(self, expected=None, failed_code=None, checked=CHECKED):
         with patch('tracker.entry_review_live.capture_source',side_effect=capture_all(failed_code,checked)):
             return run_live_capture(self.store,self.packets,expected_revision=expected,live=True,now=NOW)
 
@@ -56,7 +56,7 @@ class LiveEntryReviewTests(unittest.TestCase):
             with self.assertRaises(ReviewStoreError):
                 run_live_capture(self.store,self.packets,expected_revision=None,live=False,now=NOW)
             capture.assert_not_called()
-        first=self.run()
+        first=self.run_live()
         with patch('tracker.entry_review_live.capture_source') as capture:
             with self.assertRaises(ReviewStoreError):
                 run_live_capture(self.store,self.packets,expected_revision=None,live=True,now=NOW)
@@ -85,7 +85,7 @@ class LiveEntryReviewTests(unittest.TestCase):
     def test_existing_ledger_requires_current_head_and_appends_complete_batch(self):
         first=self.run()
         checked='2026-09-29T14:30:00.000Z'
-        second=self.run(expected=first['ledger_revision'],checked=checked)
+        second=self.run_live(expected=first['ledger_revision'],checked=checked)
         state=self.store.read()
         self.assertEqual(len(state['events']),2)
         self.assertEqual(second['ledger_revision'],state['revision'])
@@ -94,7 +94,7 @@ class LiveEntryReviewTests(unittest.TestCase):
         self.assertEqual(state['records'],state['events'][0]['request']['records'])
 
     def test_failed_source_is_durably_recorded_and_never_gets_fake_packet(self):
-        result=self.run(failed_code='zion')
+        result=self.run_live(failed_code='zion')
         state=self.store.read(); event=state['events'][-1]
         zion=next(c for c in event['request']['captures'] if c['source_url']==PROFILES['zion']['url'])
         row=next(r for r in result['sources'] if r['park_code']=='zion')
