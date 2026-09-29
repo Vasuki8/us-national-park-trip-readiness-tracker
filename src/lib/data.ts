@@ -29,7 +29,7 @@ export const entryReviewHoldsFor = (code: string) => entryReview.holds.filter((h
 // Relevant links are not operational reviews and never enter rule/feed coverage.
 export const planningResources = validatePlanningResources(rawPlanningResources, parks.map((park) => park.code));
 export const planningResourcesFor = (code: string) => planningResources.filter((resource) => resource.park_code === code);
-export interface Notice { id: string; title: string; description: string; category: string; url: string; scope_status: string }
+export interface Notice { id: string; title: string; description: string; category: string; url: string | null; scope_status: string }
 export interface Snapshot {
   park_code: string; collection_status: string; coverage_status: string; last_checked_at: string | null;
   last_successful_fetch_at: string | null; source_updated_at: string | null; records: Notice[];
