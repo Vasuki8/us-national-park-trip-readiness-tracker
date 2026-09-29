@@ -31,7 +31,7 @@ test('candidate source markup stays text and evidence remains usable without Jav
   await page.goto(url);expect(await page.evaluate(()=>(window as any).previewInjected)).toBeUndefined();
   const context=await browser.newContext({javaScriptEnabled:false});const plain=await context.newPage();await plain.goto(url);
   const detail=plain.locator('[data-preview-park="yose"] details').first();await detail.locator('summary').click();
-  await expect(detail.getByRole('link',{name:'Official source'}).first()).toBeVisible();
+  await expect(detail.getByRole('link',{name:'More information link supplied by NPS'}).first()).toBeVisible();
   await expect(plain.locator('[data-preview-park="yose"] noscript p')).toBeVisible();await context.close();
 });
 test('candidate preview fits a 360px screen with expanded evidence',async({page})=>{
