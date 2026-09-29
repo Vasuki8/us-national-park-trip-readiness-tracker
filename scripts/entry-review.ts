@@ -1,5 +1,7 @@
 /** Selected-text review intake, not a scraper, semantic interpreter or approval service. */
 import { createHash } from 'node:crypto';
+import { validateRule } from './validate-data.ts';
+import { validateEntryNotes } from './validate-entry-notes.ts';
 import type { EntryHold, EntryReviewReason } from '../src/lib/entry-review.ts';
 
 export interface SourceGuidance {
@@ -148,6 +150,63 @@ export function assessEntrySources(records: SourceGuidance[], values: unknown, p
   register.proposals.sort((a, b) => a.guidance_id.localeCompare(b.guidance_id) || timestamp(a.checked_at) - timestamp(b.checked_at));
   return { register: validateEntryReview(register, records, now), checks };
 }
+
+function validateApprovedInventory(records: SourceGuidance[], parks: any[]): void {
+  requireValue(Array.isArray(parks) && parks.length > 0, 'entry_review_inventory_mismatch');
+  const codes = parks.map((park) => park.code);
+  for (const value of records as any[]) {
+    const item = object(value);
+    if (item.subject_type === 'general_entry') validateEntryNotes([item], codes);
+    else validateRule(item, parks);
+  }
+}
+
+/** Explicit reviewer reconciliation. Clears only complete source-level proposal sets. */
+export function reconcileEntryReview(
+  current: SourceGuidance[], pending: unknown, proposalIds: unknown,
+  nextRecords: SourceGuidance[], reviewedAt: Date, parks: any[],
+) {
+  const currentMap = inventory(current, reviewedAt);
+  const register = validateEntryReview(pending, current, reviewedAt);
+  requireValue(Array.isArray(proposalIds) && proposalIds.length > 0 && proposalIds.length <= MAX_PROPOSALS,
+    'entry_review_reconciliation_mismatch');
+  const selected = new Set<string>();
+  for (const id of proposalIds) {
+    text(id, 64); requireValue(/^[a-f0-9]{64}$/.test(id) && !selected.has(id), 'entry_review_reconciliation_mismatch');
+    selected.add(id);
+  }
+  const chosen = register.proposals.filter((proposal) => selected.has(proposal.id));
+  requireValue(chosen.length === selected.size, 'entry_review_reconciliation_mismatch');
+  const sourceUrls = [...new Set(chosen.map((proposal) => proposal.source_url))].sort();
+  requireValue(register.proposals.filter((proposal) => sourceUrls.includes(proposal.source_url))
+    .every((proposal) => selected.has(proposal.id)), 'entry_review_partial_source_reconciliation');
+  for (const proposal of chosen) requireValue(reviewedAt.getTime() > timestamp(proposal.checked_at), 'invalid_entry_review_clock');
+
+  validateApprovedInventory(nextRecords, parks);
+  const nextMap = inventory(nextRecords, reviewedAt);
+  requireValue(nextMap.size === currentMap.size && [...currentMap.keys()].every((id) => nextMap.has(id)),
+    'entry_review_inventory_mismatch');
+  const affected = [...currentMap.values()].filter((record) => sourceUrls.includes(record.evidence.url))
+    .map((record) => record.id).sort();
+  for (const [id, before] of currentMap) {
+    const after = nextMap.get(id)!;
+    requireValue(after.park_code === before.park_code && after.evidence.url === before.evidence.url,
+      'entry_review_reconciliation_mismatch');
+    if (!sourceUrls.includes(before.evidence.url)) {
+      requireValue(canonical(after) === canonical(before), 'entry_review_unrelated_guidance_changed');
+      continue;
+    }
+    requireValue(after.review_status === 'reviewed' && timestamp(after.reviewed_at) === reviewedAt.getTime()
+      && after.evidence.reviewed_at === after.reviewed_at, 'entry_review_reconciliation_mismatch');
+    const beforeAny = before as any, afterAny = after as any;
+    requireValue(afterAny.rights_basis === beforeAny.rights_basis
+      && afterAny.rights_reviewed_at === beforeAny.rights_reviewed_at, 'entry_review_rights_changed');
+  }
+  const remaining = { schema_version: 1 as const, proposals: register.proposals.filter((proposal) => !selected.has(proposal.id)) };
+  return { register: validateEntryReview(remaining, nextRecords, reviewedAt),
+    affected_guidance_ids: affected, source_urls: sourceUrls };
+}
+
 /** Copies approved records and overlays only their review status. Never persists changes. */
 export function applyEntryReview<T extends SourceGuidance>(records: T[], pending: unknown, now: Date): { guidance: T[]; holds: EntryHold[] } {
   const register = validateEntryReview(pending, records, now);

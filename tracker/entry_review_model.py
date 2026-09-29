@@ -5,7 +5,8 @@ import os
 import re
 import subprocess
 from datetime import datetime, timezone
-from .entry_sources import canonical, digest, inspect_entry_sources, instant, shape
+from .entry_sources import (PROFILES, PROFILE_VERSION, canonical, context_value, digest,
+    inspect_entry_sources, instant, normalized, shape)
 from .entry_html import clean_text, SourceExtractionError
 from .entry_review_io import REPO_ROOT, MAX_INPUT_BYTES, ReviewStoreError, parse_json, require
 
@@ -16,7 +17,7 @@ EMPTY_REGISTER = {'schema_version': 1, 'proposals': []}
 
 
 def empty_state() -> dict:
-    return {'revision': None, 'events': [], 'records': [], 'register': copy.deepcopy(EMPTY_REGISTER)}
+    return {'revision': None, 'events': [], 'records': [], 'register': copy.deepcopy(EMPTY_REGISTER), 'baselines': []}
 
 
 def revision(value) -> None:
@@ -43,8 +44,50 @@ def gate(records: list, observations: list, pending: dict, saved_at: str) -> dic
         raise ReviewStoreError('review_gate_failed') from None
 
 
+def reconcile_gate(records: list, pending: dict, proposal_ids: list, next_records: list, reviewed_at: str) -> dict:
+    payload = canonical({'current': records, 'pending': pending, 'proposal_ids': proposal_ids,
+                         'next': next_records, 'reviewed_at': reviewed_at})
+    require(len(payload) <= 4 * 1024 * 1024, 'review_gate_input_too_large')
+    try:
+        result = subprocess.run(['node', '--experimental-strip-types', str(REPO_ROOT/'scripts/entry-reconcile-bridge.ts')],
+            input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=REPO_ROOT,
+            env={'PATH': os.environ.get('PATH', os.defpath), 'NODE_NO_WARNINGS': '1'}, timeout=10, check=False)
+        require(result.returncode == 0 and len(result.stdout) <= 4 * 1024 * 1024, 'review_reconciliation_failed')
+        value = shape(parse_json(result.stdout), 'register affected_guidance_ids source_urls')
+        require(type(value['affected_guidance_ids']) is list and type(value['source_urls']) is list,
+                'review_reconciliation_failed')
+        return value
+    except ReviewStoreError:
+        raise
+    except (OSError, subprocess.SubprocessError, SourceExtractionError):
+        raise ReviewStoreError('review_reconciliation_failed') from None
+
+
 def request_key(kind: str, request: dict, parent) -> str:
     return digest({'kind': kind, 'request': request, 'expected_revision': parent})
+
+
+def _reviewer(value: dict) -> None:
+    require(isinstance(value['reviewer'], str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,63}', value['reviewer']),
+            'invalid_reviewer')
+    clean_text(value['rationale'], 4096)
+
+
+def _baseline_from_context(source: dict, records: list, reviewed_at: str) -> dict:
+    url = source['source_url']
+    code = next((code for code, profile in PROFILES.items() if profile['url'] == url), None)
+    require(code is not None and source['profile_id'] == f'{PROFILE_VERSION}:{code}', 'review_source_event_mismatch')
+    context = context_value(source['context'], PROFILES[code]['heading'])
+    require(source['context_hash'] == digest(context), 'review_source_event_mismatch')
+    guidance = [record for record in records if record['evidence']['url'] == url]
+    require(guidance, 'review_source_event_mismatch')
+    for record in guidance:
+        require(normalized(context['text']).count(normalized(record['evidence']['excerpt'])) == 1,
+                'reviewed_excerpt_not_in_context')
+    return {'schema_version': 1, 'source_url': url, 'profile_id': source['profile_id'],
+            'guidance_hashes': {record['id']: digest(record) for record in guidance},
+            'checked_at': source['checked_at'], 'reviewed_at': reviewed_at,
+            'context': copy.deepcopy(context), 'context_hash': source['context_hash']}
 
 
 def make_event(kind: str, request: object, state: dict, saved_at: str) -> dict:
@@ -60,7 +103,12 @@ def make_event(kind: str, request: object, state: dict, saved_at: str) -> dict:
                 # Canonical bytes preserve JSON types; Python equality conflates True and 1.
                 require(canonical(value['records']) == canonical(state['records']), 'review_guidance_revision_mismatch')
                 require(canonical(value['seed_register']) == canonical(state['events'][0]['request']['seed_register']), 'review_seed_mismatch')
-            extraction = inspect_entry_sources(value['records'], value['captures'], value['baselines'], when)
+            if state['baselines']:
+                require(canonical(value['baselines']) == b'[]', 'review_baseline_override')
+                effective_baselines = state['baselines']
+            else:
+                effective_baselines = value['baselines']  # Legacy trusted input until an explicit reconciliation exists.
+            extraction = inspect_entry_sources(value['records'], value['captures'], effective_baselines, when)
             previous = next((e for e in reversed(state['events']) if e['kind'] == 'observation'), None)
             if previous:
                 times = {c['source_url']: instant(c['checked_at']) for c in previous['request']['captures']}
@@ -72,9 +120,38 @@ def make_event(kind: str, request: object, state: dict, saved_at: str) -> dict:
             value = shape(request, 'proposal_id reviewer decision rationale')
             require(any(p['id'] == value['proposal_id'] for p in state['register']['proposals']), 'unknown_review_proposal')
             require(value['decision'] in ('retain_hold', 'request_guidance_revision'), 'invalid_review_disposition')
-            require(isinstance(value['reviewer'], str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,63}', value['reviewer']), 'invalid_reviewer')
-            clean_text(value['rationale'], 4096)
+            _reviewer(value)
             evidence = {'extraction': None, 'register': state['register'], 'checks': []}
+        elif kind == 'reconciliation':
+            value = shape(request, 'source_event_revision proposal_ids reviewer rationale reviewed_at records')
+            require(type(value['source_event_revision']) is str, 'review_source_event_mismatch')
+            revision(value['source_event_revision']); _reviewer(value)
+            reviewed = instant(value['reviewed_at'])
+            require(reviewed <= when, 'invalid_review_clock')
+            source_event = next((event for event in state['events']
+                                 if event['kind'] == 'observation' and digest(event) == value['source_event_revision']), None)
+            require(source_event is not None, 'review_source_event_mismatch')
+            assessed = reconcile_gate(state['records'], state['register'], value['proposal_ids'], value['records'],
+                                      value['reviewed_at'])
+            baselines = [baseline for baseline in state['baselines'] if baseline['source_url'] not in assessed['source_urls']]
+            selected = [proposal for proposal in state['register']['proposals'] if proposal['id'] in value['proposal_ids']]
+            for url in assessed['source_urls']:
+                source = next((item for item in source_event['extraction']['sources'] if item['source_url'] == url), None)
+                require(source is not None and source['context'] is not None, 'review_source_event_mismatch')
+                related = [proposal for proposal in selected if proposal['source_url'] == url]
+                require(related and instant(source['checked_at']) == max(instant(proposal['checked_at']) for proposal in related),
+                        'stale_review_source_event')
+                require(instant(source['checked_at']) <= reviewed, 'invalid_review_clock')
+                baselines.append(_baseline_from_context(source, value['records'], value['reviewed_at']))
+            baselines.sort(key=lambda item: item['source_url'])
+            evidence = {'extraction': None, 'register': assessed['register'], 'checks': [],
+                        'baselines': baselines,
+                        'reconciliation': {'source_event_revision': value['source_event_revision'],
+                            'proposal_ids': list(value['proposal_ids']),
+                            'affected_guidance_ids': assessed['affected_guidance_ids'],
+                            'source_urls': assessed['source_urls'],
+                            'previous_guidance_hashes': {r['id']: digest(r) for r in state['records']},
+                            'next_guidance_hashes': {r['id']: digest(r) for r in value['records']}}}
         else:
             raise ReviewStoreError('invalid_review_event')
         event = {'schema_version': 1, 'kind': kind, 'previous_revision': state['revision'],
@@ -89,19 +166,24 @@ def make_event(kind: str, request: object, state: dict, saved_at: str) -> dict:
 
 
 def apply_event(state: dict, event: dict, identifier: str) -> dict:
+    records = event['request']['records'] if event['kind'] in ('observation', 'reconciliation') else state['records']
+    baselines = event['baselines'] if event['kind'] == 'reconciliation' else state['baselines']
     return {'revision': identifier, 'events': [*state['events'], event],
-            'records': event['request']['records'] if event['kind'] == 'observation' else state['records'],
-            'register': event['register']}
+            'records': records, 'register': event['register'], 'baselines': baselines}
 
 
 def safe_summary(state: dict) -> dict:
     observations = [event for event in state['events'] if event['kind'] == 'observation']
+    dispositions = [event for event in state['events'] if event['kind'] == 'disposition']
+    reconciliations = [event for event in state['events'] if event['kind'] == 'reconciliation']
     return {'revision': state['revision'], 'events': len(state['events']), 'recorded_batches': len(observations),
             'pending_proposals': len(state['register']['proposals']),
             'pending': [{'proposal_id': p['id'], 'guidance_id': p['guidance_id'],
                          'reason': p['reason'], 'checked_at': p['checked_at']}
                         for p in state['register']['proposals']],
-            'reviewer_dispositions': len(state['events']) - len(observations),
+            'reviewer_dispositions': len(dispositions), 'guidance_reconciliations': len(reconciliations),
+            'approved_context_baselines': len(state['baselines']),
             'guidance_records': len(state['records']),
             'last_recorded_at': state['events'][-1]['saved_at'] if state['events'] else None,
-            'network_performed': False, 'publication_performed': False, 'approval_performed': False}
+            'network_performed': False, 'publication_performed': False,
+            'approval_performed': bool(reconciliations)}

@@ -156,6 +156,9 @@ class EntryReviewStore:
     def disposition(self, request: object, *, expected_revision, now) -> dict:
         return self._write('disposition', request, expected_revision, now)
 
+    def reconcile(self, request: object, *, expected_revision, now) -> dict:
+        return self._write('reconciliation', request, expected_revision, now)
+
     def recover(self) -> dict:
         """Let SQLite recover a hot rollback journal. No event/approval is created."""
         try:

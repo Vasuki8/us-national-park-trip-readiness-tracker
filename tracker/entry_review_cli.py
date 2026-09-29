@@ -16,18 +16,18 @@ class _Parser(argparse.ArgumentParser):
 
 def main(argv=None) -> int:
     try:
-        parser = _Parser(description='Private offline evidence ledger; never approves or publishes.')
-        parser.add_argument('command', choices=('status','record','disposition','recover'))
+        parser = _Parser(description='Private offline evidence ledger; never publishes.')
+        parser.add_argument('command', choices=('status','record','disposition','reconcile','recover'))
         parser.add_argument('--store', required=True, type=Path)
         parser.add_argument('--input', type=Path)
         parser.add_argument('--expected-revision')
         args = parser.parse_args(argv)
         store = EntryReviewStore(args.store)
-        if args.command in ('record','disposition'):
+        if args.command in ('record','disposition','reconcile'):
             if args.input is None or args.expected_revision is None:
                 raise ReviewStoreError('missing_review_write_arguments')
             expected = None if args.expected_revision == 'empty' else args.expected_revision
-            method = store.record if args.command == 'record' else store.disposition
+            method = {'record': store.record, 'disposition': store.disposition, 'reconcile': store.reconcile}[args.command]
             result = method(read_private_json(args.input), expected_revision=expected, now=datetime.now(timezone.utc))
         else:
             if args.input is not None or args.expected_revision is not None:
