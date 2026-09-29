@@ -36,6 +36,13 @@ class CollectorTests(unittest.TestCase):
         result = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(str(start))], total=2, start=start))
         self.assertEqual(len(result['records']), 2)
         self.assertEqual(result['collection_status'], 'success')
+    def test_diagnostic_mode_exposes_only_allowlisted_validation_reason(self):
+        bad = record(parkCode='grca')
+        normal = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([bad]))
+        diagnostic = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([bad]), diagnostic=True)
+        self.assertEqual(normal['error_code'], 'response_requires_review')
+        self.assertEqual(diagnostic['error_code'], 'invalid_source_or_scope')
+
     def test_missing_or_inconsistent_pages_are_quarantined(self):
         cases = [lambda start: page([], total=2), lambda start: page([record()], total=2, start=0), lambda start: {'error': 'provider error'}, lambda start: page([record()], total='bad')]
         for fetch in cases:
