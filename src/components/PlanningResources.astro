@@ -1,0 +1,44 @@
+---
+import { PLANNING_CATEGORIES, type PlanningCategory, type PlanningResource } from '../../scripts/validate-planning-resources';
+interface Props { parkName: string; resources: PlanningResource[] }
+const { parkName, resources } = Astro.props;
+const titles: Record<PlanningCategory, string> = {
+  roads: 'Roads & vehicle access',
+  facilities: 'Visitor centers & facilities',
+  camping: 'Campgrounds & overnight stays',
+  accessibility: 'Accessibility',
+  fees: 'Fees & passes',
+  permits: 'Activity permits',
+  weather: 'Local weather',
+};
+const ordered = PLANNING_CATEGORIES.map(category => resources.find(item => item.category === category)!);
+---
+<section id="official-checks" class="planning-resources" data-planning-resources aria-labelledby="planning-title" tabindex="-1">
+  <header class="section-heading"><div><p class="eyebrow">Still on your checklist</p><h2 id="planning-title">Official planning checks</h2></div></header>
+  <p class="planning-intro">These parts of a {parkName} visit are not monitored by this tracker. Use the official pages below to check your route, arrangements and dates.</p>
+  <p class="note planning-scope">A link review identifies a relevant official page; it is not a conditions check, a permit decision, a price quote or a forecast. The dates below describe our link review, not an NPS update. Opening a link does not complete your checklist.</p>
+  <div class="planning-grid">
+    {ordered.map(resource => <article class="planning-card" data-planning-category={resource.category}>
+      <span class="tag">Official link only</span>
+      <h3>{titles[resource.category]}</h3>
+      <p class="planning-prompt">{resource.check_prompt}</p>
+      <a class="planning-link" href={resource.url}>NPS: {resource.source_title} <span aria-hidden="true">↗</span></a>
+      <p class="planning-review">Link target reviewed: <time datetime={resource.link_reviewed_at}>{resource.link_reviewed_at}</time></p>
+    </article>)}
+  </div>
+</section>
+<style>
+  .planning-resources{margin:48px 0;scroll-margin-top:24px;min-width:0;overflow-wrap:anywhere}
+  .planning-intro{font-size:.95rem;line-height:1.8;max-width:78ch;margin-bottom:18px}
+  .planning-scope{font-size:.8rem;line-height:1.8;margin-bottom:24px}
+  .planning-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+  .planning-card{min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:24px;border:1px solid var(--line);border-radius:8px;background:var(--paper,#fff)}
+  .planning-card .tag{max-width:100%;white-space:normal;font-size:.65rem}
+  .planning-card h3{font-size:1.05rem;line-height:1.5;letter-spacing:-.02em;margin:16px 0 12px}
+  .planning-prompt{font-size:.83rem;line-height:1.8;color:var(--muted);margin:0 0 20px}
+  .planning-link{font-size:.8rem;line-height:1.7;max-width:100%;margin-top:auto}
+  .planning-review{font-size:.68rem;line-height:1.7;color:var(--muted);margin:18px 0 0}
+  .planning-review time{display:block;overflow-wrap:anywhere}
+  @media(max-width:960px){.planning-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:620px){.planning-grid{grid-template-columns:minmax(0,1fr)}.planning-card{padding:20px}.planning-resources h2{font-size:1.5rem;line-height:1.35}}
+</style>

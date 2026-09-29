@@ -3,6 +3,7 @@ import parks from '../../data/parks.json';
 import rawRules from '../../data/rules.json';
 import rawNotes from '../../data/entry-notes.json';
 import rawHistory from '../../data/history.json';
+import rawPlanningResources from '../../data/planning-resources.json';
 import yose from '../../data/alerts/yose.json';
 import romo from '../../data/alerts/romo.json';
 import yell from '../../data/alerts/yell.json';
@@ -10,6 +11,7 @@ import zion from '../../data/alerts/zion.json';
 import grca from '../../data/alerts/grca.json';
 import { validateEntryNotes, type EntryNote } from '../../scripts/validate-entry-notes';
 import { validateHistory } from '../../scripts/validate-history';
+import { validatePlanningResources } from '../../scripts/validate-planning-resources';
 import type { Rule } from './readiness';
 import type { CoverageInput, ReviewCoverage } from './source-coverage';
 export { parks };
@@ -17,6 +19,9 @@ export const rules = rawRules as Rule[];
 // Validate notes at the server/build boundary; they never enter the date evaluator.
 validateEntryNotes(rawNotes, parks.map((park) => park.code));
 export const notes: EntryNote[] = rawNotes;
+// Relevant links are not operational reviews and never enter rule/feed coverage.
+export const planningResources = validatePlanningResources(rawPlanningResources, parks.map((park) => park.code));
+export const planningResourcesFor = (code: string) => planningResources.filter((resource) => resource.park_code === code);
 export interface Notice { id: string; title: string; description: string; category: string; url: string; scope_status: string }
 export interface Snapshot {
   park_code: string; collection_status: string; coverage_status: string; last_checked_at: string | null;
@@ -38,7 +43,7 @@ export const coverageInput: CoverageInput = {
   snapshots: snapshots.map(({ park_code, collection_status, coverage_status, last_successful_fetch_at }) => ({ park_code, collection_status, coverage_status, last_successful_fetch_at })),
 };
 export const buildInfo = {
-  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, snapshots, histories })).digest('hex').slice(0, 12)}`,
+  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, snapshots, histories, planningResources })).digest('hex').slice(0, 12)}`,
   built_at: new Date().toISOString(), published_at: null,
   code_commit: process.env.GITHUB_SHA || null, live_collection_enabled: false,
 };
