@@ -41,7 +41,13 @@ class CollectorTests(unittest.TestCase):
         normal = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([bad]))
         diagnostic = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([bad]), diagnostic=True)
         self.assertEqual(normal['error_code'], 'response_requires_review')
-        self.assertEqual(diagnostic['error_code'], 'invalid_source_or_scope')
+        self.assertEqual(diagnostic['error_code'], 'park_code_mismatch')
+
+    def test_diagnostic_mode_distinguishes_optional_url_and_source_path_failures(self):
+        empty_url = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='')]), diagnostic=True)
+        other_path = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://www.nps.gov/subjects/developer/index.htm')]), diagnostic=True)
+        self.assertEqual(empty_url['error_code'], 'empty_field_url')
+        self.assertEqual(other_path['error_code'], 'source_path_mismatch')
 
     def test_missing_or_inconsistent_pages_are_quarantined(self):
         cases = [lambda start: page([], total=2), lambda start: page([record()], total=2, start=0), lambda start: {'error': 'provider error'}, lambda start: page([record()], total='bad')]
