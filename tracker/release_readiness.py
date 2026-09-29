@@ -163,20 +163,23 @@ def _rights(root: Path) -> dict:
     try:
         policy = manifest['policy']
         manifest_records = manifest['records']
-        if (set(manifest) != {'schema_version','scope','reviewed_at','review_method','policy','records'}
-            or manifest['schema_version'] != 1
-            or manifest['scope'] != 'public_guidance_text_only'
-            or manifest['review_method'] != 'official_nps_policy_and_exact_page_review'
-            or not isinstance(manifest['reviewed_at'], str)
-            or not re.fullmatch(r'\\d{4}-\\d{2}-\\d{2}T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ', manifest['reviewed_at'])
-            or set(policy) != {'ownership_url','marks_url','commercial_notice','third_party_material_allowed','nps_marks_allowed','raw_private_captures_public'}
-            or policy['ownership_url'] != ownership_url
-            or policy['marks_url'] != marks_url
-            or policy['commercial_notice'] != expected_notice
-            or policy['third_party_material_allowed'] is not False
-            or policy['nps_marks_allowed'] is not False
-            or policy['raw_private_captures_public'] is not False
-            or not isinstance(manifest_records, list)):
+        valid_manifest = (
+            set(manifest) == {'schema_version','scope','reviewed_at','review_method','policy','records'}
+            and manifest['schema_version'] == 1
+            and manifest['scope'] == 'public_guidance_text_only'
+            and manifest['review_method'] == 'official_nps_policy_and_exact_page_review'
+            and isinstance(manifest['reviewed_at'], str)
+            and re.fullmatch(r"\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\dZ", manifest['reviewed_at']) is not None
+            and set(policy) == {'ownership_url','marks_url','commercial_notice','third_party_material_allowed','nps_marks_allowed','raw_private_captures_public'}
+            and policy['ownership_url'] == ownership_url
+            and policy['marks_url'] == marks_url
+            and policy['commercial_notice'] == expected_notice
+            and policy['third_party_material_allowed'] is False
+            and policy['nps_marks_allowed'] is False
+            and policy['raw_private_captures_public'] is False
+            and isinstance(manifest_records, list)
+        )
+        if not valid_manifest:
             return _gate('source_rights','blocked','source_rights_manifest_invalid', base)
 
         expected = {(row['id'], row['evidence']['url']) for row in records}
@@ -210,7 +213,48 @@ def _rights(root: Path) -> dict:
     if not base['commercial_notice_present']:
         return _gate('source_rights','blocked','commercial_government_work_notice_missing', base)
 
-    media_ext = re.compile(r'\\.(?:png|jpe?g|gif|svg|webp|avif|ico|mp4|webm|mp3|wav)
+    media_ext = re.compile(r"\.(?:png|jpe?g|gif|svg|webp|avif|ico|mp4|webm|mp3|wav)$", re.I)
+    mark_name = re.compile(r"(?:arrowhead|nps[-_ ]?(?:logo|mark)|secondary[-_ ]mark)", re.I)
+    detected = False
+    for folder in (root/'src', root/'public'):
+        if not folder.exists():
+            continue
+        for path in folder.rglob('*'):
+            if not path.is_file():
+                continue
+            if media_ext.search(path.name) or mark_name.search(str(path.relative_to(root))):
+                detected = True
+                break
+            try:
+                lower = path.read_text(encoding='utf-8', errors='ignore').lower()
+            except OSError:
+                raise ReviewStoreError('release_readiness_repository_unreadable') from None
+            for tag in ('<img', '<video', '<audio', '<source'):
+                cursor = 0
+                while True:
+                    cursor = lower.find(tag, cursor)
+                    if cursor < 0:
+                        break
+                    end_tag = lower.find('>', cursor)
+                    snippet = lower[cursor:] if end_tag < 0 else lower[cursor:end_tag + 1]
+                    if ('nps.gov' in snippet or 'arrowhead' in snippet
+                        or 'secondary-mark' in snippet or 'secondary mark' in snippet
+                        or 'nps-logo' in snippet or 'nps logo' in snippet
+                        or 'nps-mark' in snippet or 'nps mark' in snippet):
+                        detected = True
+                        break
+                    cursor = cursor + len(tag)
+                if detected:
+                    break
+            if detected:
+                break
+        if detected:
+            break
+    base['nps_marks_or_media_detected'] = detected
+    if detected:
+        return _gate('source_rights','blocked','nps_marks_or_media_detected', base)
+
+    return _gate('source_rights','pass','exact_public_nps_text_scope_rights_evidence_complete', base)
 
 def _workflow_text(root: Path) -> str:
     folder = root/'.github'/'workflows'
