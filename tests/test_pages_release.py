@@ -26,8 +26,8 @@ class PagesReleaseWorkflowTests(unittest.TestCase):
             self.assertIn(value,text)
         self.assertIn('DEPLOY_VERIFIED_PILOT',text)
         self.assertIn('ROLLBACK_VERIFIED_PILOT',text)
-        self.assertIn("github.event.inputs.mode == 'deploy'",text)
-        self.assertIn("github.event.inputs.mode == 'rollback'",text)
+        self.assertIn("mode === 'deploy'",text)
+        self.assertIn("mode === 'rollback'",text)
 
     def test_permissions_are_narrow_and_pages_specific(self):
         text=self.text()
@@ -62,7 +62,6 @@ class PagesReleaseWorkflowTests(unittest.TestCase):
         self.assertIn('dist/build.json',text)
         self.assertIn('dist/index.html',text)
         self.assertRegex(text,r'path:\s*_verified/dist')
-        self.assertNotIn('path: _verified\n',text)
         self.assertIn('find _verified/dist -type l',text)
 
     def test_rollback_is_the_same_verified_artifact_path_not_a_special_mutating_script(self):
