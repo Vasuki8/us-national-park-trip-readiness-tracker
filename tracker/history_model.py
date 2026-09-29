@@ -2,6 +2,7 @@
 from __future__ import annotations
 import copy
 import hashlib
+import ipaddress
 import json
 import posixpath
 import re
@@ -69,8 +70,14 @@ def _source(value: object, _code: str) -> None:
     try:
         url = urlsplit(value)
         host = (url.hostname or '').lower()
-        require(url.scheme == 'https' and (host == 'nps.gov' or host.endswith('.nps.gov'))
+        require(url.scheme == 'https' and host and host != 'localhost'
                 and not url.username and not url.password and url.port in (None, 443), 'invalid_source')
+        try:
+            ipaddress.ip_address(host)
+            raise HistoryError('invalid_source')
+        except ValueError:
+            pass
+        require(not ('nps.gov' in host and not (host == 'nps.gov' or host.endswith('.nps.gov'))), 'invalid_source')
         path = unquote(url.path)
         require((not path or posixpath.normpath(path) == path) and '\\' not in path, 'invalid_source')
         require(not re.search(r'api.?key|token|secret', unquote(url.query + url.fragment), re.I), 'invalid_source')
