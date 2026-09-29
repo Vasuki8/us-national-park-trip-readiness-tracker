@@ -288,6 +288,39 @@ This **passes the current public-text scope only**. It is not legal advice or bl
 
 Contract: `docs/SOURCE_RIGHTS.md`.
 
+## New: keyed NPS alert API compatibility validated
+
+The owner configured the repository Actions secret `NPS_API_KEY`, and the existing read-only preflight was rerun against live NPS alert responses.
+
+The first keyed request proved authentication was working but exposed collector assumptions that were stricter than the current provider contract. Safe diagnostic mode was added so preflight could report only allowlisted validation reasons—never provider text, credentials, or raw payloads.
+
+Live diagnostics identified:
+
+- Yosemite and Zion alert records with provider-supplied links outside the old hardcoded NPS-host/path rule; and
+- a Grand Canyon alert with no direct URL.
+
+The official NPS alert schema documents `url` as a link supplied only **if available**. The collector/history/build contracts were therefore updated so:
+
+- `parkCode` remains the authoritative park-scope field;
+- an absent alert URL is normalized to `null`, not invented;
+- safe provider-supplied external HTTPS links are retained;
+- the UI labels such links as **“More information link supplied by NPS”** rather than implying NPS ownership of the destination; and
+- credentials, secret-bearing query/fragment values, malformed/path-traversal URLs, localhost/numeric-IP targets, and NPS-lookalike hosts remain rejected.
+
+The final keyed compatibility run **36628434444**, job **109611267322**, at 2026-09-29T20:44:13–20:44:14Z returned:
+
+- Yosemite — success, 1 record;
+- Rocky Mountain — success, 0 records;
+- Yellowstone — success, 5 records;
+- Zion — success, 8 records;
+- Grand Canyon — success, 3 records.
+
+Each park required one page, every diagnostic code was null, `gate_passed:true`, and `publication_performed:false`.
+
+This proves the current keyed NPS API integration/normalization path for the five pilot parks. It does **not** mean the public site is collecting live alerts yet. The public alert snapshots and public history remain untouched/`never_checked`. The next alert milestone is durable private collection/staging and review before any public data publication.
+
+Exact safe evidence: `docs/NPS_PREFLIGHT.md`.
+
 ## TDD and self-review record
 
 The reconciliation contract was developed test-first.
@@ -304,29 +337,27 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`df908a6b4d608ef5c57ca12a2b8bc872ac039bd4`**.
+Code/test head: **`1b19234f9597ce96a818c929a22a63848a03ccdb`**.
 
-**Verify pilot #103, run `36619784653`, job `109581929909`, completed successfully.**
+**Verify pilot #124, run `36629120528`, job `109614142038`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
-| Node core/data/review/rights tests | 147 passed |
-| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup/readiness/Pages/rights tests | 320 passed |
+| Node core/data/review/rights/history tests | 148 passed |
+| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup/readiness/Pages/rights/preflight tests | 323 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **559 passed** |
+| **Total automated tests** | **563 passed** |
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
-The source-rights increment adds three Node tests and five Python tests. RED #94 (`36618285770`) confirmed the manifest, footer notice, and passing rights gate were absent. RED #97 (`36618654174`) then confirmed the build-boundary validator itself was still missing. During implementation, #100–#102 exposed two malformed Python patch remnants in `release_readiness.py`; those were traced to duplicated/truncated generated edits and removed without weakening the rights policy. #103 passed the complete implementation.
+The keyed-alert compatibility increment was driven by live read-only provider evidence plus synthetic regressions. Initial keyed runs proved authentication worked but quarantined Yosemite/Zion/Grand Canyon. Diagnostic-code tests then failed first before safe allowlisted diagnostics were added. Provider-compatible tests failed before nullable URLs, NPS subdomains, and safe provider-supplied external HTTPS links were accepted across collector, Python/TypeScript history validation, build validation, and rendering.
 
-Coverage verifies exact six-record/source pairing, official NPS policy URLs, the commercial U.S. Government-work notice, refusal of omitted/duplicated rights evidence, refusal of marks/media/third-party claims, absence of public NPS marks/media, and the source-rights readiness gate passing only for this exact text scope.
+The final current-head regression run #124 passed all 563 automated tests. Separately, keyed NPS preflight run **36628434444** passed all five parks with `gate_passed:true`; it used the same current collector semantics and performed no public writes.
 
-Implementation verification artifact `pilot-verification`, ID **11056593722**, had CI-reported ZIP SHA-256 `f7b4fadbe2dc207049a37dc19a8080d3bfb6c36468d9ec0f18dd4cbf5cc9d12d`.
+Verification artifact `pilot-verification`, ID **11061476620**, contains the production site build, screenshots and lockfile—not API credentials, live raw payloads, private archives, or published alert data. CI-reported ZIP SHA-256: `14e9a1592ad8bb8ac9fab3aff7120685cf92728f7062d446f39549ebba5459cc`.
 
-The documentation head **`a0ebdc23a6b66391fcfea4b92cd04c714774b92e`** then passed **Verify pilot #105**, run `36620211515`, job `109583902805`, with the same 559-test suite/build. Its artifact ID was **11056884522**, ZIP SHA-256 `44217eeb7fb194eca35814ba951aa444366433db8787b78f4e836c870522c090`.
-
-Review was author self-review because no independent reviewer/subagent tool is available. No deployment, indexing, advertising, or live-data state changed. This final status-only handoff edit receives its own CI run.
+Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising/public-alert publication occurred. This final status/docs handoff receives its own CI run.
 
 ## Previously verified real-page compatibility
 
@@ -344,7 +375,7 @@ The private ledger remains owner-only local POSIX storage, not hosted durable st
 
 The exact six-record public NPS **text-only** rights scope now has explicit evidence and passes its release-readiness gate. This does not clear private raw captures, NPS marks/media, third-party material, or future source uses. Hashes prove internal consistency, not factual truth or source authenticity.
 
-The keyed NPS alerts preflight was rechecked on the current branch and is still blocked because the runner received no usable `NPS_API_KEY`. No provider request was made. See run 36607959537; do not treat its red conclusion as a product-test regression.
+The keyed NPS alerts integration is now **validated**. Read-only run **36628434444**, job **109611267322**, completed with `status: verified` and `gate_passed:true` for all five pilot parks: Yosemite 1 record, Rocky Mountain 0, Yellowstone 5, Zion 8, and Grand Canyon 3. The run wrote no public snapshots or history, so public `data/alerts/*.json` remain `never_checked`. Provider compatibility and public collection/publication remain separate gates.
 
 No scheduler, real deployment, indexing, advertising, tracking, account system, spending or provider agreement was activated. A manual Pages deployment/rollback workflow now exists but was not dispatched. Neither pilot release milestone is declared complete.
 
@@ -356,8 +387,8 @@ Before reviewing or reconciling real guidance, create a content-addressed ledger
 
 That real session cannot be performed in this development environment because the current tools do not provide the user's durable private POSIX/WSL filesystem or backup destination. Do not substitute GitHub Actions artifacts, repository files or public hosted storage for the editorial ledger/backup.
 
-The keyed NPS alert API remains a separate gate and should use the existing preflight/staging/preview path once an owner-controlled `NPS_API_KEY` is configured.
+The keyed NPS alert API compatibility gate is now validated. The next alert step is durable private staging/archive collection and review before public snapshot/history publication.
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **559 tests** at `df908a6`, run #103. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **563 tests** at `1b19234`, run #124. PR #1 remains draft and unmerged.
