@@ -159,6 +159,39 @@ V2 reflects the explicit review flow: a source context is captured first, a revi
 
 When reconciling only one source for the first time, already-validated legacy baselines from the latest observation for unaffected sources are preserved. Subsequent reconciliations replace only affected source baselines.
 
+## Private backup and restore
+
+Use the separate backup utility for the complete private ledger:
+
+```sh
+uv run --frozen python -m tracker.entry_review_backup backup \
+  --store /absolute/private/entry-review \
+  --backup-root /absolute/private/entry-review-backups
+```
+
+The source ledger is replay-verified first. SQLite then creates a consistent snapshot, and that copied database is replayed again before a content-addressed bundle is installed. The source ledger is not modified.
+
+Verify a completed bundle independently:
+
+```sh
+uv run --frozen python -m tracker.entry_review_backup verify \
+  --backup /absolute/private/entry-review-backups/BACKUP_ID
+```
+
+Restore only into a path that does not already exist:
+
+```sh
+uv run --frozen python -m tracker.entry_review_backup restore \
+  --backup /absolute/private/entry-review-backups/BACKUP_ID \
+  --destination /absolute/private/restored-entry-review
+```
+
+Restore validates the bundle first, copies into a temporary private directory, replays the copied ledger, and only then atomically installs the fresh destination. Existing ledger directories are never replaced.
+
+Backup bundles contain the SQLite ledger plus a metadata-only manifest. Reviewer packets are not included; they are derived artifacts that can be regenerated from retained ledger evidence when applicable.
+
+Full contract: `docs/ENTRY_REVIEW_BACKUP.md`.
+
 ## Transactions and recovery
 
 Every write is one hash-linked event plus head update inside SQLite `BEGIN IMMEDIATE`, DELETE journal mode and `synchronous=EXTRA`. The expected head is checked again inside the transaction.

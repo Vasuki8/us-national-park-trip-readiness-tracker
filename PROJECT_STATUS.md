@@ -2,7 +2,7 @@
 
 Updated: **September 29, 2026 (America/Toronto)**.
 
-**The explicit persistent live entry capture → private ledger → reviewer packet operator path is now implemented and CI-verified. Actual NPS entry-page compatibility remains verified for all five pilot parks, but this milestone did not run a real durable capture session or approve any real context baseline. Public guidance and alert data remain unchanged.**
+**Private content-addressed backup/verify/restore is now implemented and CI-verified for the entry-review ledger, in addition to the persistent live capture → ledger → reviewer-packet path. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Branch: `feat/pilot-foundation`. Draft PR #1 remains unmerged.  
@@ -118,6 +118,35 @@ This command never calls `reconcile`, never updates public `data/`, never deploy
 
 Contract: `docs/PERSISTENT_ENTRY_CAPTURE.md`.
 
+## New: private ledger backup, verification and restore
+
+`tracker.entry_review_backup` provides an owner-only backup/restore mechanism for the private editorial SQLite ledger. It does not back up public site data and performs no network request, source capture, review decision, reconciliation or publication.
+
+Backup first performs a full ledger replay. It then uses SQLite's backup API to create a transactionally consistent database snapshot in a temporary owner-only directory. The copied database is replayed again and must equal the previously verified logical ledger state before it can be accepted.
+
+A content-addressed manifest binds:
+
+- ledger revision;
+- event, guidance-record and pending-proposal counts;
+- exact database byte length;
+- SHA-256 of the backed-up SQLite database; and
+- explicit `network_performed:false`, `approval_performed:false`, and `publication_performed:false`.
+
+The backup ID is SHA-256 over that manifest core. A completed bundle is:
+
+`BACKUP_ROOT/BACKUP_ID/review.sqlite3`  
+`BACKUP_ROOT/BACKUP_ID/manifest.json`
+
+Backup roots and files are owner-only and must be outside the repository under an owner-only parent. Exact retries reuse an identical verified bundle. Corrupt/mismatched bundles or unexpected files are refused rather than overwritten.
+
+`verify` checks private permissions, exact bundle contents, manifest identity, database size/SHA-256 and full semantic ledger replay without modifying the backup.
+
+`restore` accepts only a fully verified bundle and only a brand-new destination. It copies into a temporary owner-only ledger directory, replays the restored database, and atomically renames it into place only after the restored head/counts match the backup manifest. Existing destinations are never overwritten. Interrupted backup/restore tests confirm no completed destination is exposed.
+
+Commands and limitations: `docs/ENTRY_REVIEW_BACKUP.md`.
+
+This mechanism makes local backup/restore testable, but it does **not** create an off-host backup service, choose backup media, encrypt the database, authenticate reviewers, certify native Windows/network filesystems, or prove hardware power-loss durability. Those remain operator/storage decisions.
+
 ## TDD and self-review record
 
 The reconciliation contract was developed test-first.
@@ -134,29 +163,27 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`1da6dffb4677412517ad4db0038574ddbe618b15`**.
+Code/test head: **`a8538cb5656bcaf60b174fc167229ec60a5b7bcf`**.
 
-**Verify pilot #74, run `36600851931`, job `109517542233`, completed successfully.**
+**Verify pilot #77, run `36603370528`, job `109526089733`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
 | Node core/data/review tests | 144 passed |
-| Python collector/archive/extraction/ledger/reconciliation/packet/live-operator tests | 286 passed |
+| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup tests | 296 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **522 passed** |
+| **Total automated tests** | **532 passed** |
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
-The live-operator increment originally added eight Python methods. RED #66 (`36595233082`) failed because `tracker.entry_review_live` did not exist. The first implementation runs then exposed two test-harness errors rather than product failures: a helper named `run` overrode `unittest.TestCase.run`, and a second synthetic batch reused the first event's write clock. Both harness issues were corrected without changing product semantics. Full #70 passed; #71 reverified the direct-digest refactor.
+The backup increment adds ten Python methods. RED #76 (`36603036692`) failed because `tracker.entry_review_backup` did not exist. #77 passed after the minimal implementation.
 
-A later author review added one compatibility regression: an existing ledger containing a validated legacy schema-v1 context baseline must preserve that baseline on a live append. RED #73 (`36600646532`) reproduced the bug: Yellowstone changed from `matching_reviewed_context` to `context_not_reviewed` because the live operator always supplied an empty baseline list. The fix carries forward the latest validated legacy baseline input only while no explicit ledger-held reconciliation baselines exist. #74 passed the complete suite.
+Coverage includes content-addressed/private backup creation, source-ledger byte preservation, complete replay verification, deterministic retry, database/manifest/unexpected-file corruption refusal, fresh-destination restore, protected/symlink/insecure path rejection, interrupted backup/restore cleanup, empty-ledger refusal, and sanitized backup/verify/restore CLI output.
 
-Coverage includes deliberate live opt-in, pre-network expected-revision/path checks, complete five-source persistence, current-head append behavior, legacy-baseline preservation, failed-source retention without fake packets, post-commit packet failure without rollback, safe CLI output and exit-1 partial-completion semantics.
+Verification artifact `pilot-verification`, ID **11049274101**, contains the production site build, existing screenshots and lockfile—not editorial databases, backups, captures or reviewer packets. CI-reported ZIP SHA-256: `df99b0796e1b56ec1fcbde8bf33fd7a1b6ba5691fda130788d2969cdc455f725`.
 
-Verification artifact `pilot-verification`, ID **11049198460**, contains the production build, existing screenshots and lockfile—not live editorial ledgers, source captures or reviewer packets. CI-reported ZIP SHA-256: `1c0ba13ac55e14127d16ab396aa00b94d25bdc72822b522ebc28569b64273af5`.
-
-Review was author self-review, not independent approval. This documentation-only handoff receives a separate CI run; do not infer it from #71.
+Review was author self-review because no independent reviewer/subagent tool is available. No Critical/Important issue remained after review. This documentation-only handoff receives a separate CI run; do not infer it from #77.
 
 ## Previously verified real-page compatibility
 
@@ -170,7 +197,7 @@ Exact safe retrieval metadata and hashes remain in `docs/LIVE_ENTRY_COMPATIBILIT
 
 No real reviewer has used the new reconciliation command on a durable NPS capture. Therefore there are still **zero durable real approved context baselines** created by this workflow.
 
-The private ledger is owner-only local POSIX storage, not hosted durable storage, encryption, authenticated reviewer identity, multi-host storage or off-host backup. Hardware power-loss, Windows/network filesystems and hostile same-user mutation remain outside verified guarantees.
+The private ledger remains owner-only local POSIX storage, not hosted durable storage, encryption, authenticated reviewer identity or multi-host storage. Backup/verify/restore mechanics are now tested, but no off-host target, retention schedule, removable-media policy or cloud backup has been configured. Hardware power-loss, native Windows/network filesystems and hostile same-user mutation remain outside verified guarantees.
 
 Source-content redistribution/rights review remains separate from guidance review. Hashes prove internal consistency, not factual truth, source authenticity or permission to republish.
 
@@ -180,14 +207,14 @@ No scheduler, deployment, indexing, advertising, tracking, account system, spend
 
 ## Next coherent task
 
-The persistent operator path now exists. The next source-review milestone is an **owner-controlled real five-source capture and human review session** using this command, followed by explicit `reconcile` actions only for guidance actually approved against those retained contexts.
+The code-side private storage gates now include capture, ledger replay, reviewer packets, reconciliation, and backup/restore. The next source-review milestone is therefore an **owner-controlled real five-source capture and human review session** on durable private POSIX/WSL storage.
 
-That real session was **not** performed in this development environment because the current tools do not provide the user's durable private POSIX/WSL filesystem. Do not substitute public GitHub Actions artifacts or repository files for the private editorial ledger.
+Before reviewing or reconciling real guidance, create a content-addressed ledger backup with `entry_review_backup backup`, run `verify`, and keep a second verified copy on owner-controlled storage separate from the working ledger. Then inspect the generated packets and use `reconcile` only for guidance a human actually approves.
 
-If a suitable owner-controlled POSIX/WSL storage location is not available yet, prioritize the remaining durable-storage/backup decision instead of inventing a temporary hosted source archive.
+That real session cannot be performed in this development environment because the current tools do not provide the user's durable private POSIX/WSL filesystem or backup destination. Do not substitute GitHub Actions artifacts, repository files or public hosted storage for the editorial ledger/backup.
 
 The keyed NPS alert API remains a separate gate and should use the existing preflight/staging/preview path once an owner-controlled `NPS_API_KEY` is configured.
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **522 tests** at `1da6dff`, run #74. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **532 tests** at `a8538cb`, run #77. PR #1 remains draft and unmerged.
