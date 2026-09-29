@@ -60,9 +60,19 @@ class PreflightTests(unittest.TestCase):
         self.assertFalse(report['gate_passed']); self.assertEqual(report['status'], 'needs_review')
         self.assertNotIn(KEY, json.dumps(report)); self.assertEqual(report['checks'][0]['collection_status'], 'failed')
 
+    def test_preflight_reports_safe_validation_reason_without_provider_text(self):
+        report = self.run_check(transport=lambda code, start, key: {
+            'total':'1','start':str(start),'data':[record(code, parkCode='other')]
+        })
+        self.assertFalse(report['gate_passed'])
+        self.assertEqual(report['checks'][0]['collection_status'], 'quarantined')
+        self.assertEqual(report['checks'][0]['diagnostic_code'], 'invalid_source_or_scope')
+        self.assertNotIn(KEY, json.dumps(report))
+
     def test_malformed_response_remains_quarantined(self):
         report = self.run_check(transport=lambda *args: {'message': KEY})
         self.assertFalse(report['gate_passed']); self.assertEqual(report['checks'][0]['collection_status'], 'quarantined')
+        self.assertEqual(report['checks'][0]['diagnostic_code'], 'invalid_response')
         self.assertNotIn(KEY, json.dumps(report))
 
     def test_unexpected_exception_stays_sanitized(self):
