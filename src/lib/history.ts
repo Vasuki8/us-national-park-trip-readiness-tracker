@@ -1,7 +1,7 @@
 /** Public observation history types and browser-safe copy. No archive I/O here. */
 import { freshness } from './readiness.ts';
 export interface HistoryEvidence {
-  id: string; title: string; description: string; category: string; url: string; content_hash: string;
+  id: string; title: string; description: string; category: string; url: string | null; content_hash: string;
 }
 export interface HistoryChange {
   kind: 'added' | 'edited' | 'removed'; record_id: string;
