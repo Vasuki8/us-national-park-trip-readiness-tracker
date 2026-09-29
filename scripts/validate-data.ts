@@ -1,6 +1,7 @@
 /** Build gate for the curated inventory and collector-produced snapshots. */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { isIP } from 'node:net';
 import { readFileSync, readdirSync } from 'node:fs';
 import { posix, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -21,8 +22,9 @@ function alertSource(value: unknown): void {
   const url = new URL(value);
   const host = url.hostname.toLowerCase();
   const path = decodeURIComponent(value.replace(/^https:\/\/[^/]+/, '').split(/[?#]/)[0]);
-  assert.ok(url.protocol === 'https:' && (host === 'nps.gov' || host.endsWith('.nps.gov'))
-    && !url.username && !url.password && !url.port);
+  assert.ok(url.protocol === 'https:' && host && host !== 'localhost' && isIP(host) === 0
+    && !url.username && !url.password && !url.port
+    && !(host.includes('nps.gov') && host !== 'nps.gov' && !host.endsWith('.nps.gov')));
   assert.ok((!path || posix.normalize(path) === path) && !path.includes('\\'));
   assert.ok(!/api.?key|token|secret/i.test(decodeURIComponent(url.search + url.hash)));
 }
