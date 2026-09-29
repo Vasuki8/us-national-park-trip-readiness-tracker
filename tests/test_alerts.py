@@ -88,10 +88,14 @@ class CollectorTests(unittest.TestCase):
             with self.subTest(now=now):
                 with self.assertRaises(ValueError):
                     collect('yose', self.previous(), now, lambda start: page([]))
-    def test_source_link_must_stay_on_an_official_nps_host(self):
-        result = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://example.com/yose/conditions.htm')]), diagnostic=True)
-        self.assertEqual(result['collection_status'], 'quarantined')
-        self.assertEqual(result['error_code'], 'source_host_invalid')
+    def test_provider_supplied_external_https_links_are_allowed_but_unsafe_hosts_are_rejected(self):
+        external = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://inciweb.wildfire.gov/incident/example')]), diagnostic=True)
+        self.assertEqual(external['collection_status'], 'success')
+        self.assertEqual(external['records'][0]['url'], 'https://inciweb.wildfire.gov/incident/example')
+        for url in ['https://www.nps.gov.evil.test/yose/test', 'https://localhost/yose/test', 'https://127.0.0.1/yose/test']:
+            with self.subTest(url=url):
+                result = collect('yose', initial_snapshot('yose'), NOW, lambda start, url=url: page([record(url=url)]), diagnostic=True)
+                self.assertEqual(result['collection_status'], 'quarantined')
     def test_previous_success_cannot_be_later_than_previous_attempt(self):
         previous = self.previous()
         previous['last_checked_at'] = '2026-09-28T17:00:00Z'
