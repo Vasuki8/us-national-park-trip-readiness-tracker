@@ -158,6 +158,7 @@ def _render_packet(state: dict, park_code: str, source_event_revision: str) -> d
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; style-src &#x27;unsafe-inline&#x27;; img-src &#x27;none&#x27;; connect-src &#x27;none&#x27;; font-src &#x27;none&#x27;; media-src &#x27;none&#x27;; object-src &#x27;none&#x27;; frame-src &#x27;none&#x27;; form-action &#x27;none&#x27;; base-uri &#x27;none&#x27;">
 <title>Private entry review packet · {_text(park_code)}</title>
 <style>
 :root{{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#18231b;background:#f6f7f3;line-height:1.55}}
