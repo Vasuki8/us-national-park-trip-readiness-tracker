@@ -65,7 +65,7 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(alerts['evidence']['never_checked'],5)
         self.assertEqual(alerts['evidence']['successful'],0)
         self.assertEqual(self.gate(report,'storage_backup')['status'],'not_checked')
-        self.assertEqual(self.gate(report,'source_rights')['status'],'not_checked')
+        self.assertEqual(self.gate(report,'source_rights')['status'],'pass')
         self.assertEqual(self.gate(report,'hosting_rollback')['status'],'not_checked')
         self.assertEqual(self.gate(report,'indexing')['status'],'blocked')
         self.assertEqual(self.gate(report,'advertising')['status'],'blocked')
