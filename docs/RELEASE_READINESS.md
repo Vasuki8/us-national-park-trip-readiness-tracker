@@ -90,9 +90,11 @@ Complete guidance metadata still yields `not_checked`, because those record-leve
 
 ### Hosting and rollback
 
-No recognized production deployment path in repository workflows: `blocked`.
+A manual GitHub Pages deployment/rollback workflow is now present, so this gate is `not_checked` rather than `blocked`.
 
-If deployment configuration is later present, the gate becomes `not_checked`, not pass, until actual production URL and rollback behavior have been verified separately.
+The workflow can only reuse a successful default-branch `Verify pilot` artifact whose run ID and exact commit SHA are explicitly supplied. It has not been dispatched, so no live production URL or rollback behavior has been verified.
+
+The current build uses root-absolute URLs. The release workflow refuses a nonempty GitHub Pages `base_path`, preventing deployment to the default project-page subpath where those URLs would break. Root-hosting/custom-domain configuration or a future base-path-aware build is still required before a real deployment can succeed.
 
 The evaluator never deploys.
 
@@ -121,22 +123,22 @@ The evaluator never enables ads or analytics.
 As of the verified implementation head on September 29, 2026:
 
 - **0 pass**
-- **4 blocked**
-- **3 not checked**
+- **3 blocked**
+- **4 not checked**
 - **release_ready: false**
 
-The four explicit blockers are:
+The three explicit blockers are:
 
 1. all five alert snapshots are `never_checked`;
-2. no production deployment path is configured;
-3. indexing is still disabled; and
-4. advertising is not enabled.
+2. indexing is still disabled; and
+3. advertising is not enabled.
 
-The three not-checked gates are:
+The four not-checked gates are:
 
 1. durable source review, because no owner private ledger was supplied here;
-2. storage backup, for the same reason; and
-3. broader source-rights review.
+2. storage backup, for the same reason;
+3. broader source-rights review; and
+4. hosting/rollback, because the manual verified-artifact workflow exists but no real deployment or rollback has been exercised.
 
 ## Safety properties
 
