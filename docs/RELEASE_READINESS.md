@@ -66,11 +66,13 @@ Legacy schema-v1 baselines do not satisfy this release gate.
 
 ### NPS alert API
 
-The report reads the five public alert snapshots in `data/alerts/`.
+The read-only keyed provider integration has now been validated for all five pilot parks. Run **36628434444** returned `gate_passed:true` with successful normalization for Yosemite, Rocky Mountain, Yellowstone, Zion and Grand Canyon.
 
-Any `never_checked` snapshot blocks the gate. An empty record list is never interpreted as “no alerts.”
+That diagnostic deliberately performs no public writes. The release-readiness report therefore still reads the five public alert snapshots in `data/alerts/`, which remain `never_checked`.
 
-Even if all five snapshots later show successful collection, the static report remains `not_checked` until release-time freshness/provider compatibility is separately established. Collection success alone is intentionally not a self-certifying launch signal.
+Any `never_checked` snapshot blocks the public alert-data gate. An empty record list is never interpreted as “no alerts.”
+
+Provider compatibility is now established, but the gate remains blocked until alert observations are durably collected/reviewed and intentionally published through the existing staging/history path. A successful preflight alone cannot self-promote unpublished data into a release pass.
 
 ### Private storage backup
 
