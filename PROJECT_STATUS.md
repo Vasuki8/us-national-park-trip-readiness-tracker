@@ -90,7 +90,7 @@ A stale expected revision or unsafe packet destination refuses **before network*
 
 The command then makes one credential-free HTTPS GET to each of the five fixed NPS entry sources using the already-tested transport: no API key, cookies, redirects, retries or arbitrary URL input. Each response remains bounded to 1 MiB and is validated for status, content type/encoding, length and UTF-8 before it can become a successful capture.
 
-All five capture attempts form one complete ledger observation event. Successful raw HTML is retained inside the owner-only SQLite event; failed captures are retained as failed observations rather than discarded or converted into empty success. Existing reconciled baselines are reused automatically. An existing ledger keeps its own current private guidance inventory rather than silently adopting changed repository guidance.
+All five capture attempts form one complete ledger observation event. Successful raw HTML is retained inside the owner-only SQLite event; failed captures are retained as failed observations rather than discarded or converted into empty success. Existing reconciled baselines are reused automatically. The live append also preserves the latest validated legacy schema-v1 baseline input until explicit reconciliation creates ledger-held baselines, so a later capture cannot manufacture a fresh `context_not_reviewed` hold merely by dropping prior reviewed context. An existing ledger keeps its own current private guidance inventory rather than silently adopting changed repository guidance.
 
 After the ledger commit, the command prepares reviewer packets for every source that has active holds and retained comparison context. A failed source receives no fabricated packet. Packet-generation failures do **not** roll the already committed live evidence back.
 
@@ -134,25 +134,27 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`60ed64031272a428010cc493f4a4d946699b5554`**.
+Code/test head: **`1da6dffb4677412517ad4db0038574ddbe618b15`**.
 
-**Verify pilot #71, run `36596713485`, job `109503397710`, completed successfully.**
+**Verify pilot #74, run `36600851931`, job `109517542233`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
 | Node core/data/review tests | 144 passed |
-| Python collector/archive/extraction/ledger/reconciliation/packet/live-operator tests | 285 passed |
+| Python collector/archive/extraction/ledger/reconciliation/packet/live-operator tests | 286 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **521 passed** |
+| **Total automated tests** | **522 passed** |
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
-The live-operator increment adds eight Python methods. RED #66 (`36595233082`) failed because `tracker.entry_review_live` did not exist. The first implementation runs then exposed two test-harness errors rather than product failures: a helper named `run` overrode `unittest.TestCase.run`, and a second synthetic batch reused the first event's write clock. Both harness issues were corrected without changing product semantics. Full #70 passed; #71 reverified the final direct-digest refactor.
+The live-operator increment originally added eight Python methods. RED #66 (`36595233082`) failed because `tracker.entry_review_live` did not exist. The first implementation runs then exposed two test-harness errors rather than product failures: a helper named `run` overrode `unittest.TestCase.run`, and a second synthetic batch reused the first event's write clock. Both harness issues were corrected without changing product semantics. Full #70 passed; #71 reverified the direct-digest refactor.
 
-Coverage includes deliberate live opt-in, pre-network expected-revision/path checks, complete five-source persistence, current-head append behavior, failed-source retention without fake packets, post-commit packet failure without rollback, safe CLI output and exit-1 partial-completion semantics.
+A later author review added one compatibility regression: an existing ledger containing a validated legacy schema-v1 context baseline must preserve that baseline on a live append. RED #73 (`36600646532`) reproduced the bug: Yellowstone changed from `matching_reviewed_context` to `context_not_reviewed` because the live operator always supplied an empty baseline list. The fix carries forward the latest validated legacy baseline input only while no explicit ledger-held reconciliation baselines exist. #74 passed the complete suite.
 
-Verification artifact `pilot-verification`, ID **11045953817**, contains the production build, existing screenshots and lockfile—not live editorial ledgers, source captures or reviewer packets. CI-reported ZIP SHA-256: `713fa9eb758a75d0dc8e12e838e904cd241a4ba59dd6385770d005aeb9f67956`.
+Coverage includes deliberate live opt-in, pre-network expected-revision/path checks, complete five-source persistence, current-head append behavior, legacy-baseline preservation, failed-source retention without fake packets, post-commit packet failure without rollback, safe CLI output and exit-1 partial-completion semantics.
+
+Verification artifact `pilot-verification`, ID **11049198460**, contains the production build, existing screenshots and lockfile—not live editorial ledgers, source captures or reviewer packets. CI-reported ZIP SHA-256: `1c0ba13ac55e14127d16ab396aa00b94d25bdc72822b522ebc28569b64273af5`.
 
 Review was author self-review, not independent approval. This documentation-only handoff receives a separate CI run; do not infer it from #71.
 
@@ -188,4 +190,4 @@ The keyed NPS alert API remains a separate gate and should use the existing pref
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **521 tests** at `60ed640`, run #71. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **522 tests** at `1da6dff`, run #74. PR #1 remains draft and unmerged.
