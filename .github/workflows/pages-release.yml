@@ -1,0 +1,126 @@
+name: Release verified pilot to GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Deploy the verified main artifact or roll back to an older verified main artifact
+        required: true
+        type: choice
+        options:
+          - deploy
+          - rollback
+      target_sha:
+        description: Exact 40-character commit SHA produced by the Verify pilot run
+        required: true
+        type: string
+      verify_run_id:
+        description: Successful Verify pilot workflow run ID for target_sha
+        required: true
+        type: string
+      confirmation:
+        description: Type DEPLOY_VERIFIED_PILOT or ROLLBACK_VERIFIED_PILOT to continue
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'Vasuki8/us-national-park-trip-readiness-tracker'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Validate explicit release request and verified run
+        uses: actions/github-script@v7
+        env:
+          MODE: ${{ github.event.inputs.mode }}
+          TARGET_SHA: ${{ github.event.inputs.target_sha }}
+          VERIFY_RUN_ID: ${{ github.event.inputs.verify_run_id }}
+          CONFIRMATION: ${{ github.event.inputs.confirmation }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const mode = process.env.MODE;
+            const target_sha = process.env.TARGET_SHA;
+            const verify_run_id = process.env.VERIFY_RUN_ID;
+            const confirmation = process.env.CONFIRMATION;
+            const expected = mode === 'deploy'
+              ? 'DEPLOY_VERIFIED_PILOT'
+              : mode === 'rollback'
+                ? 'ROLLBACK_VERIFIED_PILOT'
+                : null;
+            if (!expected || confirmation !== expected) {
+              core.setFailed('Explicit release confirmation does not match mode.');
+              return;
+            }
+            if (!/^[0-9a-f]{40}$/.test(target_sha || '')) {
+              core.setFailed('target_sha must be an exact lowercase 40-character commit SHA.');
+              return;
+            }
+            if (!/^[1-9][0-9]*$/.test(verify_run_id || '')) {
+              core.setFailed('verify_run_id must be a positive workflow run ID.');
+              return;
+            }
+            const run_id = Number(verify_run_id);
+            const { owner, repo } = context.repo;
+            const { data: run } = await github.rest.actions.getWorkflowRun({ owner, repo, run_id });
+            if (run.name !== 'Verify pilot') {
+              core.setFailed('Selected workflow run is not Verify pilot.');
+              return;
+            }
+            if (run.conclusion !== 'success') {
+              core.setFailed('Selected Verify pilot run did not succeed.');
+              return;
+            }
+            if (run.head_sha !== target_sha) {
+              core.setFailed('Selected Verify pilot run does not match target_sha.');
+              return;
+            }
+            if (run.event !== 'push' || run.head_branch !== context.payload.repository.default_branch) {
+              core.setFailed('Only a successful Verify pilot push run from the default branch may be released.');
+              return;
+            }
+            core.info(`Validated ${mode} request for verified commit ${target_sha} using run ${run_id}.`);
+
+      - name: Download the exact verified build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pilot-verification
+          path: _verified
+          run-id: ${{ github.event.inputs.verify_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate artifact layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f _verified/dist/index.html
+          test -f _verified/dist/build.json
+          if find _verified/dist -type l -print -quit | grep -q .; then
+            echo "Refusing a Pages artifact containing symlinks." >&2
+            exit 1
+          fi
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Package only the verified static site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _verified/dist
+
+      - name: Deploy verified artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
