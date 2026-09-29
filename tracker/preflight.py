@@ -50,8 +50,11 @@ def run_preflight(key: str, *, transport: Callable[[str, int, str], dict] = requ
 def main() -> int:
     report = run_preflight(os.environ.get('NPS_API_KEY', ''))
     print(json.dumps(report, indent=2))
-    # Zero means the diagnostic completed. Only gate_passed=true verifies integration.
-    return 1 if report['status'] in ('needs_review', 'invalid_configuration') else 0
+    # Only a verified integration returns zero. Configuration and provider
+    # failures must make the workflow visibly fail rather than look green.
+    if report['gate_passed']:
+        return 0
+    return 2 if report['status'] in ('not_configured', 'invalid_configuration') else 1
 
 if __name__ == '__main__':
     raise SystemExit(main())
