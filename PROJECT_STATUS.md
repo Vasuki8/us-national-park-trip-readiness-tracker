@@ -226,6 +226,33 @@ The public alert snapshots are untouched and remain `never_checked`; this diagno
 
 Contract and exact run evidence: `docs/NPS_PREFLIGHT.md`.
 
+## New: gated GitHub Pages deployment and rollback path
+
+`.github/workflows/pages-release.yml` adds a production-hosting path without making the site live. The workflow is **manual-only** (`workflow_dispatch`); it has no push, pull-request, or schedule trigger.
+
+Every deployment or rollback requires all four explicit inputs:
+
+- `mode`: `deploy` or `rollback`;
+- `target_sha`: an exact lowercase 40-character commit SHA;
+- `verify_run_id`: the GitHub Actions run ID containing the verified build artifact; and
+- `confirmation`: exactly `DEPLOY_VERIFIED_PILOT` or `ROLLBACK_VERIFIED_PILOT` for the selected mode.
+
+The workflow queries GitHub for that run and refuses unless it is a **successful `Verify pilot` push run on the repository default branch** and its `head_sha` exactly matches `target_sha`. It then downloads that run's existing `pilot-verification` artifact. It does not check out source or run a fresh build during release, so deployment and rollback use the exact static output that already passed verification.
+
+Only `_verified/dist` is repackaged as the Pages artifact. The workflow requires `dist/index.html` and `dist/build.json` and refuses symlinks.
+
+The current verified frontend uses root-absolute links and Astro asset URLs. Default GitHub **project Pages** would serve under `/us-national-park-trip-readiness-tracker/` and would therefore break those URLs. The workflow reads the official `actions/configure-pages@v5` `base_path` output and refuses any nonempty Pages base path **before** artifact upload/deployment. The current build therefore requires root hosting, such as an appropriately configured custom domain, unless the application is later made base-path aware.
+
+The workflow grants only `contents: read`, `actions: read`, `pages: write`, and `id-token: write`. Deployment uses the standard `github-pages` environment and `actions/deploy-pages@v4`.
+
+Rollback is the same artifact path with `mode: rollback` and an older successful default-branch Verify run. It never runs `git revert`, `git reset`, or pushes source changes. The current `pilot-verification` artifact retention is seven days, so this rollback mechanism only covers verified runs whose artifacts have not expired.
+
+No release workflow was dispatched during this milestone. The website remains unpublished, PR #1 remains draft/unmerged, and all existing `noindex` controls remain unchanged. `public/_headers` is retained in the build, but GitHub Pages does not by itself establish that those custom response headers are effective; real hosting/header behavior remains part of the post-deployment verification gate.
+
+The release-readiness `hosting_rollback` gate now moves from `blocked` to **`not_checked`**: a deployment/rollback mechanism exists, but no real production URL or rollback has been exercised.
+
+Contract: `docs/PAGES_RELEASE.md`.
+
 ## TDD and self-review record
 
 The reconciliation contract was developed test-first.
@@ -242,17 +269,17 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`16dda2f20c504ada6d9740c1de38f458e47cb7f9`**.
+Code/test head: **`726e73ddb498be1f44cf6f02fd141e0b99fa0314`**.
 
-**Verify pilot #84, run `36607969239`, job `109541772212`, completed successfully.**
+**Verify pilot #91, run `36611072254`, job `109552320513`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
 | Node core/data/review tests | 144 passed |
-| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup/readiness tests | 305 passed |
+| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup/readiness/Pages tests | 315 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **541 passed** |
+| **Total automated tests** | **551 passed** |
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
@@ -260,7 +287,7 @@ The release-readiness increment adds nine Python methods. RED #79 (`36605123475`
 
 Coverage proves the current repository cannot report release-ready, `never_checked` alerts cannot be described as an all-clear, all five schema-v2 source baselines plus zero holds are required for the private source-review gate, a verified backup must match the exact current ledger head, public guidance rights metadata does not self-certify broader source rights, all three indexing controls are detected, no network/filesystem write occurs during evaluation, and CLI text/JSON/error output remains path-safe.
 
-Verification artifact `pilot-verification`, ID **11051738824**, contains the production site build, existing screenshots and lockfile—not private ledgers, backups, captures, packets, or NPS credentials. CI-reported ZIP SHA-256: `011ea061ac8b935588957be1141dbedf118d6de8f27a5be68d1ed79912c60cba`.
+Verification artifact `pilot-verification`, ID **11053432427**, contains the production site build, existing screenshots and lockfile—not private ledgers, backups, captures, packets, credentials, or deployed Pages state. CI-reported ZIP SHA-256: `873a9862211e71560b0a3474363381ad8093037bf4a3417d9c6dfa058724cc97`.
 
 Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising state changed. This documentation-only handoff receives a separate CI run; do not infer it from #80.
 
@@ -282,11 +309,11 @@ Source-content redistribution/rights review remains separate from guidance revie
 
 The keyed NPS alerts preflight was rechecked on the current branch and is still blocked because the runner received no usable `NPS_API_KEY`. No provider request was made. See run 36607959537; do not treat its red conclusion as a product-test regression.
 
-No scheduler, deployment, indexing, advertising, tracking, account system, spending or provider agreement was activated. Neither pilot release milestone is declared complete.
+No scheduler, real deployment, indexing, advertising, tracking, account system, spending or provider agreement was activated. A manual Pages deployment/rollback workflow now exists but was not dispatched. Neither pilot release milestone is declared complete.
 
 ## Next coherent task
 
-The code-side private storage gates now include capture, ledger replay, reviewer packets, reconciliation, and backup/restore. The next source-review milestone is therefore an **owner-controlled real five-source capture and human review session** on durable private POSIX/WSL storage.
+The code-side private storage gates now include capture, ledger replay, reviewer packets, reconciliation, backup/restore, and a manual verified-artifact hosting/rollback path. The next trust milestone remains an **owner-controlled real five-source capture and human review session** on durable private POSIX/WSL storage, plus successful keyed NPS alert preflight.
 
 Before reviewing or reconciling real guidance, create a content-addressed ledger backup with `entry_review_backup backup`, run `verify`, and keep a second verified copy on owner-controlled storage separate from the working ledger. Then inspect the generated packets and use `reconcile` only for guidance a human actually approves.
 
@@ -296,4 +323,4 @@ The keyed NPS alert API remains a separate gate and should use the existing pref
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **541 tests** at `16dda2f`, run #84. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **551 tests** at `726e73d`, run #91. PR #1 remains draft and unmerged.
