@@ -3,7 +3,10 @@ on:
   workflow_dispatch:
   push:
     branches: [feat/pilot-foundation]
-    paths: [.github/workflows/nps-preflight.yml]
+    paths:
+      - .github/workflows/nps-preflight.yml
+      - tracker/preflight.py
+      - tracker/alerts.py
 permissions:
   contents: read
 concurrency:
