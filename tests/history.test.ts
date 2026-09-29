@@ -31,7 +31,7 @@ test('a rehashed snapshot with a different observation clock cannot be substitut
   v.history.snapshot_hash = historyDigest(v.snapshot); assert.throws(() => validateHistory(v.history, v.snapshot));
 });
 test('alert evidence permits a missing link and official NPS shared/subdomain links', () => {
-  for (const url of [null, 'https://go.nps.gov/short-link', 'https://www.nps.gov/subjects/developer/index.htm']) {
+  for (const url of [null, 'https://go.nps.gov/short-link', 'https://www.nps.gov/subjects/developer/index.htm', 'https://inciweb.wildfire.gov/incident/example']) {
     const v = copy(); v.history.observations[0].changes[0].after.url = url;
     v.history.observations[0].changes[0].after.content_hash = historyDigest(Object.fromEntries(
       ['category','description','id','title','url'].map((key) => [key, v.history.observations[0].changes[0].after[key]])
