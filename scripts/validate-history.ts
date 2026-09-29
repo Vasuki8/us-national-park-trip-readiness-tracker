@@ -1,5 +1,6 @@
 /** Server/build boundary. Never bundle Node hashing or archive validation into the browser. */
 import { createHash } from 'node:crypto';
+import { isIP } from 'node:net';
 import { posix } from 'node:path';
 import { isCalendarDate } from '../src/lib/readiness.ts';
 import type { History } from '../src/lib/history.ts';
@@ -54,8 +55,9 @@ function source(value: unknown) {
     const host = url.hostname.toLowerCase();
     // Inspect the original path too: URL() normalizes dot segments before exposing pathname.
     const path = decodeURIComponent(value.replace(/^https:\/\/[^/]+/, '').split(/[?#]/)[0]);
-    requireValue(url.protocol === 'https:' && (host === 'nps.gov' || host.endsWith('.nps.gov'))
+    requireValue(url.protocol === 'https:' && host && host !== 'localhost' && isIP(host) === 0
       && !url.username && !url.password && !url.port
+      && !(host.includes('nps.gov') && host !== 'nps.gov' && !host.endsWith('.nps.gov'))
       && (!path || posix.normalize(path) === path) && !path.includes('\\')
       && !/api.?key|token|secret/i.test(decodeURIComponent(url.search + url.hash)), 'invalid_history_source');
   } catch { throw new Error('invalid_history_source'); }
