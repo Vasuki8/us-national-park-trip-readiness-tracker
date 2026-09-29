@@ -10,33 +10,56 @@ The diagnostic checks only the five pilot parks, with at most two requested page
 
 `status: verified` means all checked responses normalized successfully within the budget and is the only state that returns exit **0**. It does not establish complete conditions coverage, independently validate a park's operating state, or activate scheduled collection. `needs_review` returns exit **1**. `not_configured` and `invalid_configuration` return exit **2**. Do not publish these diagnostic responses automatically.
 
-## Latest current-revision run
+## Latest verified keyed run
 
-Run **36607959537**, job **109541744290**, head **16dda2f20c504ada6d9740c1de38f458e47cb7f9**, at **2026-09-29T17:52:04Z**:
+Run **36628434444**, job **109611267322**, collector head **5cdfee176bdb0d6fc0223962a96b00892bb46ac5**, at **2026-09-29T20:44:13–20:44:14Z** completed successfully:
 
 ```json
-{"schema_version":1,"mode":"read_only","status":"not_configured","gate_passed":false,"publication_performed":false,"checks":[]}
+{
+  "schema_version": 1,
+  "mode": "read_only",
+  "status": "verified",
+  "gate_passed": true,
+  "publication_performed": false,
+  "checks": [
+    {"park_code":"yose","collection_status":"success","record_count":1,"pages_requested":1,"diagnostic_code":null},
+    {"park_code":"romo","collection_status":"success","record_count":0,"pages_requested":1,"diagnostic_code":null},
+    {"park_code":"yell","collection_status":"success","record_count":5,"pages_requested":1,"diagnostic_code":null},
+    {"park_code":"zion","collection_status":"success","record_count":8,"pages_requested":1,"diagnostic_code":null},
+    {"park_code":"grca","collection_status":"success","record_count":3,"pages_requested":1,"diagnostic_code":null}
+  ]
+}
 ```
 
-The current feature-branch runner still received an empty `NPS_API_KEY`. It made **zero NPS provider requests**, wrote no snapshots, and performed no publication. The diagnostic step exited **2**, so the workflow conclusion is intentionally **failure** while this release gate is unconfigured.
+The repository secret is now available to the workflow and the keyed provider integration is validated for all five pilot parks. The API key itself was never printed or stored in repository data.
 
-This is stronger evidence than the earlier rerun because it executed the current preflight/collector revision rather than the original September 28 checkout. It still does not reveal whether the repository secret is absent, incorrectly named, restricted, or otherwise unavailable to this workflow; GitHub does not expose the secret value here.
+The live responses exposed two assumptions in the original collector that were stricter than the official NPS alert schema:
 
-Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36607959537  
-Job: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36607959537/job/109541744290
+- the alert `url` may be absent; and
+- provider-supplied alert links may be external HTTPS links rather than park-path `nps.gov` URLs.
 
-## Historical September 28 rerun
+The collector now treats `parkCode` as the authoritative park-scope field, stores a missing alert link as `null`, and accepts provider-supplied HTTPS links after safety validation. It still rejects credentials, secret-like query/fragment values, malformed/path-traversal URLs, localhost/numeric-IP targets, and NPS-lookalike hostnames. External links are labeled in the UI as **“More information link supplied by NPS”** rather than represented as NPS-owned content.
 
-Run **36481482091**, job **109224608968**, at **2026-09-29T02:13:16Z** returned the same `not_configured` / no-request result, but its checkout was the older **0dce38beb7c1d9bc3d7feba0d8a69ca1f97ddca7** and its job conclusion was green under the former diagnostic-completion exit semantics. It remains historical evidence only.
+The latest successful run is read-only. It **did not write `data/alerts/`, public history, or publication state**. Therefore the public snapshots still remain `never_checked`; provider compatibility is validated, but public alert collection/publication is a separate release gate.
 
-## First observed run
+Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36628434444  
+Job: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36628434444/job/109611267322
 
-The first execution of run 36481482091, job 109127917904, at 2026-09-28T20:45:52Z returned the same empty-key/no-request diagnostic. It is retained here as historical evidence, not reused as the latest configuration check.
+## Diagnostic progression
 
-Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36481482091
+After the owner added `NPS_API_KEY`, the first keyed run reached the provider but quarantined three parks under the older validator. Safe allowlisted diagnostic codes isolated the causes without exposing alert bodies or credentials:
+
+- Yosemite and Zion: provider-supplied links were outside the old hardcoded NPS-host/path rule;
+- Grand Canyon: at least one live alert had no direct URL.
+
+The official NPS alert schema documents the alert URL as a link supplied **“if available.”** The compatibility fixes were developed against synthetic regression tests and repeatedly rechecked against the read-only live preflight until all five parks normalized successfully.
+
+Earlier empty-key and intermediate quarantine runs remain historical diagnostics only; none published data.
 
 ## Owner setup and next validation
 
-Add `NPS_API_KEY` under repository Settings → Secrets and variables → Actions → Secrets → New repository secret, then rerun the existing read-only preflight. Request a personal key through https://www.nps.gov/subjects/developer/get-started.htm. GitHub secret handling: https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets. Do not send the key through chat or an issue.
+The repository Actions secret named exactly `NPS_API_KEY` is now functioning and the five-park read-only preflight has passed.
 
-After an owner-controlled key is available, repeat the preflight, inspect actual record shapes privately and retain a reviewed credential-free fixture. The collector, private evidence archive, staging/recovery and isolated preview implementations already exist: use those paths rather than rebuilding them. Operator-controlled persistent storage is still required before scheduling; ephemeral Actions checkouts are not a durable private archive. Source-content approval, production hosting/publication, advertising and indexing remain separate requirements.
+The next alert-data step is **not another credential check**. It is an owner-controlled durable collection into the existing private staging/archive path, followed by review before any public snapshot/history update. Do not publish directly from the preflight and do not treat an empty successful feed as an all-clear.
+
+The collector, private evidence archive, staging/recovery, isolated preview and history implementations already exist: use those paths rather than rebuilding them. Operator-controlled persistent storage is still required before scheduling or publication. Source-content approval, production hosting/publication, advertising and indexing remain separate requirements.
