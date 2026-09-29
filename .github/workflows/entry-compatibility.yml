@@ -54,7 +54,7 @@ jobs:
                           def __init__(self):
                               super().__init__(); self.recent = []
                           def note(self, kind, tag):
-                              self.recent = (self.recent + [[kind, tag if tag in allowed else 'other']])[-8:]
+                              self.recent = (self.recent + [[kind, tag if re.fullmatch('[a-z][a-z0-9:-]{0,39}', tag) else 'unrecognized']])[-8:]
                           def handle_starttag(self, tag, attrs):
                               self.note('start', tag); super().handle_starttag(tag, attrs)
                           def handle_endtag(self, tag):
@@ -64,6 +64,7 @@ jobs:
                           parser.feed(html); parser.close()
                       except Exception:
                           row['parser_position'] = parser.getpos()
+                          row['closed_bodies'] = parser.closed_bodies
                           row['recent_tags'] = parser.recent
                           row['stack_tail'] = [t if t in allowed else 'other' for t in parser.stack[-8:]]
               except Exception:
@@ -74,11 +75,3 @@ jobs:
               rows.append(row)
           print(json.dumps({'schema_version': 1, 'diagnostic_only': True, 'all_contexts_parsed': all(r['parsed'] for r in rows), 'approval_performed': False, 'publication_performed': False, 'raw_captures_uploaded': False, 'sources': rows}, sort_keys=True))
           PY
-      - name: Package committed source code only for offline verification
-        run: git archive --format=tar HEAD > "$RUNNER_TEMP/committed-source.tar"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: committed-source-only
-          path: ${{ runner.temp }}/committed-source.tar
-          retention-days: 1
-          if-no-files-found: error
