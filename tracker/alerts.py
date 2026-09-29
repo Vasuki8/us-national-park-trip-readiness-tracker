@@ -2,6 +2,7 @@
 from __future__ import annotations
 import copy
 import hashlib
+import ipaddress
 import json
 import os
 import posixpath
@@ -71,7 +72,14 @@ def _record(raw: dict, park_code: str, now: str, previous: dict) -> dict:
         if url.scheme != 'https':
             raise InvalidFeed('source_scheme_invalid')
         host = (url.hostname or '').lower()
-        if not (host == 'nps.gov' or host.endswith('.nps.gov')):
+        if not host or host == 'localhost':
+            raise InvalidFeed('source_host_invalid')
+        try:
+            ipaddress.ip_address(host)
+            raise InvalidFeed('source_host_invalid')
+        except ValueError:
+            pass
+        if 'nps.gov' in host and not (host == 'nps.gov' or host.endswith('.nps.gov')):
             raise InvalidFeed('source_host_invalid')
         if url.username or url.password:
             raise InvalidFeed('source_credentials_present')
