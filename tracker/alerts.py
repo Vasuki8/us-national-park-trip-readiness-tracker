@@ -20,6 +20,12 @@ class InvalidFeed(ValueError):
 class CollectionError(RuntimeError):
     """Safe, non-sensitive transport failure."""
 
+SAFE_DIAGNOSTIC_CODES = frozenset({
+    'invalid_count', 'invalid_record', 'invalid_source_or_scope', 'invalid_response',
+    'pagination_changed', 'duplicate_id', 'count_mismatch', 'incomplete_pagination',
+    'page_limit', 'unexpected_record_drop', 'response_too_large',
+})
+
 def _instant(value: str) -> datetime:
     if not isinstance(value, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})', value):
         raise ValueError('An explicit timezone-aware timestamp is required.')
@@ -60,7 +66,7 @@ def _record(raw: dict, park_code: str, now: str, previous: dict) -> dict:
             'observed_changed_at': old.get('observed_changed_at', now) if old.get('content_hash') == digest else now,
             'content_hash': digest, 'hash_scope': 'normalized_record', 'evidence_excerpt': raw['description']}
 
-def collect(park_code: str, previous: dict, now: str, fetch_page: Callable[[int], dict]) -> dict:
+def collect(park_code: str, previous: dict, now: str, fetch_page: Callable[[int], dict], *, diagnostic: bool = False) -> dict:
     _park(park_code)
     current_time = _instant(now)
     if previous.get('park_code') != park_code or previous.get('schema_version') != 1 or not isinstance(previous.get('records'), list):
@@ -104,7 +110,10 @@ def collect(park_code: str, previous: dict, now: str, fetch_page: Callable[[int]
             raise InvalidFeed('unexpected_record_drop')
         result.update(collection_status='success', coverage_status='checked_feed_only',
                       last_successful_fetch_at=now, records=found, error_code=None)
-    except (InvalidFeed, ValueError, KeyError, TypeError):
+    except InvalidFeed as error:
+        code = str(error) if diagnostic and str(error) in SAFE_DIAGNOSTIC_CODES else 'response_requires_review'
+        result.update(collection_status='quarantined', coverage_status='incomplete', error_code=code)
+    except (ValueError, KeyError, TypeError):
         result.update(collection_status='quarantined', coverage_status='incomplete', error_code='response_requires_review')
     except (CollectionError, TimeoutError, OSError):
         result.update(collection_status='failed', coverage_status='incomplete', error_code='provider_request_failed')
