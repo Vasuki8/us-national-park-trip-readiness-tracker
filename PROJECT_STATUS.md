@@ -2,7 +2,7 @@
 
 Updated: **September 29, 2026 (America/Toronto)**.
 
-**Explicit private guidance reconciliation is implemented and CI-verified. Actual NPS entry-page HTML compatibility is also verified for all five pilot parks, but no real durable context baseline has been approved and no public guidance or alert data was changed.**
+**Private read-only reviewer packets are now implemented and CI-verified on top of the existing guidance-reconciliation ledger. Actual NPS entry-page HTML compatibility remains verified for all five pilot parks, but no real durable context baseline has been approved and no public guidance or alert data was changed.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Branch: `feat/pilot-foundation`. Draft PR #1 remains unmerged.  
@@ -45,6 +45,36 @@ This is **private editorial approval inside the ledger**, not public publication
 
 Contract: `docs/GUIDANCE_RECONCILIATION.md` and `docs/ENTRY_REVIEW_LEDGER.md`.
 
+## New: private read-only reviewer packets
+
+`tracker.entry_review_packet` turns one verified ledger snapshot into a deterministic owner-only review packet without network access, ledger mutation, reconciliation, approval or publication.
+
+The operator selects a pilot park and the **latest retained observation event** for that source. Packet generation refuses an unknown/stale event, a source with no retained comparison context, or a source with no active hold.
+
+The packet contains:
+
+- current private approved guidance for the source;
+- every active proposal ID that must be reconciled together at source level;
+- pending reasons, before excerpts and source-supplied replacement excerpts when present;
+- the retained normalized text/H1/link comparison context and context hash;
+- exact capture/proposal/review clocks;
+- current baseline metadata;
+- prior reviewer disposition history; and
+- prior reconciliation metadata and old/new guidance hashes.
+
+Dynamic material is escaped. Real `script` elements remain outside the extractor scope; literal script-looking source text is rendered as text. The generated HTML contains no links, images, frames, forms, buttons or scripts and carries a strict Content Security Policy that denies network/connect/object/frame/form activity. Source link targets are shown only as text.
+
+The output directory and packet files are owner-only (`0700` directories, `0600` files) and must live outside the repository under an owner-only parent. Each packet is installed atomically as:
+
+`OUTPUT_DIR/PACKET_ID/index.html`  
+`OUTPUT_DIR/PACKET_ID/manifest.json`
+
+The manifest contains metadata/hashes only, including the ledger revision, source event revision, context hash, complete active proposal IDs, guidance hashes and SHA-256 of the HTML. It contains no retained context or private filesystem path. Exact retries are idempotent; a corrupted existing packet is refused rather than overwritten.
+
+A packet is only an inspection snapshot. It deliberately has no `expected_revision` write argument and cannot approve anything. Before a later reconciliation, the operator must re-read the ledger and use its then-current revision.
+
+Operator contract: `docs/REVIEWER_PACKET.md`.
+
 ## TDD and self-review record
 
 The reconciliation contract was developed test-first.
@@ -61,23 +91,25 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`8f5034690e58ea766adf2044ee986080988869d0`**.
+Code/test head: **`7ee01b455b05bc53d0a91263f284f1c36edd0cec`**.
 
-**Verify pilot #57, run `36582856143`, job `109455297528`, completed successfully.**
+**Verify pilot #64, run `36592970695`, job `109490537481`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
 | Node core/data/review tests | 144 passed |
-| Python collector/archive/extraction/ledger/reconciliation tests | 267 passed |
+| Python collector/archive/extraction/ledger/reconciliation/packet tests | 277 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **503 passed** |
+| **Total automated tests** | **513 passed** |
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
-Verification artifact `pilot-verification`, ID **11040527008**, contains production build output, existing screenshots and lockfile—not private source captures or ledgers. CI-reported ZIP SHA-256: `cffb57874750dff951ff6aad5423b195b3e89fa712e20c2248f6e34a275c7cae`.
+The packet increment adds ten Python tests. The initial RED run #59 (`36591588647`) failed because `tracker.entry_review_packet` did not exist. Run #61 exposed one incorrect test fixture: real script elements are intentionally removed by the extractor, so the hostile-text regression was corrected to use literal script-looking retained text. Run #62 passed the implementation. Author self-review then added a browser-level no-network regression; RED #63 (`36592788117`) proved CSP was absent, and #64 passed after adding the strict CSP.
 
-This documentation handoff receives a separate CI run; do not infer it from #57.
+Verification artifact `pilot-verification`, ID **11044742831**, contains the production build, existing screenshots and lockfile—not review packets, private captures or ledgers. CI-reported ZIP SHA-256: `24182393d83277bfbd624c642e26b8c2ad245d4c50ad42be36b25b5abfedb01c`.
+
+Review was author self-review, not independent approval. This documentation-only handoff receives a separate CI run; do not infer it from #64.
 
 ## Previously verified real-page compatibility
 
@@ -101,10 +133,10 @@ No scheduler, deployment, indexing, advertising, tracking, account system, spend
 
 ## Next coherent task
 
-Build a **private reviewer inspection packet/workflow** over the existing retained ledger evidence so a human can inspect the selected current context, previous approved guidance, proposed replacement guidance, proposal history and exact clocks before invoking `reconcile`. Keep it local/private, read-only and non-publishing; do not create another source store.
+The reviewer packet exists. Next add an **explicit owner-controlled persistent live capture-to-ledger command** for the five fixed entry sources, using the already-tested transport/extractor/ledger and requiring deliberate live opt-in plus private local storage. It should record actual captures durably and then create reviewer packets, without auto-reconciling or touching public data.
 
-After that reviewer surface exists, perform an owner-controlled durable capture/review session for the five sources, then validate keyed alerts through the existing preflight/staging/preview path when an NPS key is configured.
+After that operator path is verified, conduct a real five-source review session and only then create durable approved baselines through `reconcile`. Keyed alert API validation remains separate and should use the existing preflight/staging/preview path once an owner-controlled `NPS_API_KEY` is configured.
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **503 tests** at `8f50346`, run #57. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **513 tests** at `7ee01b4`, run #64. PR #1 remains draft and unmerged.

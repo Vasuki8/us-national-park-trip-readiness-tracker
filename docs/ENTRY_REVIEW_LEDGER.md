@@ -39,6 +39,32 @@ For later writes, replace `empty` with the exact current revision. Stale expecte
 
 CLI summaries expose safe counts, revision/proposal references, reasons and timestamps. They do not print source HTML/context, reviewer rationale, private paths or arbitrary exceptions.
 
+## Read-only reviewer packet
+
+Use `packet` to create a local inspection artifact before drafting or executing a reconciliation. It performs no network request and no ledger write.
+
+```sh
+uv run --frozen python -m tracker.entry_review_cli packet \
+  --store /absolute/private/entry-review \
+  --output-dir /absolute/private/review-packets \
+  --park yose \
+  --source-event-revision LATEST_OBSERVATION_EVENT_SHA256
+```
+
+The selected event must be the latest retained observation for that park's configured source, must contain a verified retained comparison context, and the source must still have at least one active hold.
+
+The output root's parent must already exist with owner-only permissions. The command creates an owner-only output root if needed, then atomically installs `PACKET_ID/index.html` and `PACKET_ID/manifest.json`. CLI stdout contains safe manifest metadata only and does not echo the private output path or source text.
+
+The HTML packet shows current approved guidance, the complete active source-level proposal set, before/replacement excerpts where available, retained normalized context, exact clocks, baseline metadata, reviewer dispositions and prior reconciliation history. Dynamic values are escaped. Link targets are displayed as text rather than clickable URLs.
+
+The packet includes a strict Content Security Policy and no scripts, forms, buttons, images, frames, objects, external styles or hyperlinks. The manifest contains no source/context text and binds the HTML with SHA-256.
+
+Packet creation is deterministic and idempotent for the same verified ledger state. An existing mismatched/corrupt packet is refused, never overwritten.
+
+A packet is not an approval. It embeds the ledger revision it was created from; re-read `status` before any later write and use the current head for `reconcile`.
+
+Full details: `docs/REVIEWER_PACKET.md`.
+
 ## Non-approving reviewer dispositions
 
 A `disposition` request has `proposal_id`, `reviewer`, `decision` and `rationale`. Supported decisions remain:
