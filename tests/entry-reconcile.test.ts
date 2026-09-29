@@ -83,3 +83,14 @@ test('unknown, duplicate and incomplete proposal selections fail closed', () => 
   const pid=assessed.register.proposals[0].id; const next=[approve(current[0])];
   for (const ids of [[],['0'.repeat(64)],[pid,pid]]) assert.throws(()=>reconcileEntryReview(current,assessed.register,ids,next,new Date(T2),parks));
 });
+
+
+test('reconciliation preserves the exact record and evidence schema shape', () => {
+  const current=[rule()];
+  const assessed=assessEntrySources(current,[observation(current[0])],{schema_version:1,proposals:[]},new Date(T2));
+  const pid=assessed.register.proposals[0].id;
+  const extraTop:any=approve(current[0]); extraTop.unreviewed_field='not allowed';
+  assert.throws(()=>reconcileEntryReview(current,assessed.register,[pid],[extraTop],new Date(T2),parks));
+  const extraEvidence:any=approve(current[0]); extraEvidence.evidence.unreviewed_field='not allowed';
+  assert.throws(()=>reconcileEntryReview(current,assessed.register,[pid],[extraEvidence],new Date(T2),parks));
+});
