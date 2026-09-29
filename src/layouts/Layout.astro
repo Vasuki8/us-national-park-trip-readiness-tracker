@@ -28,7 +28,7 @@ const path = Astro.url.pathname;
     </header>
     <main id="main" class="wrap" tabindex="-1"><slot /></main>
     <footer class="site-footer wrap">
-      <div><a class="brand footer-brand" href="/">Park <strong>Readiness</strong></a><p>Know what is checked. Know what is still unknown.</p><p class="small">Independent project. Not affiliated with or endorsed by the National Park Service.<br />Not an emergency service or a guarantee of access, conditions or safety.</p></div>
+      <div><a class="brand footer-brand" href="/">Park <strong>Readiness</strong></a><p>Know what is checked. Know what is still unknown.</p><p class="small">Independent project. Not affiliated with or endorsed by the National Park Service.<br />Source excerpts are attributed to the National Park Service. No protection is claimed in original U.S. Government works.<br />Not an emergency service or a guarantee of access, conditions or safety.</p></div>
       <nav aria-label="Footer navigation"><a href="/about/" aria-current={path === '/about/' ? 'page' : undefined}>About</a><a href="/privacy/" aria-current={path === '/privacy/' ? 'page' : undefined}>Privacy</a><a href="/terms/" aria-current={path === '/terms/' ? 'page' : undefined}>Use & limitations</a><a href="/corrections/" aria-current={path === '/corrections/' ? 'page' : undefined}>Report a correction</a><a href="/changes/" aria-current={path === '/changes/' ? 'page' : undefined}>Change history</a></nav>
     </footer>
   </body>
