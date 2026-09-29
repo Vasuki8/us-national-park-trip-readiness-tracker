@@ -64,6 +64,17 @@ class PagesReleaseWorkflowTests(unittest.TestCase):
         self.assertRegex(text,r'path:\s*_verified/dist')
         self.assertIn('find _verified/dist -type l',text)
 
+    def test_pages_project_subpath_is_refused_before_upload(self):
+        text=self.text()
+        self.assertIn('id: pages',text)
+        self.assertIn('steps.pages.outputs.base_path',text)
+        self.assertIn('Current verified build requires Pages root hosting',text)
+        guard=text.index('Current verified build requires Pages root hosting')
+        upload=text.index('actions/upload-pages-artifact@v3')
+        deploy=text.index('actions/deploy-pages@v4')
+        self.assertLess(guard,upload)
+        self.assertLess(guard,deploy)
+
     def test_rollback_is_the_same_verified_artifact_path_not_a_special_mutating_script(self):
         text=self.text()
         self.assertEqual(text.count('actions/deploy-pages@v4'),1)
