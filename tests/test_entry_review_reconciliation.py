@@ -91,6 +91,17 @@ class ReconciliationTests(unittest.TestCase):
             self.store.reconcile(reconcile_request(self.first['revision'],[self.proposal],self.approved(changed)),
               expected_revision=self.first['revision'],now=datetime(2026,9,28,13,30,tzinfo=timezone.utc))
 
+    def test_new_excerpt_must_be_unique_not_duplicated_in_retained_context(self):
+        other=EntryReviewStore(Path(self.tmp.name)/'duplicate-review')
+        html=f'<html><body><h1>Entrance Reservations</h1><p>{QUOTE}</p><p>Duplicate candidate.</p><p>Duplicate candidate.</p></body></html>'
+        value=batch(rule(),T1); value['captures']=[capture(T1,html)]
+        saved=other.record(value,expected_revision=None,now=datetime(2026,9,28,12,30,tzinfo=timezone.utc))
+        proposal=other.read()['register']['proposals'][0]['id']
+        changed=rule(T2,'Duplicate candidate.')
+        with self.assertRaises(ReviewStoreError):
+            other.reconcile(reconcile_request(saved['revision'],[proposal],changed),
+              expected_revision=saved['revision'],now=datetime(2026,9,28,13,30,tzinfo=timezone.utc))
+
     def test_exact_reconcile_retry_is_idempotent(self):
         value=reconcile_request(self.first['revision'],[self.proposal],self.approved())
         saved=self.store.reconcile(value,expected_revision=self.first['revision'],now=datetime(2026,9,28,13,30,tzinfo=timezone.utc))
