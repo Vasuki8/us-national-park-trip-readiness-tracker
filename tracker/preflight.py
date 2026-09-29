@@ -31,10 +31,11 @@ def run_preflight(key: str, *, transport: Callable[[str, int, str], dict] = requ
             attempts += 1
             return transport(code, start, key.strip())
         attempted_at = datetime.now(timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
-        status, count = 'internal_error', None
+        status, count, diagnostic_code = 'internal_error', None, 'internal_error'
         try:
-            snapshot = collect(code, initial_snapshot(code), attempted_at, fetch)
+            snapshot = collect(code, initial_snapshot(code), attempted_at, fetch, diagnostic=True)
             status = snapshot['collection_status']
+            diagnostic_code = snapshot.get('error_code')
             if status == 'success':
                 count = len(snapshot['records'])
         except Exception:
@@ -42,7 +43,7 @@ def run_preflight(key: str, *, transport: Callable[[str, int, str], dict] = requ
             status = 'internal_error'
         report['checks'].append({'park_code': code, 'attempted_at': attempted_at,
                                  'collection_status': status, 'record_count': count,
-                                 'pages_requested': attempts})
+                                 'pages_requested': attempts, 'diagnostic_code': diagnostic_code})
     report['gate_passed'] = all(item['collection_status'] == 'success' for item in report['checks'])
     report['status'] = 'verified' if report['gate_passed'] else 'needs_review'
     return report
