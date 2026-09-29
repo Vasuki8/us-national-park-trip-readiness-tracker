@@ -2,7 +2,7 @@
 
 Updated: **September 29, 2026 (America/Toronto)**.
 
-**Private read-only reviewer packets are now implemented and CI-verified on top of the existing guidance-reconciliation ledger. Actual NPS entry-page HTML compatibility remains verified for all five pilot parks, but no real durable context baseline has been approved and no public guidance or alert data was changed.**
+**The explicit persistent live entry capture → private ledger → reviewer packet operator path is now implemented and CI-verified. Actual NPS entry-page compatibility remains verified for all five pilot parks, but this milestone did not run a real durable capture session or approve any real context baseline. Public guidance and alert data remain unchanged.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Branch: `feat/pilot-foundation`. Draft PR #1 remains unmerged.  
@@ -75,6 +75,49 @@ A packet is only an inspection snapshot. It deliberately has no `expected_revisi
 
 Operator contract: `docs/REVIEWER_PACKET.md`.
 
+## New: explicit persistent live capture operator path
+
+`tracker.entry_review_live` is the first retained live-entry operator workflow. It reuses the existing fixed NPS transport, source extractor, transactional editorial ledger and read-only reviewer packets; it does not create a second source store.
+
+Before the first network request it requires:
+
+- explicit `--live`;
+- an absolute private ledger path accepted by the existing POSIX ledger boundary;
+- an absolute packet-output path outside the repository under an owner-only parent; and
+- `--expected-revision empty` for a new ledger, or the exact current ledger SHA-256 for a later batch.
+
+A stale expected revision or unsafe packet destination refuses **before network**. The SQLite write still rechecks the expected revision inside its transaction, so a concurrent writer cannot be silently overwritten after capture.
+
+The command then makes one credential-free HTTPS GET to each of the five fixed NPS entry sources using the already-tested transport: no API key, cookies, redirects, retries or arbitrary URL input. Each response remains bounded to 1 MiB and is validated for status, content type/encoding, length and UTF-8 before it can become a successful capture.
+
+All five capture attempts form one complete ledger observation event. Successful raw HTML is retained inside the owner-only SQLite event; failed captures are retained as failed observations rather than discarded or converted into empty success. Existing reconciled baselines are reused automatically. An existing ledger keeps its own current private guidance inventory rather than silently adopting changed repository guidance.
+
+After the ledger commit, the command prepares reviewer packets for every source that has active holds and retained comparison context. A failed source receives no fabricated packet. Packet-generation failures do **not** roll the already committed live evidence back.
+
+Operator command:
+
+```sh
+uv run --frozen python -m tracker.entry_review_live \
+  --live \
+  --store /absolute/private/entry-review \
+  --packet-output-dir /absolute/private/review-packets \
+  --expected-revision empty
+```
+
+For every later run, first use `entry_review_cli status` and replace `empty` with the exact returned revision.
+
+Exit semantics:
+
+- **0** — the complete batch was committed, all five captures succeeded, and every source requiring review has a packet (or no packet is needed).
+- **1** — the batch was committed, but at least one capture or required packet is incomplete. This is retained evidence, not a rollback; inspect the safe JSON report and ledger.
+- **2** — configuration, validation, stale-write or unexpected failure prevented a normal report. Re-read ledger status before retrying because concurrent/post-commit failures must never be guessed from an exit code alone.
+
+The safe JSON report exposes source URL, HTTP status, capture reason, capture/context hashes, active-hold counts, packet IDs and the committed ledger/source-event revisions. It excludes raw HTML, retained normalized text and private filesystem paths.
+
+This command never calls `reconcile`, never updates public `data/`, never deploys, and never schedules itself. No `NPS_API_KEY` is read or needed.
+
+Contract: `docs/PERSISTENT_ENTRY_CAPTURE.md`.
+
 ## TDD and self-review record
 
 The reconciliation contract was developed test-first.
@@ -91,25 +134,27 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`7ee01b455b05bc53d0a91263f284f1c36edd0cec`**.
+Code/test head: **`60ed64031272a428010cc493f4a4d946699b5554`**.
 
-**Verify pilot #64, run `36592970695`, job `109490537481`, completed successfully.**
+**Verify pilot #71, run `36596713485`, job `109503397710`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
 | Node core/data/review tests | 144 passed |
-| Python collector/archive/extraction/ledger/reconciliation/packet tests | 277 passed |
+| Python collector/archive/extraction/ledger/reconciliation/packet/live-operator tests | 285 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **513 passed** |
+| **Total automated tests** | **521 passed** |
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
-The packet increment adds ten Python tests. The initial RED run #59 (`36591588647`) failed because `tracker.entry_review_packet` did not exist. Run #61 exposed one incorrect test fixture: real script elements are intentionally removed by the extractor, so the hostile-text regression was corrected to use literal script-looking retained text. Run #62 passed the implementation. Author self-review then added a browser-level no-network regression; RED #63 (`36592788117`) proved CSP was absent, and #64 passed after adding the strict CSP.
+The live-operator increment adds eight Python methods. RED #66 (`36595233082`) failed because `tracker.entry_review_live` did not exist. The first implementation runs then exposed two test-harness errors rather than product failures: a helper named `run` overrode `unittest.TestCase.run`, and a second synthetic batch reused the first event's write clock. Both harness issues were corrected without changing product semantics. Full #70 passed; #71 reverified the final direct-digest refactor.
 
-Verification artifact `pilot-verification`, ID **11044742831**, contains the production build, existing screenshots and lockfile—not review packets, private captures or ledgers. CI-reported ZIP SHA-256: `24182393d83277bfbd624c642e26b8c2ad245d4c50ad42be36b25b5abfedb01c`.
+Coverage includes deliberate live opt-in, pre-network expected-revision/path checks, complete five-source persistence, current-head append behavior, failed-source retention without fake packets, post-commit packet failure without rollback, safe CLI output and exit-1 partial-completion semantics.
 
-Review was author self-review, not independent approval. This documentation-only handoff receives a separate CI run; do not infer it from #64.
+Verification artifact `pilot-verification`, ID **11045953817**, contains the production build, existing screenshots and lockfile—not live editorial ledgers, source captures or reviewer packets. CI-reported ZIP SHA-256: `713fa9eb758a75d0dc8e12e838e904cd241a4ba59dd6385770d005aeb9f67956`.
+
+Review was author self-review, not independent approval. This documentation-only handoff receives a separate CI run; do not infer it from #71.
 
 ## Previously verified real-page compatibility
 
@@ -133,10 +178,14 @@ No scheduler, deployment, indexing, advertising, tracking, account system, spend
 
 ## Next coherent task
 
-The reviewer packet exists. Next add an **explicit owner-controlled persistent live capture-to-ledger command** for the five fixed entry sources, using the already-tested transport/extractor/ledger and requiring deliberate live opt-in plus private local storage. It should record actual captures durably and then create reviewer packets, without auto-reconciling or touching public data.
+The persistent operator path now exists. The next source-review milestone is an **owner-controlled real five-source capture and human review session** using this command, followed by explicit `reconcile` actions only for guidance actually approved against those retained contexts.
 
-After that operator path is verified, conduct a real five-source review session and only then create durable approved baselines through `reconcile`. Keyed alert API validation remains separate and should use the existing preflight/staging/preview path once an owner-controlled `NPS_API_KEY` is configured.
+That real session was **not** performed in this development environment because the current tools do not provide the user's durable private POSIX/WSL filesystem. Do not substitute public GitHub Actions artifacts or repository files for the private editorial ledger.
+
+If a suitable owner-controlled POSIX/WSL storage location is not available yet, prioritize the remaining durable-storage/backup decision instead of inventing a temporary hosted source archive.
+
+The keyed NPS alert API remains a separate gate and should use the existing preflight/staging/preview path once an owner-controlled `NPS_API_KEY` is configured.
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **513 tests** at `7ee01b4`, run #64. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **521 tests** at `60ed640`, run #71. PR #1 remains draft and unmerged.

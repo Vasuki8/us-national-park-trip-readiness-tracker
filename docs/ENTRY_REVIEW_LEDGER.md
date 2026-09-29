@@ -39,6 +39,32 @@ For later writes, replace `empty` with the exact current revision. Stale expecte
 
 CLI summaries expose safe counts, revision/proposal references, reasons and timestamps. They do not print source HTML/context, reviewer rationale, private paths or arbitrary exceptions.
 
+## Persistent live entry capture
+
+Use the separate live operator command to fetch the five fixed NPS entry sources and retain one complete batch in this ledger:
+
+```sh
+uv run --frozen python -m tracker.entry_review_live \
+  --live \
+  --store /absolute/private/entry-review \
+  --packet-output-dir /absolute/private/review-packets \
+  --expected-revision empty
+```
+
+`--live` is mandatory. The command accepts no source URL argument and reads no NPS API key.
+
+For an existing ledger, run `status` first and supply its exact revision instead of `empty`. The expected revision and packet destination are validated before any request, and the revision is checked again transactionally when the complete batch is written.
+
+The command uses the same bounded credential-free transport already exercised by the live compatibility diagnostic. It attempts each of the five fixed sources once, with no redirects or retries. A successful HTML capture is retained inside the ledger event. A transport/parser/source failure is retained as a failed observation rather than being dropped.
+
+After commit, the command creates read-only packets for sources with active holds and retained context. Packet preparation cannot roll the committed observation back.
+
+Exit code `0` means captures and required packets are ready for review. Exit code `1` means the ledger batch **was committed** but capture/packet preparation is incomplete. Exit code `2` means no normal completion report was produced; always re-read ledger status before retrying.
+
+The report is metadata-only and excludes private paths and page text.
+
+Full contract: `docs/PERSISTENT_ENTRY_CAPTURE.md`.
+
 ## Read-only reviewer packet
 
 Use `packet` to create a local inspection artifact before drafting or executing a reconciliation. It performs no network request and no ledger write.
