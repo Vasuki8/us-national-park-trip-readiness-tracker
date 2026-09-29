@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from .entry_review_io import ReviewStoreError, read_private_json
 from .entry_review_model import safe_summary
+from .entry_review_packet import prepare_review_packet
 from .entry_review_store import EntryReviewStore
 
 class _Parser(argparse.ArgumentParser):
@@ -17,20 +18,28 @@ class _Parser(argparse.ArgumentParser):
 def main(argv=None) -> int:
     try:
         parser = _Parser(description='Private offline evidence ledger; never publishes.')
-        parser.add_argument('command', choices=('status','record','disposition','reconcile','recover'))
+        parser.add_argument('command', choices=('status','record','disposition','reconcile','packet','recover'))
         parser.add_argument('--store', required=True, type=Path)
         parser.add_argument('--input', type=Path)
         parser.add_argument('--expected-revision')
+        parser.add_argument('--output-dir', type=Path)
+        parser.add_argument('--park')
+        parser.add_argument('--source-event-revision')
         args = parser.parse_args(argv)
         store = EntryReviewStore(args.store)
+        packet_args = (args.output_dir, args.park, args.source_event_revision)
         if args.command in ('record','disposition','reconcile'):
-            if args.input is None or args.expected_revision is None:
+            if args.input is None or args.expected_revision is None or any(value is not None for value in packet_args):
                 raise ReviewStoreError('missing_review_write_arguments')
             expected = None if args.expected_revision == 'empty' else args.expected_revision
             method = {'record': store.record, 'disposition': store.disposition, 'reconcile': store.reconcile}[args.command]
             result = method(read_private_json(args.input), expected_revision=expected, now=datetime.now(timezone.utc))
+        elif args.command == 'packet':
+            if args.input is not None or args.expected_revision is not None or any(value is None for value in packet_args):
+                raise ReviewStoreError('invalid_packet_arguments')
+            result = prepare_review_packet(store, args.output_dir, args.park, args.source_event_revision)
         else:
-            if args.input is not None or args.expected_revision is not None:
+            if args.input is not None or args.expected_revision is not None or any(value is not None for value in packet_args):
                 raise ReviewStoreError('unexpected_review_arguments')
             result = store.recover() if args.command == 'recover' else safe_summary(store.read())
         sys.stdout.write(json.dumps(result, sort_keys=True, separators=(',',':'))+'\n')
