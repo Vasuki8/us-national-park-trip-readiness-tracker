@@ -67,6 +67,24 @@ class ReconciliationTests(unittest.TestCase):
             self.store.reconcile(reconcile_request(self.first['revision'],proposals,rule(T3)),
               expected_revision=second['revision'],now=datetime(2026,9,28,14,30,tzinfo=timezone.utc))
 
+
+    def test_reconciliation_can_use_latest_matching_context_after_an_older_hold(self):
+        first_event=self.store.read()['events'][0]
+        source=first_event['extraction']['sources'][0]
+        legacy={'schema_version':1,'source_url':URL,'profile_id':source['profile_id'],
+          'guidance_hashes':source['guidance_hashes'],'checked_at':T1,'reviewed_at':'2026-09-28T12:30:00Z',
+          'context':source['context'],'context_hash':source['context_hash']}
+        later=batch(rule(),T2); later['baselines']=[legacy]
+        second=self.store.record(later,expected_revision=self.first['revision'],
+          now=datetime(2026,9,28,13,30,tzinfo=timezone.utc))
+        self.assertEqual(self.store.read()['events'][-1]['extraction']['sources'][0]['reason'],'matching_reviewed_context')
+        self.assertEqual(second['pending_proposals'],1)
+        next_record=rule(T3)
+        reconciled=self.store.reconcile(reconcile_request(second['revision'],[self.proposal],next_record,T3),
+          expected_revision=second['revision'],now=datetime(2026,9,28,14,30,tzinfo=timezone.utc))
+        self.assertEqual(reconciled['pending_proposals'],0)
+        self.assertEqual(self.store.read()['baselines'][0]['checked_at'],T2)
+
     def test_new_excerpt_must_be_unique_in_retained_context(self):
         changed='Synthetic replacement that is not present in the retained page.'
         with self.assertRaises(ReviewStoreError):
