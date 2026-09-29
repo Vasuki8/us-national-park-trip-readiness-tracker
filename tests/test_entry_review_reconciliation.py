@@ -3,10 +3,14 @@ import copy, hashlib, json, os, subprocess, sys, tempfile, unittest
 from datetime import datetime, timezone
 from pathlib import Path
 from tracker.entry_review_store import EntryReviewStore, ReviewStoreError
+from tracker.entry_html import inspect_html
+from tracker.entry_sources import digest, PROFILE_VERSION
 
 T0='2026-09-28T10:00:00Z'; T1='2026-09-28T12:00:00Z'; T2='2026-09-28T13:00:00Z'; T3='2026-09-28T14:00:00Z'
 URL='https://www.nps.gov/yose/planyourvisit/reservations.htm'
+YELL_URL='https://www.nps.gov/yell/planyourvisit/permitsandreservations.htm'
 QUOTE='Synthetic entry guidance for reconciliation testing.'
+YELL_QUOTE='Synthetic undated Yellowstone entry guidance.'
 def sha(text): return hashlib.sha256(text.encode()).hexdigest()
 def rule(reviewed=T0, excerpt=QUOTE):
     return {'id':'synthetic-yose','park_code':'yose','summary':'Synthetic reviewed rule.','exception_note':'Synthetic exception note.',
@@ -15,6 +19,17 @@ def rule(reviewed=T0, excerpt=QUOTE):
       'evidence':{'url':URL,'excerpt':excerpt,'content_hash':sha(excerpt),'hash_scope':'excerpt','reviewed_at':reviewed,
         'source_updated_at':None,'method':'manual_official_page_review'},
       'rights_basis':'Synthetic test rights basis.','rights_reviewed_at':T0}
+def note(reviewed=T0):
+    return {'id':'synthetic-yell','park_code':'yell','subject_type':'general_entry','period_status':'not_published',
+      'effective_from':None,'effective_to':None,'reviewed_at':reviewed,'review_status':'reviewed',
+      'summary':'Synthetic undated note.','limitation':'Synthetic limitation.',
+      'evidence':{'url':YELL_URL,'excerpt':YELL_QUOTE,'content_hash':sha(YELL_QUOTE),'hash_scope':'excerpt',
+        'reviewed_at':reviewed,'source_updated_at':None,'method':'manual_official_page_review'},
+      'rights_basis':'Synthetic test rights basis.','rights_reviewed_at':T0}
+def yell_capture(checked):
+    html=f'<html><body><h1>Permits & Reservations</h1><p>{YELL_QUOTE}</p><p>Synthetic Yellowstone context.</p></body></html>'
+    return {'source_url':YELL_URL,'final_url':YELL_URL,'checked_at':checked,'status':'success','content_type':'text/html','html':html}
+
 def capture(checked, html=None):
     return {'source_url':URL,'final_url':URL,'checked_at':checked,'status':'success','content_type':'text/html',
       'html': html or f'<html><body><h1>Entrance Reservations</h1><p>{QUOTE}</p><p>Synthetic surrounding context.</p></body></html>'}
@@ -84,6 +99,31 @@ class ReconciliationTests(unittest.TestCase):
           expected_revision=second['revision'],now=datetime(2026,9,28,14,30,tzinfo=timezone.utc))
         self.assertEqual(reconciled['pending_proposals'],0)
         self.assertEqual(self.store.read()['baselines'][0]['checked_at'],T2)
+
+    def test_reconciling_one_source_preserves_unaffected_reviewed_baselines(self):
+        other=EntryReviewStore(Path(self.tmp.name)/'multi-source-review')
+        yellow=note()
+        baseline_html=f'<html><body><h1>Permits & Reservations</h1><p>{YELL_QUOTE}</p><p>Synthetic Yellowstone context.</p></body></html>'
+        context=inspect_html(baseline_html,'Permits & Reservations')
+        legacy={'schema_version':1,'source_url':YELL_URL,'profile_id':f'{PROFILE_VERSION}:yell',
+          'guidance_hashes':{yellow['id']:digest(yellow)},'checked_at':'2026-09-28T11:00:00Z',
+          'reviewed_at':'2026-09-28T11:30:00Z','context':context,'context_hash':digest(context)}
+        first_request={'records':[rule(),yellow],'captures':[capture(T1),yell_capture(T1)],
+          'baselines':[legacy],'seed_register':{'schema_version':1,'proposals':[]}}
+        first=other.record(first_request,expected_revision=None,now=datetime(2026,9,28,12,30,tzinfo=timezone.utc))
+        proposal=other.read()['register']['proposals'][0]['id']
+        request_value=reconcile_request(first['revision'],[proposal],self.approved())
+        request_value['records']=[self.approved(),yellow]
+        reconciled=other.reconcile(request_value,expected_revision=first['revision'],
+          now=datetime(2026,9,28,13,30,tzinfo=timezone.utc))
+        current=other.read()['records']
+        later={'records':current,'captures':[capture(T3),yell_capture(T3)],'baselines':[],
+          'seed_register':{'schema_version':1,'proposals':[]}}
+        saved=other.record(later,expected_revision=reconciled['revision'],now=datetime(2026,9,28,15,tzinfo=timezone.utc))
+        self.assertEqual(saved['pending_proposals'],0)
+        reasons={source['source_url']:source['reason'] for source in other.read()['events'][-1]['extraction']['sources']}
+        self.assertEqual(reasons[URL],'matching_reviewed_context')
+        self.assertEqual(reasons[YELL_URL],'matching_reviewed_context')
 
     def test_new_excerpt_must_be_unique_in_retained_context(self):
         changed='Synthetic replacement that is not present in the retained page.'
