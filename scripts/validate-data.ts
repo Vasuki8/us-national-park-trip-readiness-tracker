@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { posix, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isCalendarDate } from '../src/lib/readiness.ts';
 import { validateSourceRights } from './validate-source-rights.ts';
@@ -14,6 +14,17 @@ function source(value: string, code: string): void {
   assert.ok(url.protocol === 'https:' && hosts.has(url.hostname) && !url.username && !url.password && !url.port);
   assert.ok(url.pathname.startsWith(`/${code}/`));
   assert.ok(!/api.?key|token|secret/i.test(url.search));
+}
+function alertSource(value: unknown): void {
+  if (value === null) return;
+  assert.ok(typeof value === 'string' && value.length > 0);
+  const url = new URL(value);
+  const host = url.hostname.toLowerCase();
+  const path = decodeURIComponent(value.replace(/^https:\/\/[^/]+/, '').split(/[?#]/)[0]);
+  assert.ok(url.protocol === 'https:' && (host === 'nps.gov' || host.endsWith('.nps.gov'))
+    && !url.username && !url.password && !url.port);
+  assert.ok((!path || posix.normalize(path) === path) && !path.includes('\\'));
+  assert.ok(!/api.?key|token|secret/i.test(decodeURIComponent(url.search + url.hash)));
 }
 function timestamp(value: unknown): number {
   assert.ok(typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.test(value));
@@ -83,7 +94,7 @@ export function validateSnapshot(snapshot: any, code: string): void {
   assert.equal(new Set(snapshot.records.map((r: any) => r.id)).size, snapshot.records.length);
   for (const item of snapshot.records) {
     for (const key of ['id', 'title', 'category']) required(item[key]);
-    assert.equal(typeof item.description, 'string'); source(item.url, code);
+    assert.equal(typeof item.description, 'string'); alertSource(item.url);
     assert.equal(item.park_code, code); assert.equal(item.area_id, null); assert.equal(item.scope_status, 'unclassified');
     assert.equal(item.effective_from, null); assert.equal(item.effective_to, null); assert.equal(item.source_updated_at, null);
     assert.ok(timestamp(item.observed_first_at) <= timestamp(item.observed_changed_at));
