@@ -23,7 +23,7 @@ test('synthetic timeline renders baseline and source-linked before-after changes
   const detail = page.locator('[data-history] details').first(); await detail.locator('summary').click();
   await expect(detail).toContainText('Café — synthetic text. <script>window.historyInjected=1</script>');
   expect(await page.evaluate(() => (window as any).historyInjected)).toBeUndefined();
-  await expect(detail.getByRole('link', { name: 'Official source' }).first()).toHaveAttribute('href', 'https://www.nps.gov/yose/test.htm');
+  await expect(detail.getByRole('link', { name: 'More information link supplied by NPS' }).first()).toHaveAttribute('href', 'https://www.nps.gov/yose/test.htm');
   await expect(page.locator('[data-history]')).toContainText('not a confirmed reopening');
 });
 test('failed check retains earlier changes and does not become a fresh successful check', async ({ page }) => {
@@ -54,7 +54,7 @@ test('synthetic history evidence works without JavaScript', async ({ browser }) 
   const page = await context.newPage(); await page.goto(`${fixtureBase}/mixed/`);
   await expect(page.locator('[data-history-observation]')).toHaveCount(2);
   const detail = page.locator('[data-history] details').first(); await detail.locator('summary').click();
-  await expect(detail.getByRole('link', { name: 'Official source' }).first()).toBeVisible();
+  await expect(detail.getByRole('link', { name: 'More information link supplied by NPS' }).first()).toBeVisible();
   // Playwright deliberately skips NOSCRIPT when aggregating ancestor text.
   // Check the actual fallback paragraph so both rendered visibility and copy are proved.
   const fallback = page.locator('[data-history] noscript p');
