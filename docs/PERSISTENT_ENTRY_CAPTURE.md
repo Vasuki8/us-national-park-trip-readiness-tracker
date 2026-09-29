@@ -76,6 +76,8 @@ The command's safe report also includes HTTP status, transport reason and raw SH
 
 For an existing ledger, the command uses the ledger's current private guidance inventory. It does not silently replace that inventory from changed repository JSON; guidance changes continue to require explicit reconciliation.
 
+If explicit reconciliation baselines exist, the ledger injects them internally as before. Before any reconciliation, the live operator preserves the latest validated legacy schema-v1 baseline input from the most recent observation. This prevents a reviewed legacy context from being silently dropped and converted into a new `context_not_reviewed` hold on the next live append.
+
 ## Reviewer packets
 
 After the observation transaction commits, the command replays the ledger and prepares one packet per source that:
@@ -149,3 +151,10 @@ Automated tests use synthetic responses and real ledger/extractor/packet code. T
 This milestone did not create a real durable ledger because the development tool environment is not the user's owner-controlled persistent private filesystem.
 
 The next real-world step is to run this command on the owner's private POSIX/WSL storage, inspect the generated packets and then use `reconcile` only for guidance a human actually approves.
+
+
+## Legacy-baseline regression verification
+
+Author review added a regression for an existing ledger with a validated schema-v1 Yellowstone context baseline. RED run #73 (`36600646532`) reproduced a false new hold because the live operator supplied `baselines: []` on every append. The fix now carries forward the latest validated legacy baseline input only while the ledger has no explicit reconciliation baselines.
+
+Verify pilot #74 (`36600851931`, job `109517542233`) passed the full suite: 144 Node + 286 Python + 18 generated-output + 74 Chromium = **522 tests**, with Astro 24 files and zero errors/warnings/hints. Artifact `11049198460`, CI ZIP SHA-256 `1c0ba13ac55e14127d16ab396aa00b94d25bdc72822b522ebc28569b64273af5`.
