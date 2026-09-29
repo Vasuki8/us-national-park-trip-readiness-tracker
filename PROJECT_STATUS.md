@@ -337,9 +337,9 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`1b19234f9597ce96a818c929a22a63848a03ccdb`**.
+Code/test head: **`ab562090b6e33624e96f9040e45e3dda15ee6db7`**.
 
-**Verify pilot #124, run `36629120528`, job `109614142038`, completed successfully.**
+**Verify pilot #127, run `36629772353`, job `109615969906`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
@@ -355,9 +355,9 @@ The keyed-alert compatibility increment was driven by live read-only provider ev
 
 The final current-head regression run #124 passed all 563 automated tests. Separately, keyed NPS preflight run **36628434444** passed all five parks with `gate_passed:true`; it used the same current collector semantics and performed no public writes.
 
-Verification artifact `pilot-verification`, ID **11061476620**, contains the production site build, screenshots and lockfile—not API credentials, live raw payloads, private archives, or published alert data. CI-reported ZIP SHA-256: `14e9a1592ad8bb8ac9fab3aff7120685cf92728f7062d446f39549ebba5459cc`.
+Verification artifact `pilot-verification`, ID **11061727292**, contains the production site build, screenshots and lockfile—not API credentials, live raw payloads, private archives, or published alert data. CI-reported ZIP SHA-256: `8ec9862067bd8df43b2191f07fb71e29d4230654388d92cd13f575d53e2e3cdb`.
 
-Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising/public-alert publication occurred. This final status/docs handoff receives its own CI run.
+Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising/public-alert publication occurred.
 
 ## Previously verified real-page compatibility
 
@@ -391,4 +391,4 @@ The keyed NPS alert API compatibility gate is now validated. The next alert step
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **563 tests** at `1b19234`, run #124. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation/docs: **563 tests** at `ab56209`, run #127. PR #1 remains draft and unmerged.
