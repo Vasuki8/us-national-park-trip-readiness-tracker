@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,7 +18,7 @@ from .entry_review_io import REPO_ROOT, ReviewStoreError, check_path, private_st
 from .entry_review_model import revision
 from .entry_review_packet import prepare_review_packet
 from .entry_review_store import EntryReviewStore
-from .entry_sources import PROFILES, instant, shape
+from .entry_sources import PROFILES, digest, instant, shape
 
 RECORDS_FILE = REPO_ROOT/'data/rules.json'
 NOTES_FILE = REPO_ROOT/'data/entry-notes.json'
@@ -130,7 +129,7 @@ def run_live_capture(store: EntryReviewStore, packet_output_dir: Path, *,
     event = next((item for item in state['events']
                   if item['kind'] == 'observation'
                   and item.get('operation_id') is not None
-                  and source_event_revision == __import__('tracker.entry_sources', fromlist=['digest']).digest(item)), None)
+                  and source_event_revision == digest(item)), None)
     require(event is not None, 'live_review_commit_mismatch')
     extracted = {item['source_url']: item for item in event['extraction']['sources']}
 
