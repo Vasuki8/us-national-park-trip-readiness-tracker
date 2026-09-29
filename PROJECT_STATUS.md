@@ -1,90 +1,110 @@
 # Project status and handoff
 
 Updated: **September 29, 2026 (America/Toronto)**.
-**Actual HTML from all five configured NPS entry pages now passes scoped extraction and temporary private-ledger replay. Reviewed context baselines, persistent live evidence, final approval reconciliation and public release remain unfinished.**
 
-Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.
-Branch: `feat/pilot-foundation`.
-Draft PR: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/1
-Main remains `a9d9c19e8307828c5bdb6f331e24ca3fe7afffce`. No merge or production deployment was performed.
+**Explicit private guidance reconciliation is implemented and CI-verified. Actual NPS entry-page HTML compatibility is also verified for all five pilot parks, but no real durable context baseline has been approved and no public guidance or alert data was changed.**
 
-## Standing direction and preserved capabilities
+Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
+Branch: `feat/pilot-foundation`. Draft PR #1 remains unmerged.  
+Main remains `a9d9c19e8307828c5bdb6f331e24ca3fe7afffce`. No deployment was performed.
 
-Eventual AdSense-first, light-theme product, no paid data dependency. Validate five parks before expanding to 20. Trustworthy data precedes indexing/advertising. Never infer an all-clear, reopening, exemption or annual validity from absent information.
+## Standing product direction
 
-The production build remains 14 HTML pages plus build.json: park/state search, five park pages, dated/undated source evidence, self-reported checklists, notice history and 35 official planning links. Only Yosemite and Rocky Mountain have dated rules; the other three parks have undated observations. Planning links are not live condition checks. Original source, approval, effective, collection, import/build and publication clocks remain distinct.
+The eventual product remains AdSense-first, light-theme and free of paid-data dependencies. Validate the five-park pilot before expanding to 20 parks. Trustworthy source evidence precedes indexing or advertising. Never infer an all-clear, reopening, permit exemption or annual validity from missing information.
 
-Existing alert collector/archive/staging, visitor history, isolated candidate previews, accessibility repairs, source review gate, scoped extraction and private editorial ledger remain in place. Do not rebuild these systems. Contracts are in docs/EVIDENCE_HISTORY.md, STAGING_COLLECTION.md, VISITOR_HISTORY.md, PREVIEW_BUNDLES.md, ACCESSIBILITY_REVIEW.md, ENTRY_CHANGE_REVIEW.md, ENTRY_SOURCE_EXTRACTION.md and ENTRY_REVIEW_LEDGER.md.
+The public build remains 14 HTML pages plus `build.json`, with park/state search, five park pages, date-aware entry guidance, source evidence, checklists, notice history and seven official planning links per park. Yosemite and Rocky Mountain have dated rules; Yellowstone, Zion and Grand Canyon retain undated source observations. Public alert snapshots remain `never_checked`; public histories and the public entry-review register remain empty.
 
-Public alert snapshots remain `never_checked`. Public histories and the public entry-review register remain empty. No original guidance, approved date, planning resource or public dataset was changed in this increment. The site interface, dependency files, existing CI and alert preflight workflow are unchanged.
+Existing alert collection/archive/staging, candidate previews, visitor history, accessibility repairs, source-change gate, HTML extraction, live entry-page compatibility diagnostic and private review ledger remain in place. Do not rebuild them.
 
-## New: real-page compatibility and envelope repair
+## New: explicit private reconciliation
 
-The new `tracker/entry_compatibility.py` diagnostic makes one explicitly requested credential-free HTTPS GET for each of the five fixed source profiles. It rejects redirects, unsupported types/encodings, invalid UTF-8, oversized/incomplete responses and inconsistent capture receipts. No arbitrary URLs, retries or API-key lookup are supported.
+The private ledger now supports a fourth write operation, `reconcile`, in addition to `record`, `disposition` and recovery/status operations.
 
-It runs actual captures through `inspect_entry_sources` with no context baselines, records them through the existing SQLite ledger and TypeScript gate in a temporary private directory, and reads/replays the committed event. Safe metadata only is printed; no raw source bodies, context text, proposal replacements, private paths or credentials are uploaded. Temporary evidence is removed at the end. This validates integration but is not a durable live archive.
+A reconciliation request contains exactly:
+- `source_event_revision`: a committed observation event containing the source context the reviewer inspected.
+- `proposal_ids`: the active holds being resolved.
+- `reviewer` and `rationale`: operator-supplied review metadata.
+- `reviewed_at`: the actual editorial review time.
+- `records`: the complete resulting private guidance inventory.
 
-Initial live runs 36574128149 and 36574421469 received all five pages with HTTP 200 but exposed a shared parser incompatibility: redundant document-closing tags after an already complete body/html, preceded by scripts. `tracker/entry_html.py` now handles precisely one inert duplicate closing pair while retaining strict interior balancing. New regression tests also exposed and repaired silently discarded out-of-body prose/elements. Missing or misnested internal tags, duplicate opening bodies, appended visible content and incomplete/reordered closing pairs still refuse. Script/style behavior remains outside comparison scope, not implicitly approved.
+Reconciliation is source-level. If a source has multiple active proposals, all of them must be selected; Rocky Mountain's shared source cannot be partially approved. The selected source observation must be the latest retained observation for that source and at least as new as every cleared proposal.
 
-The final diagnostic workflow is manual `workflow_dispatch` only, contents:read, with a five-minute job limit and no capture artifacts. Development-only marker-gated push execution has been removed. No recurring collection was enabled. The 15-second network timeout applies per socket operation, not as an absolute standalone command deadline.
+The replacement guidance inventory is validated through the existing rule/note validators. Unaffected records must remain byte-equivalent. Affected records keep the same identity, park and official source, use the exact approved review time, and preserve their existing rights basis and rights-review timestamp. Extra top-level or evidence fields are refused.
 
-## Actual live verification
+The approved excerpt for every affected record must occur exactly once in the retained source context. Missing or duplicated replacement text fails closed. The reconciliation event stores the complete new records plus hashes of the previous and next guidance revisions; prior events remain immutable and reconstructable.
 
-**Entry HTML compatibility diagnostic #3, run 36575873171, job 109431220513, head a98487ec123b629ba433deee00fe3ab24b29fc4c.**
-https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36575873171
+### Reviewed context baseline semantics
 
-On **2026-09-29 at 13:32:52.880Z–13:32:53.190Z** (9:32 a.m. Toronto), all five exact source URLs returned HTTP 200 and their actual HTML contexts were extracted. All six saved guidance excerpts were uniquely present in that scope. Actual captures, extracted evidence and resulting proposals successfully round-tripped through the existing temporary private ledger and review gate.
+Reconciliation derives a persistent **schema-v2 context baseline** from the retained source observation. V2 distinguishes the real editorial sequence: source captured first, then human review/approval. Legacy schema-v1 baselines keep their previous clock semantics.
 
-Report: `all_contexts_extracted:true`, `ledger_replay_verified:true`, `pending_proposals:6`, `approved_context_baselines:0`, `approval_performed:false`, `publication_performed:false`, `raw_captures_uploaded:false`. Every source reason was `context_not_reviewed`.
+Subsequent observations automatically consume ledger-held baselines. A caller cannot replace them through a new capture request. When the first explicit reconciliation affects only one source, already-validated legacy baselines for unrelated sources are carried forward rather than silently dropped.
 
-**The six temporary holds are missing-context-review holds, not confirmed rule changes.** Presence of saved excerpts does not approve surrounding exceptions, renew original guidance dates or establish current park conditions. The diagnostic intentionally created no context baseline or public proposal. Raw captures were not retained after its temporary ledger was removed. Exact source clocks, byte counts and raw/context hashes are recorded in **docs/LIVE_ENTRY_COMPATIBILITY.md**.
+A later matching source observation does not automatically clear a sticky hold. A reviewer may explicitly reconcile from that newer observation if it is the latest retained evidence and the complete source-level hold set is selected.
+
+This is **private editorial approval inside the ledger**, not public publication. The reconcile command does not write `data/`, the website, alert snapshots, public history, deployment state or advertising configuration.
+
+Contract: `docs/GUIDANCE_RECONCILIATION.md` and `docs/ENTRY_REVIEW_LEDGER.md`.
+
+## TDD and self-review record
+
+The reconciliation contract was developed test-first.
+
+- Verify pilot #47 (`36579697560`) failed because `reconcileEntryReview` did not exist.
+- Initial implementation exposed a clock-model mismatch between legacy baselines and explicit review-after-capture; schema-v2 baselines were introduced without weakening v1.
+- Verify pilot #51 (`36581315199`) reproduced acceptance of extra unreviewed schema fields; exact record/evidence shape is now required.
+- Verify pilot #53 (`36581590068`) reproduced rejection of a valid newer matching source observation while an older hold remained; reconciliation now binds to the latest retained source observation.
+- Verify pilot #56 (`36582585446`) reproduced loss of an unrelated reviewed legacy baseline when reconciling one source; unaffected latest validated baselines are now preserved.
+
+The final review-focus tests also cover absent and duplicated approved excerpts, partial source-level proposal selections, exact retry, caller baseline override, stale source observations, CLI redaction and unchanged rights metadata.
+
+Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **a98487ec123b629ba433deee00fe3ab24b29fc4c**.
-**Verify pilot #44, run 36575877382, completed successfully.** Job **109431236802** tested temporary PR merge **28b113ba5a98d721289208ec39a91191a7521abd** against unchanged main. This CI test merge is not a merge into main. Complete logs were read.
-https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36575877382
+Code/test head: **`8f5034690e58ea766adf2044ee986080988869d0`**.
+
+**Verify pilot #57, run `36582856143`, job `109455297528`, completed successfully.**
 
 | Check | Verified result |
-|---|---|
-| Reproducible npm installation | Passed |
-| Node core/data/review/cross-language tests | 138 passed |
-| Python collection/storage/extraction/compatibility tests | 258 passed |
-| Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
-| Production build | 14 HTML pages plus build.json |
+|---|---:|
+| Node core/data/review tests | 144 passed |
+| Python collector/archive/extraction/ledger/reconciliation tests | 267 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **488 passed; 28 added** |
+| **Total automated tests** | **503 passed** |
+| Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
+| Production static build | 14 HTML pages plus `build.json` |
 
-The 28 new methods cover the observed document trailer and hidden-loss regressions, opt-in/fixed-source transport, response/receipt validation, failure redaction and actual extractor/ledger/gate integration with all six stored guidance bindings. Unit fixtures remain synthetic; the separate live run above supplies actual captured-HTML evidence. No existing test was removed or weakened. All earlier browser cases remain passing; no UI change or new visual/accessibility audit is claimed.
+Verification artifact `pilot-verification`, ID **11040527008**, contains production build output, existing screenshots and lockfile—not private source captures or ledgers. CI-reported ZIP SHA-256: `cffb57874750dff951ff6aad5423b195b3e89fa712e20c2248f6e34a275c7cae`.
 
-Artifact `pilot-verification`, ID **11037711139**, includes production output, existing screenshots and lockfile, not captures or private ledgers. Seven-day retention. CI-reported ZIP SHA-256: `331de6b67608ae051bec8598f33d344b73ea11916515bd7f71e6e010d68cb05d`; this verification artifact was not independently downloaded in this increment.
-https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36575877382/artifacts/11037711139
+This documentation handoff receives a separate CI run; do not infer it from #57.
 
-The final handoff adds documentation and disables the temporary push trigger; it does not change the verified application/test code. Its own CI result must be checked and recorded in PR #1, not inferred from #44.
+## Previously verified real-page compatibility
 
-## Execution and review limits
+Diagnostic run `36575873171`, job `109431220513`, captured the five exact configured NPS entry pages on September 29, 2026. All five returned HTTP 200; all body-text/link contexts extracted; all six saved guidance excerpts were uniquely present; temporary ledger replay succeeded.
 
-Local GitHub/NPS DNS was unavailable. A temporary development workflow packaged only committed public source code as a git archive. Its downloaded ZIP digest was verified (`c942fb0cc8959b7da4944bee245fe2a8ba726e378cdfc36816398138fa7e536a`). Local work used that complete isolated source snapshot, not a clone with upstream history; the source-artifact step was removed afterward. No live page body was in that artifact.
+Every source reason was `context_not_reviewed`, with six temporary holds and **zero approved context baselines**. Those captures were deliberately discarded after the diagnostic. They are compatibility evidence, not a durable reviewed reference archive and not proof that park requirements are unchanged.
 
-Tests preceded the repair: the 14 envelope methods initially produced nine failed assertions and four errors, including genuine silent-discard cases. They passed after the narrow fix, together with the 30 original extraction tests. The 14 diagnostic methods first ran against explicit unimplemented interfaces, then passed against the implementation. The local entry family passed 100 Python tests and eight cross-language Node cases, plus compileall.
+Exact safe retrieval metadata and hashes remain in `docs/LIVE_ENTRY_COMPATIBILITY.md`.
 
-A complete local baseline Python run on 3.13 exposed one existing stderr assertion contaminated by SQLite ResourceWarnings; a complete local Node run lacked installed Astro dependencies (136 passed, two failed). No full local pass is claimed, and unrelated tests were not weakened. Full #44 CI installed the lockfile and used the supported Node 24/Python 3.12 configuration; all 488 passed.
+## Remaining gates
 
-Review was author self-review, not independent approval. Existing action-runtime/install-script warnings remain. Previous manual screen-reader, actual OS/browser zoom, cross-browser and forced-color limitations remain. Hardware power-loss, Windows/network filesystems, hostile same-user mutation, encryption/authenticated reviewers and off-host backup are not newly established.
+No real reviewer has used the new reconciliation command on a durable NPS capture. Therefore there are still **zero durable real approved context baselines** created by this workflow.
 
-## Remaining gates and next coherent task
+The private ledger is owner-only local POSIX storage, not hosted durable storage, encryption, authenticated reviewer identity, multi-host storage or off-host backup. Hardware power-loss, Windows/network filesystems and hostile same-user mutation remain outside verified guarantees.
 
-Read current PR/head/CI first. Real HTML body-text/link compatibility is now demonstrated for the five captured pages, so do not repeat that milestone or rebuild the collector, parser, ledger or preview systems.
+Source-content redistribution/rights review remains separate from guidance review. Hashes prove internal consistency, not factual truth, source authenticity or permission to republish.
 
-**Next establish explicitly reviewed reference contexts and an approved-guidance reconciliation workflow**, using owner-controlled persistent captures and the existing ledger. Keep original capture times, current/previous guidance revisions, reviewer decisions and all unresolved holds linked. Never derive approval from a hash, matching sentence or successful HTTP request. The diagnostic CLI intentionally discards its temporary store, so it cannot substitute for persistent baseline evidence. Changing parser acceptance can make older ledger events fail replay; such cases require explicit operator handling, not automatic history rewrites.
+The keyed NPS alerts API was not checked during this milestone. The last historical key diagnostic remains the earlier empty-key/no-request result; do not treat it as current configuration.
 
-Only the bounded body text/block/H1/link representation was tested. Linked/dynamic content, scripts/styles, media and embedded documents remain outside scope. No source-content rights or factual guarantees follow from extraction or hashing. Actual approved context baselines are still zero. Final approval/hold-resolution and publication remain separate from source capture.
+No scheduler, deployment, indexing, advertising, tracking, account system, spending or provider agreement was activated. Neither pilot release milestone is declared complete.
 
-The keyed NPS alert API and private-key configuration were not checked. The last historical key diagnostic remains run36481482091/job109224608968 at2026-09-29T02:13:16Z: empty key/no requests, original preflight code0dce38beb7c1d9bc3d7feba0d8a69ca1f97ddca7. It does not establish current secret settings. Use docs/NPS_PREFLIGHT.md when the owner-controlled key is ready; do not repeatedly rerun an unchanged empty-key check as progress.
+## Next coherent task
 
-Persistent storage/backup, reviewed source content, alert API compatibility, final editorial approval, hosting and publication/rollback remain release requirements. No deployment, indexing, advertising, tracking, accounts, spending or provider agreement was activated. Neither M1 nor M2 is declared complete; no expansion beyond five parks.
+Build a **private reviewer inspection packet/workflow** over the existing retained ledger evidence so a human can inspect the selected current context, previous approved guidance, proposed replacement guidance, proposal history and exact clocks before invoking `reconcile`. Keep it local/private, read-only and non-publishing; do not create another source store.
+
+After that reviewer surface exists, perform an owner-controlled durable capture/review session for the five sources, then validate keyed alerts through the existing preflight/staging/preview path when an NPS key is configured.
 
 ## Verification lineage
 
-Prior totals: 79 foundation;109 source coverage;167 private history;206 staging;246 visitor history;293 preview;309 planning;347 accessibility;380 selected-source review;416 extraction;460 ledger/identity repair (67a2491 / run36572571183, handoffdc3c794 / run36573251437). Current implementation is 488 tests plus the separate five-page live capture/replay diagnostic above. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **503 tests** at `8f50346`, run #57. PR #1 remains draft and unmerged.

@@ -1,29 +1,29 @@
 # Private entry-review ledger
 
-## What this adds
+## Purpose
 
-`tracker.entry_review_store.EntryReviewStore` persists the existing source-extraction and review-gate results together. It does not replace the park-alert archive. It is a separate, offline editorial ledger for supplied page captures, context evidence, pending proposals and non-approving reviewer dispositions. No website imports it, and no public dataset is written.
+`tracker.entry_review_store.EntryReviewStore` is a separate offline editorial ledger for entry-source captures, extracted context, review proposals, reviewer dispositions and explicit guidance reconciliations. It is not the alert archive and no website imports it directly.
 
-The ledger is stored as `review.sqlite3` in an owner-only POSIX directory outside the repository. SQLite is provided by Python's standard library; no server, paid service, new package or account is introduced. This is local persistence, not provisioned hosted storage, encryption, access authentication or a backup service.
+The ledger is one owner-only SQLite database (`review.sqlite3`) outside the repository. SQLite comes from Python's standard library. This is local persistence, not hosted storage, encryption, authenticated identity or backup.
 
-## Record contract
+Every read replays the bounded event chain through the current extractor and review policy. Hashes verify consistency; they are not signatures, factual validation or proof of source-content rights.
 
-An input JSON object has exactly four fields:
+## Observation record contract
 
-- `records`: the full original approved guidance records (the current rules plus undated notes), unchanged, not the copies with overlaid review status.
-- `captures`: the complete distinct-source capture batch accepted by `inspect_entry_sources`. Capture timestamps are the actual original observation times, not the import time.
-- `baselines`: separately reviewed context baselines, or an empty array. Missing baselines create holds, not automatic approvals.
-- `seed_register`: the initial pending register to preserve. On subsequent batches this must remain identical to the first seed; the ledger's accumulated register, not the seed, is passed to the gate.
+The `record` input has exactly four fields:
 
-The first batch binds the exact supplied guidance inventory. Subsequent batches must retain it. Revised approved guidance requires a separately designed reconciliation/migration, not substituting it into this ledger. Starting a new ledger does not resolve the old one's holds.
+- `records`: the complete current private guidance inventory.
+- `captures`: one capture for every configured source represented by the inventory.
+- `baselines`: legacy reviewed context baselines when no ledger-held explicit baselines exist; otherwise this must be empty.
+- `seed_register`: the original proposal register seed. Later batches retain the same seed while accumulated ledger proposals are supplied internally.
 
-The importer runs the existing Python `inspect_entry_sources`, then invokes `scripts/entry-review-bridge.ts` to run the existing TypeScript `assessEntrySources`. Captures, extracted current/reference context, precise failure reasons, checks and the resulting proposal register are included in the same event. Matching checks are retained as well as failed/held checks. No approval date, effective period or source timestamp is renewed by importing.
+A record event stores the supplied captures, extracted current/reference context, precise reasons, gate checks and resulting proposal register together. Matching checks are retained too. Importing never renews guidance approval dates.
 
-Reads replay all committed observation events through those same implementations. A changed proposal or context does not pass merely because someone recomputes its stored digest. Hashes and replay are consistency checks, not source authenticity, reviewer authentication or a defence against an actor who can rewrite the entire store and source inputs.
+Once a reconciliation has created ledger-held baselines, later record events automatically use those baselines and caller-supplied replacements are refused.
 
 ## Commands
 
-Run from the repository with its existing Node and Python/uv setup. Use real absolute paths outside the checkout. The parent of the new store directory must already exist. Protect capture/decision input files with owner-only permissions, for example `chmod 600` on files you control; do not put credentials into them.
+Use absolute private paths outside the checkout and owner-only input files.
 
 ```sh
 uv run --frozen python -m tracker.entry_review_cli status \
@@ -35,53 +35,107 @@ uv run --frozen python -m tracker.entry_review_cli record \
   --expected-revision empty
 ```
 
-For later writes, use the exact revision returned by `status`, rather than `empty`. A stale revision is refused, including when another writer commits after initial validation. Exact retries of already committed operations return `replayed:true`, the original `committed_revision`, and the current read-snapshot revision without adding an event or moving the head backwards.
+For later writes, replace `empty` with the exact current revision. Stale expected revisions are rejected. Exact retries of already committed operations are acknowledged without duplicating events or moving the head backwards.
 
-Status and write summaries include revision IDs, counts, pending proposal references, safe reasons and timestamps. They exclude HTML, context, rationale, private paths and raw exception messages. Full evidence remains in the protected ledger and is available to local code through `EntryReviewStore.read()`; do not dump it into public CI logs or issues.
+CLI summaries expose safe counts, revision/proposal references, reasons and timestamps. They do not print source HTML/context, reviewer rationale, private paths or arbitrary exceptions.
 
-## Reviewer disposition is not approval
+## Non-approving reviewer dispositions
 
-A disposition input has exactly `proposal_id`, `reviewer`, `decision` and `rationale`. The reviewer is an operator-supplied identifier, not an authenticated identity. Valid decisions are `retain_hold` and `request_guidance_revision`. Both append an immutable record and keep all pending proposals active. Rationale must be nonempty and bounded. There is no approve/resolve or clear-hold command.
+A `disposition` request has `proposal_id`, `reviewer`, `decision` and `rationale`. Supported decisions remain:
+
+- `retain_hold`
+- `request_guidance_revision`
+
+Both keep the proposal pending.
 
 ```sh
 uv run --frozen python -m tracker.entry_review_cli disposition \
   --store /absolute/private/entry-review \
   --input /absolute/private/reviewer-disposition.json \
-  --expected-revision EXISTING_HEAD_SHA256
+  --expected-revision CURRENT_HEAD_SHA256
 ```
 
-Unknown proposals, stale heads, unsupported approval actions and invalid reviewer metadata are rejected. Final disposition of revised guidance, renewed context approvals and reconciliation of historical holds remain a separate acceptance gate.
+Reviewer labels are operator-supplied identifiers, not authenticated identities.
+
+## Explicit guidance reconciliation
+
+`reconcile` is the only ledger action that can clear selected holds and advance the private approved guidance inventory.
+
+The request has exactly:
+
+- `source_event_revision`
+- `proposal_ids`
+- `reviewer`
+- `rationale`
+- `reviewed_at`
+- `records`
+
+```sh
+uv run --frozen python -m tracker.entry_review_cli reconcile \
+  --store /absolute/private/entry-review \
+  --input /absolute/private/guidance-reconciliation.json \
+  --expected-revision CURRENT_HEAD_SHA256
+```
+
+The selected event must be a committed observation whose affected source context was successfully extracted. For every affected source, it must be the latest retained source observation and cannot predate any cleared proposal.
+
+All active proposals for an affected source must be selected together. This prevents partial approval of a page that supplies multiple guidance records.
+
+The complete replacement inventory is validated using the existing rule/note validators and review-register policy. Unaffected records are unchanged. Affected records:
+
+- keep the same record ID, park, official source and schema shape;
+- use `review_status: reviewed`;
+- use the exact supplied `reviewed_at` in both record and evidence;
+- preserve `rights_basis` and `rights_reviewed_at`;
+- must have their approved excerpt present exactly once in the retained reviewed context.
+
+The reconciliation event records reviewer metadata, complete new records, previous/next guidance hashes, affected record/source identities and a reviewed context baseline. Old events remain unchanged.
+
+This is private editorial approval, **not publication**. `publication_performed` remains false and the command does not write website data.
+
+Full operator semantics: `docs/GUIDANCE_RECONCILIATION.md`.
+
+## Context baseline versions
+
+### Schema v1 — legacy baseline input
+
+V1 retains the original semantics: guidance had already been approved, a later context was captured/reviewed, and a still-later source observation is compared to it.
+
+### Schema v2 — explicit reconciliation baseline
+
+V2 reflects the explicit review flow: a source context is captured first, a reviewer approves guidance against that retained context afterward, and future captures compare against it.
+
+When reconciling only one source for the first time, already-validated legacy baselines from the latest observation for unaffected sources are preserved. Subsequent reconciliations replace only affected source baselines.
 
 ## Transactions and recovery
 
-Every write is a hash-linked event and head update in one SQLite `BEGIN IMMEDIATE` transaction using DELETE journal mode and `synchronous=EXTRA`. The expected head is checked again within that transaction. An unsuccessful transaction cannot commit half an evidence/proposal pair. Prior events are never rewritten or pruned by this API.
+Every write is one hash-linked event plus head update inside SQLite `BEGIN IMMEDIATE`, DELETE journal mode and `synchronous=EXTRA`. The expected head is checked again inside the transaction.
 
-A process killed during a write may leave a rollback journal needed by SQLite. Do not remove that file or copy only the database while a writer might be active. `status` uses a read-only connection and may refuse a database requiring recovery. Explicitly request SQLite recovery:
+A killed process may leave a rollback journal. Do not delete it manually. Use:
 
 ```sh
 uv run --frozen python -m tracker.entry_review_cli recover \
   --store /absolute/private/entry-review
 ```
 
-Recovery takes the write lock, lets SQLite recover, then verifies/replays the committed ledger. It adds no source observation, decision or approval. A corrupt or unrecognized database remains an error; the command does not reconstruct lost records or accept an invalid store. An interruption during initial database creation may leave an unrecognized empty file; retain it for operator inspection rather than silently treating it as new history.
+Recovery performs no source observation, reconciliation or publication. Corrupt/unrecognized databases remain errors.
 
-WAL-format databases are refused by inspecting their documented header before opening SQLite, because opening a read-only WAL connection can otherwise create sidecar files. Other databases are not adopted. Symlinks, hard-linked files, FIFO inputs, unexpected store contents and nonprivate permissions are refused without automatically changing existing permissions.
+WAL databases, symlinks, hard-linked databases, FIFOs, unexpected store contents, protected repository paths and nonprivate permissions are refused.
 
 ## Limits and threat model
 
-Limits: 8 MiB input JSON, 12 MiB per event, 64 events, 128 MiB aggregate event payload. Files are checked against a payload-plus-overhead bound before use. The complete bounded chain is replayed on reads; this deliberately trades throughput for simple verification in the offline pilot. Capacity errors preserve existing evidence. No automatic pruning, rotation or migration is implemented.
+Limits remain:
 
-Inputs are bounded UTF-8 JSON with duplicate-key/nonfinite-value rejection. The Node bridge gets only PATH and a warning setting, not API keys, NODE_OPTIONS, proxies or arbitrary parent environment variables. The child uses trusted local code, a ten-second timeout and bounded protocol payloads. This is not sandboxing a hostile Node binary or third-party dependency.
+- 8 MiB input JSON
+- 12 MiB per event
+- 64 events
+- 128 MiB aggregate event payload
+- bounded Node bridge input/output and ten-second child timeout
 
-Supported guarantee: tested local POSIX process-interruption and transaction/replay behavior with trusted filesystem ancestry and tools. Not established: power-loss behavior on specific hardware, hostile same-user changes or race-proof pathname traversal, network filesystems, Windows, encryption, multi-host operation, off-host backup/restore, indefinite retention or production approval. Native filesystem permissions are not a cryptographic confidentiality guarantee.
+The complete chain is replayed on reads. No automatic pruning, rotation or migration exists.
 
-No real source captures, new context approvals, reviewer decisions or pending proposals were added to public product data. Real DOM compatibility, reviewed source content, final guidance reconciliation, hosted storage and publication/rollback still precede source monitoring or launch.
+Verified guarantees concern trusted local POSIX filesystem/process-interruption cases. Not established: hardware power-loss durability, Windows/network filesystems, hostile same-user mutation, encryption, authenticated reviewer identity, multi-host operation, off-host backup/restore or indefinite retention.
 
-## Implementation references
+Changing parser/policy code can make old events fail replay. Such failures require explicit operator investigation; never rewrite history or bypass validation to make an old chain pass.
 
-SQLite atomic commit and recovery: https://www.sqlite.org/atomiccommit.html
-SQLite synchronous modes: https://www.sqlite.org/pragma.html#pragma_synchronous
-SQLite header write/read format bytes: https://www.sqlite.org/fileformat2.html
-Python SQLite URI, transaction and timeout behavior: https://docs.python.org/3.12/library/sqlite3.html
-
-These describe engine behavior, not an independent durability certification of this application.
+No real NPS context was approved through this feature in the repository test suite.
