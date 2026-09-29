@@ -1,5 +1,5 @@
 /** Strict, server-only candidate loading. No defaults to production or private state. */
-import { openSync, readSync, closeSync, fstatSync } from 'node:fs';
+import { openSync, readSync, closeSync, fstatSync, lstatSync } from 'node:fs';
 import { historyDigest, validateHistory } from './validate-history.ts';
 import { assertSafePath } from './preview-workspace.mjs';
 import type { History } from '../src/lib/history.ts';
@@ -48,8 +48,14 @@ export function validatePreviewBundle(value: unknown): PreviewBundle {
 export function readPreviewBundle(path:string):PreviewBundle {
   let fd: number | undefined;
   try {
-    assertSafePath(path); fd=openSync(path,'r');
-    const stat=fstatSync(fd); required(stat.isFile() && stat.size <= MAX_BUNDLE_BYTES);
+    assertSafePath(path);
+    // Opening a FIFO can wait indefinitely before fstat runs. Refuse non-files
+    // first, then check that the opened descriptor still identifies that file.
+    const before=lstatSync(path);
+    required(before.isFile() && before.size <= MAX_BUNDLE_BYTES);
+    fd=openSync(path,'r');
+    const stat=fstatSync(fd);
+    required(stat.isFile() && stat.size <= MAX_BUNDLE_BYTES && stat.dev===before.dev && stat.ino===before.ino);
     const bytes=Buffer.alloc(Math.min(stat.size+1,MAX_BUNDLE_BYTES+1)); let offset=0;
     while(offset<bytes.length){const n=readSync(fd,bytes,offset,bytes.length-offset,null);if(!n)break;offset+=n;}
     required(offset===stat.size);
