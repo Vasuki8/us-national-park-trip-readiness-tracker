@@ -43,11 +43,14 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(normal['error_code'], 'response_requires_review')
         self.assertEqual(diagnostic['error_code'], 'park_code_mismatch')
 
-    def test_diagnostic_mode_distinguishes_optional_url_and_source_path_failures(self):
+    def test_optional_url_and_official_nps_subdomains_are_accepted(self):
         empty_url = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='')]), diagnostic=True)
-        other_path = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://www.nps.gov/subjects/developer/index.htm')]), diagnostic=True)
-        self.assertEqual(empty_url['error_code'], 'empty_field_url')
-        self.assertEqual(other_path['error_code'], 'source_path_mismatch')
+        short_link = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://go.nps.gov/short-link')]), diagnostic=True)
+        shared_path = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://www.nps.gov/subjects/developer/index.htm')]), diagnostic=True)
+        self.assertEqual(empty_url['collection_status'], 'success')
+        self.assertIsNone(empty_url['records'][0]['url'])
+        self.assertEqual(short_link['collection_status'], 'success')
+        self.assertEqual(shared_path['collection_status'], 'success')
 
     def test_missing_or_inconsistent_pages_are_quarantined(self):
         cases = [lambda start: page([], total=2), lambda start: page([record()], total=2, start=0), lambda start: {'error': 'provider error'}, lambda start: page([record()], total='bad')]
@@ -85,9 +88,10 @@ class CollectorTests(unittest.TestCase):
             with self.subTest(now=now):
                 with self.assertRaises(ValueError):
                     collect('yose', self.previous(), now, lambda start: page([]))
-    def test_source_link_must_belong_to_the_requested_park(self):
-        result = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://www.nps.gov/grca/conditions.htm')]))
+    def test_source_link_must_stay_on_an_official_nps_host(self):
+        result = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://example.com/yose/conditions.htm')]), diagnostic=True)
         self.assertEqual(result['collection_status'], 'quarantined')
+        self.assertEqual(result['error_code'], 'source_host_invalid')
     def test_previous_success_cannot_be_later_than_previous_attempt(self):
         previous = self.previous()
         previous['last_checked_at'] = '2026-09-28T17:00:00Z'
