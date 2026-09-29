@@ -147,6 +147,61 @@ Commands and limitations: `docs/ENTRY_REVIEW_BACKUP.md`.
 
 This mechanism makes local backup/restore testable, but it does **not** create an off-host backup service, choose backup media, encrypt the database, authenticate reviewers, certify native Windows/network filesystems, or prove hardware power-loss durability. Those remain operator/storage decisions.
 
+## New: read-only release-readiness report
+
+`tracker.release_readiness` consolidates the pilot launch gates into one deterministic, non-mutating report. It never contacts providers, deploys, changes indexing, enables advertising, writes public/private state, or interprets missing evidence as success.
+
+Default repository-only command:
+
+```sh
+uv run --frozen python -m tracker.release_readiness --format text
+```
+
+Machine-readable form:
+
+```sh
+uv run --frozen python -m tracker.release_readiness --format json
+```
+
+When owner-controlled private evidence exists, the report can also replay the private ledger and verify a specific content-addressed backup before evaluating those private gates:
+
+```sh
+uv run --frozen python -m tracker.release_readiness \
+  --format text \
+  --store /absolute/private/entry-review \
+  --backup /absolute/private/backups/BACKUP_ID
+```
+
+The seven gates are:
+
+1. durable source review;
+2. NPS alert API validation;
+3. private storage backup;
+4. source-rights review;
+5. hosting and rollback;
+6. search indexing; and
+7. advertising readiness.
+
+Status values are only `pass`, `blocked`, or `not_checked`. Every non-pass status is release-blocking.
+
+The current repository-only result is deliberately **BLOCKED**:
+
+- durable source review — `not_checked`: no owner private ledger supplied;
+- NPS alert API — `blocked`: all five public snapshots are still `never_checked`;
+- storage backup — `not_checked`: no owner private ledger/verified backup supplied;
+- source rights — `not_checked`: all six public guidance records carry rights metadata, but broader source-content/commercial rights review is external and is not self-certified by those fields;
+- hosting/rollback — `blocked`: no production deployment path is configured;
+- indexing — `blocked`: HTML meta robots, `robots.txt`, and response headers all still disable indexing;
+- advertising — `blocked`: no ad integration is enabled.
+
+The alert gate intentionally never describes `never_checked` snapshots as “no alerts” or an all-clear. If future public snapshots become successful, the static report still returns `not_checked` until freshness/provider compatibility has release evidence rather than self-promoting collection success.
+
+The private source-review gate passes only when the verified private state has schema-v2 reviewed context baselines for all five fixed entry sources and zero pending proposals. The private backup gate passes only when a previously verified backup manifest matches the exact current ledger head and event count.
+
+This report is an evidence summary, not an authorization to launch. Removing `noindex`, adding deployment/ad code, or supplying a private ledger changes individual evidence but does not itself approve release.
+
+Contract: `docs/RELEASE_READINESS.md`.
+
 ## TDD and self-review record
 
 The reconciliation contract was developed test-first.
@@ -163,27 +218,27 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`a8538cb5656bcaf60b174fc167229ec60a5b7bcf`**.
+Code/test head: **`fb1ac56ee4bb73f8ae28aca914fd2d7fc22708c6`**.
 
-**Verify pilot #77, run `36603370528`, job `109526089733`, completed successfully.**
+**Verify pilot #80, run `36605455842`, job `109533190872`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
 | Node core/data/review tests | 144 passed |
-| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup tests | 296 passed |
+| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup/readiness tests | 305 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **532 passed** |
+| **Total automated tests** | **541 passed** |
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
-The backup increment adds ten Python methods. RED #76 (`36603036692`) failed because `tracker.entry_review_backup` did not exist. #77 passed after the minimal implementation.
+The release-readiness increment adds nine Python methods. RED #79 (`36605123475`) failed because `tracker.release_readiness` did not exist. #80 passed after the minimal read-only evaluator/CLI implementation.
 
-Coverage includes content-addressed/private backup creation, source-ledger byte preservation, complete replay verification, deterministic retry, database/manifest/unexpected-file corruption refusal, fresh-destination restore, protected/symlink/insecure path rejection, interrupted backup/restore cleanup, empty-ledger refusal, and sanitized backup/verify/restore CLI output.
+Coverage proves the current repository cannot report release-ready, `never_checked` alerts cannot be described as an all-clear, all five schema-v2 source baselines plus zero holds are required for the private source-review gate, a verified backup must match the exact current ledger head, public guidance rights metadata does not self-certify broader source rights, all three indexing controls are detected, no network/filesystem write occurs during evaluation, and CLI text/JSON/error output remains path-safe.
 
-Verification artifact `pilot-verification`, ID **11049274101**, contains the production site build, existing screenshots and lockfile—not editorial databases, backups, captures or reviewer packets. CI-reported ZIP SHA-256: `df99b0796e1b56ec1fcbde8bf33fd7a1b6ba5691fda130788d2969cdc455f725`.
+Verification artifact `pilot-verification`, ID **11050756880**, contains the production site build, existing screenshots and lockfile—not private ledgers, backups, captures, packets, or readiness evidence. CI-reported ZIP SHA-256: `fa3b9731ba2dcbb51fc0643a4bbbb61e4b2236d2c8b1912f19d453fa6fab84d8`.
 
-Review was author self-review because no independent reviewer/subagent tool is available. No Critical/Important issue remained after review. This documentation-only handoff receives a separate CI run; do not infer it from #77.
+Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising state changed. This documentation-only handoff receives a separate CI run; do not infer it from #80.
 
 ## Previously verified real-page compatibility
 
@@ -217,4 +272,4 @@ The keyed NPS alert API remains a separate gate and should use the existing pref
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **532 tests** at `a8538cb`, run #77. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **541 tests** at `fb1ac56`, run #80. PR #1 remains draft and unmerged.
