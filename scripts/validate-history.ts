@@ -45,24 +45,26 @@ function timestamp(value: unknown): bigint {
   requireValue(Number.isFinite(base), 'invalid_history_clock');
   return BigInt(base) * 1000n + BigInt((match[2] || '').padEnd(6, '0'));
 }
-function source(value: unknown, code: string) {
+function source(value: unknown) {
+  if (value === null) return;
   text(value);
   requireValue(!/[\x00-\x20\x7f\\]/.test(value), 'invalid_history_source');
   try {
     const url = new URL(value);
+    const host = url.hostname.toLowerCase();
     // Inspect the original path too: URL() normalizes dot segments before exposing pathname.
     const path = decodeURIComponent(value.replace(/^https:\/\/[^/]+/, '').split(/[?#]/)[0]);
-    requireValue(url.protocol === 'https:' && ['www.nps.gov', 'nps.gov', 'home.nps.gov'].includes(url.hostname)
-      && !url.username && !url.password && !url.port && path.startsWith(`/${code}/`)
-      && posix.normalize(path) === path && !path.includes('\\')
+    requireValue(url.protocol === 'https:' && (host === 'nps.gov' || host.endsWith('.nps.gov'))
+      && !url.username && !url.password && !url.port
+      && (!path || posix.normalize(path) === path) && !path.includes('\\')
       && !/api.?key|token|secret/i.test(decodeURIComponent(url.search + url.hash)), 'invalid_history_source');
   } catch { throw new Error('invalid_history_source'); }
 }
 function evidence(value: unknown, code: string, identifier: string) {
   const item = shape(value, EVIDENCE);
-  for (const key of SEMANTIC.split(' ')) text(item[key], key === 'description');
+  for (const key of SEMANTIC.split(' ')) if (key !== 'url') text(item[key], key === 'description');
   requireValue(item.id === identifier && item.id.length <= 256 && !/[\x00-\x1f\x7f]/.test(item.id));
-  source(item.url, code); hash(item.content_hash);
+  source(item.url); hash(item.content_hash);
   requireValue(historyDigest(Object.fromEntries(SEMANTIC.split(' ').map((key) => [key, item[key]]))) === item.content_hash, 'history_evidence_mismatch');
   return item;
 }
