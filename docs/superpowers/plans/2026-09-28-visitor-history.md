@@ -40,15 +40,21 @@ Interface: validateHistory(value: unknown, snapshot: unknown) -> History; descri
 Files: src/components/HistoryTimeline.astro; src/scripts/history.ts; src/lib/data.ts; src/pages/[page].astro; src/pages/parks/[slug].astro; src/lib/content.ts; tests/history.browser.spec.ts; tests/history-site/; playwright.config.ts.
 - [x] Add failing browser contracts for empty production pages and isolated synthetic populated histories.
 - [x] Render original source text as escaped text, before/after details and absolute observation times; retain useful no-JavaScript fallback. Recompute freshness every minute and on return to the page.
-- [ ] Verify source links, failure/empty/truncation copy, mobile overflow and non-execution of markup; ensure fixtures are not part of production output.
-- [ ] Run the full existing CI, review diff, document limitations and update PROJECT_STATUS.md and PR #1. No merge or deployment.
+- [x] Verify source links, failure/empty/truncation copy, mobile overflow and non-execution of markup; ensure fixtures are not part of production output.
+- [x] Run the full existing CI, review diff, document limitations and prepare PROJECT_STATUS.md/PR handoff. No merge or deployment.
 
 ## Execution record
 
-Resuming the owner-approved visitor-history task on existing feature branch 9ab1047. Direct container GitHub DNS is unavailable; use an isolated partial workspace with hash-checked source copies and full repository verification in CI. No independent reviewer tool is available; perform and disclose author self-review. Decisions stay within approved product architecture; no additional owner setup is required for synthetic development.
+Resumed the owner-approved visitor-history task from 9ab1047 on the existing feature branch. Direct container GitHub DNS was unavailable; local work used an isolated partial workspace with hash-checked dependencies and full repository verification in CI. Review is author self-review, not independent approval. No additional owner setup was required for synthetic development.
 
 The local Python projection suite has 15 tests, including fixture reproducibility. The original 14 TypeScript tests passed; review added three initially failing timestamp regressions (relabeling a retained success, inventing success within a failed window, and year-zero acceptance), fixed before the local 17-test pass.
 
-CI #14 (36506775182) passed 64 Node, 143 Python and 18 generated-output tests but did not run browser assertions because the isolated Astro config supplied URL objects instead of string paths. Fixed using fileURLToPath. CI #15 (36507235090, f190c2f) then ran all 17 browser tests: the ten existing cases passed, and exactly seven timeline assertions failed on missing elements before implementation. No assertion was removed or weakened.
+CI #14 (36506775182) passed 64 Node, 143 Python and 18 generated-output tests but did not run browser assertions because the isolated Astro config supplied URL objects instead of string paths. Fixed using fileURLToPath. CI #15 (36507235090, f190c2f) then ran all 17 browser tests: the ten existing cases passed, and exactly seven timeline assertions failed on missing elements before implementation.
 
-Ruling: projection is read-only; no export/publication CLI before live-source/content review. Visitor hashes check consistency, not signatures or full archive proofs. Keep this limitation in docs/VISITOR_HISTORY.md. Final UI/full-suite verification is pending for this implementation commit.
+CI #16 (36507885402, 77533db) passed 67 Node,143 Python,18 generated-output checks and17 of18 browser cases. The remaining no-JavaScript assertion used ancestor text matching, which Playwright deliberately excludes NOSCRIPT content from. The corrected assertion targets the actual noscript paragraph and requires both visible rendering and expected text. Product markup was unchanged; no intended contract was relaxed.
+
+**Full GREEN: CI #17, run36508305834, head70322a54c28d2942f89b442bf7fe888122d8438b, job109214628545.** Temporary PR merge59d9ae671923bea27793db4c15ecb2701dba0327. 67Node+143Python+18static+18Chromium=246passing tests. Astro21files clean, production14pages plusbuild.json. Artifact11008196173. Complete logs read. Documentation-only follow-up requires its own CI check.
+
+Ruling: projection is read-only; no export/publication CLI before live-source/content review. Visitor hashes check consistency, not signatures or full archive proofs. Limits remain explicit in docs/VISITOR_HISTORY.md. Production histories remain empty. Existing source reviews, alert snapshots, collector/archive/staging code, dependencies and workflows were preserved.
+
+Next work is staging-only preview-bundle preparation and validation, not another timeline implementation or a production promotion. See PROJECT_STATUS.md for current evidence and release gates.

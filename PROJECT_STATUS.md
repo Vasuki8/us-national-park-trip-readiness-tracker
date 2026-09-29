@@ -1,88 +1,83 @@
 # Project status and handoff
 
-Updated: 2026-09-28. **Five-park development foundation, source coverage, private evidence history and recoverable staging collection are implemented. The public pilot release remains incomplete.**
+Updated: 2026-09-28 America/Toronto (verification completed 2026-09-29 UTC). **Visitor-facing history is implemented and CI-verified; the public pilot release remains incomplete.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.
 Branch: `feat/pilot-foundation`. Draft PR: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/1
-Main remains at `a9d9c19e8307828c5bdb6f331e24ca3fe7afffce`. No merge or deployment was performed.
+Main remains `a9d9c19e8307828c5bdb6f331e24ca3fe7afffce`. No merge or deployment was performed.
 
-## Standing direction and existing product
+## Standing direction and preserved capabilities
 
-AdSense-first eventual public product, light theme, no paid data dependency. Validate five pilot parks before expanding to 20. Trustworthy data precedes indexing and advertising. Never infer an all-clear, reopening, permit exemption or annual validity from missing information.
+AdSense-first eventual public product, light theme, no paid data dependency. Validate five parks before expanding to 20. Trustworthy displayed data precedes indexing and advertising. No all-clear, safety score, reopening inference, guessed exemption or annual extrapolation.
 
-The Astro site has 14 HTML pages plus a build manifest, park/state search, five park pages, evidence panels and a self-reported checklist. All five parks have stored entry-source evidence; only Yosemite and Rocky Mountain have dated rules. Yellowstone, Zion and Grand Canyon have separate undated observations, never executable annual rules. Coverage labels derive from data and expire in the browser. Human review, collection, effective, build and publication clocks remain distinct.
+The Astro site still has 14 HTML pages plus build.json, a searchable directory, five park pages, source evidence and a self-reported checklist. All five parks have entry-source evidence; only Yosemite and Rocky Mountain have dated rules. Yellowstone, Zion and Grand Canyon have separate undated observations. Human review, source, effective, collection, build and publication clocks remain distinct.
 
-The existing private archive retains reconstructable normalized notice text and immutable per-park observations. Its first successful check is a baseline; later events distinguish additions, edits and no-longer-present-in-feed notices. Failed/quarantined checks retain last-good evidence without generating removals. Offline record/report commands and archive bounds remain supported. See `docs/EVIDENCE_HISTORY.md`.
+Existing collector, immutable private evidence archive, semantic differ, offline record/report commands and staging receipt/recovery path are preserved. Staging uses expected-parent archive checks and records successful, failed and quarantined attempts without public writes. Its trusted-local-filesystem and recovery limits remain as documented in `docs/EVIDENCE_HISTORY.md` and `docs/STAGING_COLLECTION.md`.
 
-All five committed public alert snapshots still say `never_checked`. This increment does not modify the frontend, public data, existing collector, dated rules, undated notes, dependencies or workflows. No source-review or collection timestamp in website data was advanced.
+## New: visitor-facing notice history
 
-## New: staging-only collector-to-archive integration
+- `tracker/history_projection.py`: read-only `project_history(store, code, limit=20)` returns the current snapshot and its history together from one verified committed-chain read. It excludes pending receipts and private archive internals. Before/after source text is reconstructable, not just a hash.
+- Projection bounds: at most 20 observations and 100 displayed changes per observation; maximum 2 MiB history payload. Total and omitted check/change counts are explicit. Oversized history is refused, not silently truncated. The archive itself is not pruned.
+- `scripts/validate-history.ts`: strict server/build validation checks exact fields, park-specific official URLs, evidence hashes, snapshot binding, chronology, baseline/failure semantics and omitted counts. Visible complete changes are checked against current notice hashes. Last-success times cannot be relabeled or invented within a failed window. Invalid data fails the Astro build.
+- `src/components/HistoryTimeline.astro`: shared timeline on all five park pages and `/changes/`, with park jump links on the latter. First observations are baselines, not newly started closures. Added/edited/no-longer-present notices have expandable before/after evidence and official links. Notice removal is explicitly not a confirmed reopening.
+- Failed checks retain earlier accepted evidence; empty timelines do not imply no changes. Freshness recalculates every minute and when returning to the page without changing evidence timestamps. Absolute times and the no-JavaScript warning remain in static HTML. Source markup is escaped, not executed.
+- `data/history.json`: five empty histories bound to the unchanged `never_checked` public alert snapshots. Site snapshot hashing now includes history. No real NPS alert text, private archive or pending receipt was committed.
+- Synthetic fixtures are reproducibly generated with the real archive/projector and checked by TypeScript. A separate Astro test site uses the production component, but its routes and assets never enter the production build. Browser verification checks that exclusion.
 
-- `tracker/staging.py`: `StagingCollector.collect`, `recover` and `status` connect the existing collector to `archive/` inside an operator-controlled staging root. One park is processed per invocation. Validated pending receipts retain the candidate and the exact archive parent used for collection before archival starts.
-- `tracker/history_store.py`: optional `expected_head` on `append`, checked inside the archive writer lock. Existing callers and on-disk schemas are unchanged. An intervening offline writer causes a conflict rather than applying a candidate against a different baseline. Exact committed retries are idempotent.
-- Offline recovery reuses the saved candidate and original check timestamp, never another network request. It can acknowledge a committed ancestor without rolling back newer history. An uncommitted receipt whose parent has changed is retained for review. Receipt cleanup happens only after verified archival.
-- Successful, failed and quarantined source attempts are archived distinctly. The stricter archive contract can quarantine collector-accepted but invalid records while retaining only prior accepted text. Private archival success does not imply provider success, complete coverage or permission to publish.
-- `tracker/stage.py`: explicit `collect --live`, `recover` and `status` commands. Live collection requires a private `NPS_API_KEY`; missing consent or invalid credentials refuse before state writes or requests. Status/recovery are offline. Provider echoes of the configured key are rejected before retention. Diagnostics use fixed errors and scalar metadata, not raw notice text, responses or exceptions.
-- Pending receipts are bounded by object size, total bytes and file count, including temporary/final-name reservation. Existing archive bounds also apply. Symlinks, traversal, protected source/site/Git directories and unsafe entries are rejected. Neither staging nor archive locks are automatically stolen or removed.
-
-Commands, transaction boundaries, exit codes and operator recovery are documented in `docs/STAGING_COLLECTION.md`. The implementation plan is `docs/superpowers/plans/2026-09-28-staging-collection.md`.
+Contract, limits and publication boundaries: `docs/VISITOR_HISTORY.md`.
+Plan: `docs/superpowers/plans/2026-09-28-visitor-history.md`.
 
 ## Verified implementation
 
-Code/test head: **`afdf98f89f4481fe59cd666c59032be415f11348`**.
-Run **36487323692**, **Verify pilot #12**, completed successfully on 2026-09-28.
-Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36487323692
-Job **109147282228** tested temporary PR merge **`83a051e91c57d2ce36d976a2d8e96d75e70f2b22`** against unchanged main. This is a test merge, not a merge into main.
+Code/test head: **`70322a54c28d2942f89b442bf7fe888122d8438b`**. Application code is the same as `77533db`; the follow-up corrects the no-JavaScript test selector and requires explicit paragraph visibility.
+
+**Verify pilot #17, run 36508305834, completed successfully.** Job **109214628545** tested temporary PR merge **`59d9ae671923bea27793db4c15ecb2701dba0327`** against unchanged main. A temporary test merge is not an actual merge into main.
+Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36508305834
 
 | Check | Verified result |
 |---|---|
 | Reproducible npm installation | Passed |
-| Node core/data/source-coverage tests | 50 passed |
-| Python collector/preflight/history/staging tests | 128 passed |
-| Astro check | 18 files; 0 errors, 0 warnings, 0 hints |
-| Static build | 14 HTML pages plus build.json |
-| Generated-output checks | 18 passed |
-| Chromium browser tests | 10 passed |
-| **Total automated tests** | **206 passed; 39 added in this increment** |
+| Node core/data/history/coverage tests | 67 passed |
+| Python collector/archive/staging/projection tests | 143 passed |
+| Astro check | 21 files; 0 errors, 0 warnings, 0 hints |
+| Production static build | 14 HTML pages plus build.json |
+| Generated-output tests | 18 passed |
+| Chromium browser tests | 18 passed |
+| **Total** | **246 passed; 40 new tests in this increment** |
 
-New coverage includes five expected-parent tests, 22 staging tests, nine CLI tests and three actual abrupt-subprocess-termination tests at pre-commit, mid-commit and post-commit boundaries. Existing archive, collector, date, mobile and no-JavaScript tests remain passing. Full CI logs were read; no inference of success was made from a workflow file alone.
+The eight new browser cases cover production empty-history states, populated synthetic baseline/change/evidence rendering, escaped markup, failed-check context, open-page freshness expiration, omitted history, no-JavaScript evidence and visible fallback copy, 360px layouts with expanded evidence, and exclusion of test/private content from production assets. Existing date, search, checklist, mobile and no-JavaScript cases remain passing.
 
-Artifact `pilot-verification`, ID **10999353202**, contains the static build, screenshots and lockfile, not private archives. Retention: seven days. ZIP SHA-256: `f3301f859b2812f2a31367aeb39c9942b4935291193bd57beb60731caa0515ac`.
-Artifact: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36487323692/artifacts/10999353202
+Artifact `pilot-verification`, ID **11008196173**, contains the production build, existing browser screenshots and lockfile; not private archives or the synthetic test-site build. Seven-day retention. ZIP SHA-256: `8582e49185752f9949658c09c9f45947330fad2b86522b1ff2c444755a0a5b60`.
+Artifact: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36508305834/artifacts/11008196173
 
-Handoff-only commits after this implementation are checked through their own CI. This record proves the exact implementation above, not later changes.
+This handoff/plan update changes documentation only. Its CI is verified separately; the result above proves the exact code/test head, not future changes.
 
 ## Execution and review record
 
-The local isolated workspace contained hash-verified copies of existing Python dependencies, not a full repository clone: direct container GitHub DNS failed. All 39 new tests ran locally; complete regression verification ran in GitHub CI on Python 3.12. The uploaded code and test blobs were compared with the locally tested byte hashes.
+Local verification used an isolated partial workspace with Git-blob-verified existing dependencies, not a full clone: direct container GitHub DNS was unavailable. The 15 projection/fixture tests and 17 new Node tests passed locally; GitHub CI ran the complete repository on Node 24/Python 3.12.
 
-Expected-parent tests first failed on the missing argument; staging/CLI tests first failed on absent modules. Author self-review found a pending-file limit that did not reserve temporary/final names: its regression failed before the correction and passed afterward. No existing test was removed or weakened. Actual process-termination tests verify readable prior history and explicit lock recovery after confirming the writer stopped. They do not prove hardware power-loss or network-filesystem durability.
+Tests preceded implementation. CI #14 exposed an isolated test-site configuration issue (URL objects instead of string paths); it did not establish browser RED. After correction, #15 ran the ten existing browser tests successfully and failed exactly seven missing timeline contracts before component implementation. Author review reproduced and repaired three timestamp-validation gaps. Run #16 passed all data/build tests and 17 browser cases; its sole failure used ancestor text matching for a noscript message. Playwright deliberately skips NOSCRIPT in aggregated text, so the corrected test directly checks the fallback paragraph for both visibility and text. #17 then passed all 246 tests. No test was removed or its intended behavior relaxed.
 
-Review was author self-review, not independent approval. No visual/accessibility or field-conditions audit is claimed. Existing Actions-runtime and npm install-script warnings remain maintenance items; no dependency or workflow changes were made.
+Review was author self-review, not independent approval. No independent visual/accessibility or field-conditions audit is claimed. The 20-file implementation comparison preserved public alert records, all source reviews, existing collector/archive/staging code, dependencies and workflows. Existing Actions Node-runtime and npm install-script warnings remain maintenance items.
 
-## Live NPS gate: not rechecked in this increment
+## Live NPS and publication gates
 
-The last observed read-only preflight was run **36481482091**, job **109127917904**, at **2026-09-28T20:45:52Z**. It received an empty `NPS_API_KEY`, reported `not_configured`, `gate_passed: false`, `publication_performed: false`, and `checks: []`, and made no API request. This does not establish current secret settings or distinguish absent, misnamed, inaccessible or environment-only configuration.
+No NPS API request or key-configuration recheck was performed in this increment. The last observed preflight remains run **36481482091**, at **2026-09-28T20:45:52Z**, which received an empty `NPS_API_KEY`, made no requests and reported `gate_passed: false`. That historical result does not establish the current secret configuration.
 
-Once an owner-controlled repository Actions secret named `NPS_API_KEY` is available, rerun the existing read-only preflight and inspect actual provider shapes privately. Never put keys in chat, URLs, source code or issues. See `docs/NPS_PREFLIGHT.md`. No live NPS request or real-response fixture was produced while developing this staging increment.
+Once an owner-controlled private Actions secret is available, rerun the existing read-only preflight and inspect actual provider shapes privately. Never put keys in chat, URLs, source code or issues. Configuration remains in `docs/NPS_PREFLIGHT.md`.
+
+Production alert snapshots remain `never_checked`; production history remains empty. There is no automatic export/promotion CLI, live public feed, scheduler, deployment, advertising, tracking, accounts, indexing, spending or provider-agreement acceptance. Private archival and a valid hash do not confer source-content redistribution approval.
 
 ## Next coherent task
 
-Read the latest PR/head/CI first and preserve newer changes. The collector, archive, semantic differ, data-driven coverage and staging receipt/recovery path now exist; do not rebuild them.
+Read the current PR/head/CI first and preserve newer changes. The visitor projector, validator, timeline, evidence panels and isolated browser fixture site now exist; do not rebuild them.
 
-Next implement a validated visitor-facing change-history projection and rendering, initially tested with explicitly synthetic fixtures. Project only verified committed observations; do not expose pending/private state, invent publication times, turn baseline observations into new closures, or interpret removals as reopenings. Keep failed/stale/unknown coverage visible and tie any future exported current snapshot and history to the same accepted observation. Leave production history empty and honestly labeled until actual live collection and source-content review pass.
+Next develop a staging-only preview bundle that keeps candidate current snapshots and histories together, validates the pair, and builds an isolated preview without overwriting committed production data. Test mismatched pairs, failed/quarantined attempts, interrupted preparation and exclusion of pending/private state. Keep candidate preparation separate from approval and deployment; no production promotion before live-source and content-use gates pass.
 
-Persistent operator-controlled storage, private live-source compatibility and reviewed credential-free fixtures are still prerequisites to scheduling. A local staging directory in an ephemeral Actions checkout is not durable hosted persistence. Public-history content review, automatic editorial source-change review, hosting and publication/rollback validation remain separate release gates.
+Before scheduling: provide operator-controlled persistent archive storage, validate private live-source compatibility and retain reviewed credential-free fixtures. Ephemeral Actions checkouts are not durable private archives. Automatic editorial source-change review, complete permit/road/facility coverage, source-content rights, hosting and publication/rollback validation remain release gates.
 
-## Limits and inactive capabilities
+## Limits and verification lineage
 
-Trusted local filesystem only. No Windows directory-durability, hardware power-loss, network-filesystem, hostile same-user writer, off-host backup/restore or storage-migration guarantees. Hashes are not signatures. A crash before receipt persistence cannot recover an in-flight response; the old archive remains authoritative and a later collection is a new attempt. Status is a read-only observation, not a cross-process publication transaction. Abandoned locks need explicit operator review; no automatic pruning, lock repair or bulk-removal override exists.
+Visitor digests are consistency checks, not signatures or an independently verifiable copy of the entire archive chain. Truncated views cannot prove omitted events; full verification remains in the trusted archive read. Archive/staging durability is limited to tested trusted local Linux cases: no hardware power-loss, Windows-directory, network-filesystem, hostile same-user writer or off-host backup/restore guarantees. A response lost before receipt persistence cannot be recovered. No automatic pruning, lock stealing or bulk-removal override exists.
 
-No real public alert/change feed, weather integration, complete permit/road/facility coverage, scheduled collection, deployment, accounts, tracking, advertising, indexing, spending or provider-agreement acceptance was activated. PR #1 remains draft and unmerged. Passing synthetic tests does not establish public-release or live-condition readiness.
-
-## Verification lineage
-
-- Foundation: 79 tests at `7c39fb3` / run 36479129760; handoff `83352bd` / run 36479734880.
-- Source coverage: 109 tests at `94bb7af` / run 36482305462; handoff `f232154` / run 36482644929.
-- Private history: 167 tests at `f43ee4c` / run 36485050775; handoff `d4eb109` / run 36485585784.
-- Staging collection: 206 tests at `afdf98f` / run 36487323692.
+Prior full passes: foundation 79 tests; source coverage 109; private history 167; staging 206 at `afdf98f` / run 36487323692 and handoff `9ab1047` / run 36487875643. Visitor-history verification is recorded above. PR #1 remains draft and unmerged; passing synthetic tests does not establish live-condition or public-release readiness.
