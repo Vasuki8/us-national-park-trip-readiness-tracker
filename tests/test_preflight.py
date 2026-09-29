@@ -66,7 +66,7 @@ class PreflightTests(unittest.TestCase):
         })
         self.assertFalse(report['gate_passed'])
         self.assertEqual(report['checks'][0]['collection_status'], 'quarantined')
-        self.assertEqual(report['checks'][0]['diagnostic_code'], 'invalid_source_or_scope')
+        self.assertEqual(report['checks'][0]['diagnostic_code'], 'park_code_mismatch')
         self.assertNotIn(KEY, json.dumps(report))
 
     def test_malformed_response_remains_quarantined(self):
