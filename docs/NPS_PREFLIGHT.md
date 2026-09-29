@@ -10,18 +10,28 @@ The diagnostic checks only the five pilot parks, with at most two requested page
 
 `status: verified` means all checked responses normalized successfully within the budget. It does not establish complete conditions coverage, independently validate a park's operating state, or activate scheduled collection. `needs_review` indicates at least one failed/quarantined/budget-limited response. Do not publish those responses automatically.
 
-## First observed run
+## Latest observed rerun
 
-Run 36481482091, job 109127917904, at 2026-09-28T20:45:52Z:
+Run **36481482091**, job **109224608968**, at **2026-09-29T02:13:16Z**:
 
 ```json
 {"schema_version":1,"mode":"read_only","status":"not_configured","gate_passed":false,"publication_performed":false,"checks":[]}
 ```
 
-The runner received an empty `NPS_API_KEY`. No provider request or publication occurred. The workflow completed its diagnostic successfully, but the live integration gate is blocked.
+The runner again received an empty `NPS_API_KEY`. No provider request, site-data change or publication occurred. The diagnostic completed successfully, but the live integration gate remains blocked. This describes the key supplied to this particular workflow execution, not a direct inspection of repository secrets.
+
+This rerun used the original preflight checkout **0dce38beb7c1d9bc3d7feba0d8a69ca1f97ddca7**, not the current application branch head. A rerun does not automatically validate newer application code. Before live validation after relevant code changes, make sure the executed revision is the intended reviewed revision.
+
+Latest job: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36481482091/job/109224608968
+
+## First observed run
+
+The first execution of run 36481482091, job 109127917904, at 2026-09-28T20:45:52Z returned the same empty-key/no-request diagnostic. It is retained here as historical evidence, not reused as the latest configuration check.
 
 Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36481482091
 
-Owner action: add `NPS_API_KEY` under repository Settings → Secrets and variables → Actions → Secrets → New repository secret, then rerun the existing read-only preflight. Request a personal key through https://www.nps.gov/subjects/developer/get-started.htm. GitHub secret handling: https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets.
+## Owner setup and next validation
 
-After an owner-controlled key is available, repeat the preflight, inspect actual record shapes privately, retain a reviewed credential-free fixture, and build durable evidence/change history before enabling collection. Production, advertising and indexing remain separate gates.
+Add `NPS_API_KEY` under repository Settings → Secrets and variables → Actions → Secrets → New repository secret, then rerun the existing read-only preflight. Request a personal key through https://www.nps.gov/subjects/developer/get-started.htm. GitHub secret handling: https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets. Do not send the key through chat or an issue.
+
+After an owner-controlled key is available, repeat the preflight, inspect actual record shapes privately and retain a reviewed credential-free fixture. The collector, private evidence archive, staging/recovery and isolated preview implementations already exist: use those paths rather than rebuilding them. Operator-controlled persistent storage is still required before scheduling; ephemeral Actions checkouts are not a durable private archive. Source-content approval, production hosting/publication, advertising and indexing remain separate requirements.
