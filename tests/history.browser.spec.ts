@@ -62,6 +62,7 @@ test('populated histories and evidence hashes fit a 360px viewport', async ({ pa
   await page.setViewportSize({ width: 360, height: 800 });
   for (const scenario of ['mixed', 'failed', 'truncated', 'empty']) {
     await page.goto(`${fixtureBase}/${scenario}/`);
+    await expect(page.locator('[data-history]')).toHaveCount(1);
     for (const detail of await page.locator('[data-history] summary').all()) await detail.click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
