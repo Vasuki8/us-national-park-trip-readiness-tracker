@@ -1,0 +1,51 @@
+---
+import { changeLabels, describeHistory, type History, type HistoryMetadata, type HistoryObservation } from '../lib/history';
+interface Props { history: History; snapshot: HistoryMetadata; conditionsUrl: string; title?: string }
+const { history, snapshot, conditionsUrl, title = 'Notice history' } = Astro.props;
+const status = describeHistory(snapshot, new Date());
+const metadata: HistoryMetadata = { collection_status: snapshot.collection_status, last_checked_at: snapshot.last_checked_at, last_successful_fetch_at: snapshot.last_successful_fetch_at };
+const headingId = `history-title-${history.park_code}`;
+const observationTitle = (item: HistoryObservation) => item.collection_status === 'failed' ? 'Check failed'
+  : item.collection_status === 'quarantined' ? 'Check requires review'
+  : item.comparison === 'baseline' ? 'Baseline recorded'
+  : item.change_count ? `${item.change_count} notice ${item.change_count === 1 ? 'change' : 'changes'} observed`
+  : 'No notice differences in this comparison';
+---
+<section class="panel history-panel" id={`history-${history.park_code}`} data-history data-history-metadata={JSON.stringify(metadata)} aria-labelledby={headingId}>
+  <header class="section-heading"><div><p class="eyebrow">What we observed</p><h2 id={headingId}>{title}</h2></div><span class="tag">Checked feed only</span></header>
+  <div class="history-status" role="status" aria-live="polite"><strong data-history-status>{status.title}</strong><p data-history-detail>{status.detail}</p></div>
+  <p class="small muted">Last successful feed check: {snapshot.last_successful_fetch_at ? <time datetime={snapshot.last_successful_fetch_at}>{snapshot.last_successful_fetch_at}</time> : 'Never'}. These are our observation times, not NPS update times or the start of a restriction.</p>
+  <p class="small"><a href={conditionsUrl}>Check official conditions <span aria-hidden="true">↗</span></a></p>
+  {history.observations.length > 0 && <>
+    <p class="small muted">Showing {history.observations.length} of {history.total_observations} recorded checks, newest first.</p>
+    <ol class="history-list">
+      {history.observations.map((observation) => <li data-history-observation class="history-observation">
+        <p class="eyebrow history-clock">Recorded check · <time datetime={observation.checked_at}>{observation.checked_at}</time></p>
+        <h3>{observationTitle(observation)}</h3>
+        {observation.comparison === 'baseline' && <p class="small muted">This first accepted feed is a starting point, not evidence that its restrictions began at this time.</p>}
+        {observation.comparison === 'not_compared' && <p class="small muted">No notice comparison was made. Earlier accepted evidence, when available, is retained with its original successful-check time.</p>}
+        {observation.comparison === 'compared' && observation.change_count === 0 && <p class="small muted">No differences were found between these accepted feeds. This does not establish that conditions at the park were unchanged.</p>}
+        {observation.changes.map((change) => <article class="history-change">
+          <h4>{changeLabels[change.kind]}</h4><p class="change-title">{(change.after ?? change.before)!.title}</p>
+          {change.kind === 'removed' && <p class="small muted">A notice disappearing is not a confirmed reopening. Verify the official conditions before travel.</p>}
+          <details><summary>View before and after evidence</summary><div class="history-evidence">
+            {(['before', 'after'] as const).map((side) => <div class="evidence-side"><h5>{side === 'before' ? 'Before this comparison' : 'After this comparison'}</h5>
+              {change[side] ? <><p class="small"><strong>{change[side]!.title}</strong></p><p class="small muted">{change[side]!.category} · Area scope unclassified</p><blockquote>{change[side]!.description || 'The checked feed supplied no description.'}</blockquote><p><a href={change[side]!.url}>Official source <span aria-hidden="true">↗</span></a></p><p class="small muted">Normalized-record SHA-256: <code>{change[side]!.content_hash}</code></p></> : <p class="small muted">Not present in this side of the accepted feed comparison. No access or safety conclusion follows.</p>}
+            </div>)}
+          </div><p class="small muted">Stored source text may differ from the page currently at that link. Applicability to your dates or planned area is not confirmed.</p></details>
+        </article>)}
+        {observation.omitted_changes > 0 && <p class="note small">{observation.omitted_changes} additional notice changes from this recorded check are not shown in this bounded view.</p>}
+      </li>)}
+    </ol>
+  </>}
+  {(history.omitted_observations > 0 || history.omitted_changes > 0) && <div class="note history-omissions">
+    {history.omitted_observations > 0 && <p>{history.omitted_observations} older recorded checks not shown.</p>}
+    {history.omitted_changes > 0 && <p>{history.omitted_changes} recorded notice changes not shown in this view.</p>}
+    <p>This is a limited display, not a statement that omitted history contains no changes.</p>
+  </div>}
+  <noscript><p class="note small">Without JavaScript, freshness labels reflect the site build. Use the absolute check times above and confirm current information at the official source.</p></noscript>
+</section>
+<script>import '../scripts/history';</script>
+<style>
+  .history-panel{scroll-margin-top:24px;overflow-wrap:anywhere}.history-panel h2{font-size:1.55rem}.history-status{padding:17px 19px;border:1px solid var(--line);background:var(--soft);border-radius:7px;margin-bottom:16px}.history-status strong{font-size:.9rem}.history-status p{font-size:.8rem;color:var(--muted);margin:7px 0 0}.history-list{list-style:none;padding:0;margin:24px 0 0}.history-observation{padding:25px 0 8px;border-top:1px solid var(--line);min-width:0}.history-clock{font-size:.62rem;letter-spacing:.06em;text-transform:none}.history-observation h3{font-size:1.15rem;letter-spacing:-.02em;margin-bottom:12px}.history-change{margin:20px 0;padding-left:18px;border-left:2px solid #ccd8c3;min-width:0}.history-change h4{font-size:.79rem;line-height:1.7;margin:0 0 5px}.change-title{font-size:.91rem;line-height:1.6;margin-bottom:12px}.history-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-top:18px}.evidence-side{min-width:0}.evidence-side h5{text-transform:uppercase;letter-spacing:.07em;font-size:.62rem;margin:0 0 15px}.evidence-side p{font-size:.76rem}.evidence-side blockquote{font-size:.78rem;margin:12px 0;white-space:pre-wrap;overflow-wrap:anywhere}.evidence-side code{display:block;font-size:.68rem;overflow-wrap:anywhere;margin-top:5px}.history-omissions p{margin:4px 0;font-size:.78rem}.history-panel details>p{margin:14px 0 0}.history-panel time{overflow-wrap:anywhere}@media(max-width:720px){.history-evidence{grid-template-columns:1fr;gap:16px}.evidence-side+.evidence-side{padding-top:16px;border-top:1px solid var(--line)}.history-change{padding-left:12px}.history-panel .tag{margin-top:12px}.history-status{padding:15px}.history-panel h2{font-size:1.4rem}}
+</style>

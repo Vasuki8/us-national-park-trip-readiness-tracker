@@ -92,3 +92,18 @@ test('empty, invalid-clock and future checks do not become current history', () 
   assert.match(describeHistory(copy().snapshot, new Date('invalid')).title, /fresh check/);
   assert.match(describeHistory(copy().snapshot, new Date('2026-09-27')).title, /fresh check/);
 });
+test('a failed head cannot relabel the time of the visible last successful observation', () => {
+  const v = copy('failed'); v.snapshot.last_successful_fetch_at = '2026-09-28T13:00:00Z';
+  v.history.snapshot_hash = historyDigest(v.snapshot);
+  assert.throws(() => validateHistory(v.history, v.snapshot));
+});
+test('an all-failed visible window cannot invent a success inside that window', () => {
+  const v = copy('truncated'); v.snapshot.last_successful_fetch_at = v.snapshot.last_checked_at;
+  v.history.snapshot_hash = historyDigest(v.snapshot);
+  assert.throws(() => validateHistory(v.history, v.snapshot));
+});
+test('year zero is not a valid archive timestamp', () => {
+  const v = JSON.parse(JSON.stringify(copy()).replaceAll('2026-', '0000-'));
+  v.history.snapshot_hash = historyDigest(v.snapshot);
+  assert.throws(() => validateHistory(v.history, v.snapshot));
+});

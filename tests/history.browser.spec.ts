@@ -67,3 +67,19 @@ test('populated histories and evidence hashes fit a 360px viewport', async ({ pa
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
+
+test('production assets contain no synthetic history fixtures or private archive fields', async () => {
+  const { readdirSync, readFileSync, statSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const walk = (folder: string): string[] => readdirSync(folder).flatMap((name) => {
+    const path = join(folder, name); return statSync(path).isDirectory() ? walk(path) : [path];
+  });
+  const files = walk('dist').filter((path) => /\.(html|js|json)$/.test(path));
+  expect(files.length).toBeGreaterThan(14);
+  for (const path of files) {
+    const text = readFileSync(path, 'utf8');
+    for (const forbidden of ['historyInjected', 'SYNTHETIC TEST DATA', 'pending_receipt', 'private_path', 'record_refs']) {
+      expect(text, `${path} contains test/private content`).not.toContain(forbidden);
+    }
+  }
+});

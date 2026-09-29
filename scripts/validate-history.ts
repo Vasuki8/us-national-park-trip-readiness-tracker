@@ -40,7 +40,7 @@ export const historyDigest = (value: unknown) => createHash('sha256').update(sta
 function timestamp(value: unknown): bigint {
   text(value);
   const match = /^(\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d)(?:\.(\d{1,6}))?(Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.exec(value);
-  requireValue(match && isCalendarDate(value.slice(0, 10)), 'invalid_history_clock');
+  requireValue(match && !value.startsWith('0000-') && isCalendarDate(value.slice(0, 10)), 'invalid_history_clock');
   const base = Date.parse(match[1] + match[3]);
   requireValue(Number.isFinite(base), 'invalid_history_clock');
   return BigInt(base) * 1000n + BigInt((match[2] || '').padEnd(6, '0'));
@@ -141,6 +141,12 @@ export function validateHistory(value: unknown, currentSnapshot: unknown): Histo
       if (c.before === null) state.delete(c.record_id); else state.set(c.record_id, c.before.content_hash);
     }
     shown += o.changes.length; visibleTotal += o.change_count;
+  }
+  const lastVisibleSuccess = h.observations.find((o: any) => o.collection_status === 'success');
+  if (lastVisibleSuccess) requireValue(s.last_successful_fetch_at === lastVisibleSuccess.checked_at, 'history_success_clock_mismatch');
+  else if (h.observations.length) {
+    if (!h.omitted_observations) requireValue(s.last_successful_fetch_at === null, 'history_success_clock_mismatch');
+    else if (s.last_successful_fetch_at !== null) requireValue(timestamp(s.last_successful_fetch_at) < timestamp(h.observations.at(-1).checked_at), 'history_success_clock_mismatch');
   }
   requireValue(h.total_changes >= visibleTotal && h.omitted_changes === h.total_changes - shown);
   if (!h.omitted_observations) requireValue(h.total_changes === visibleTotal);

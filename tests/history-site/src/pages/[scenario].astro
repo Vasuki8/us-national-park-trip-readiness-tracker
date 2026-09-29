@@ -1,7 +1,14 @@
 ---
+import type { InferGetStaticPropsType } from 'astro';
 import Layout from '../../../../src/layouts/Layout.astro';
+import HistoryTimeline from '../../../../src/components/HistoryTimeline.astro';
+import { validateHistory } from '../../../../scripts/validate-history';
+import fixture from '../../../fixtures/history-preview.json';
 export function getStaticPaths() {
-  return ['empty', 'baseline', 'mixed', 'failed', 'truncated'].map((scenario) => ({ params: { scenario } }));
+  return Object.entries(fixture.cases).map(([scenario, view]) => ({ params: { scenario }, props: { view } }));
 }
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { view } = Astro.props;
+const history = validateHistory(view.history, view.snapshot);
 ---
-<Layout title="Synthetic history test"><h1>Synthetic test data — not park conditions</h1><p>Timeline contract awaiting implementation.</p></Layout>
+<Layout title="Synthetic history test"><section class="page-intro"><p class="eyebrow">Isolated verification page</p><h1>Synthetic test data — not park conditions</h1><p>These fixtures test the production timeline component. They do not describe actual park conditions.</p></section><HistoryTimeline history={history} snapshot={view.snapshot} conditionsUrl="https://www.nps.gov/yose/planyourvisit/conditions.htm" /></Layout>

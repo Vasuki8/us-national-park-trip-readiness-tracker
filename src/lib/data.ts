@@ -2,12 +2,14 @@ import { createHash } from 'node:crypto';
 import parks from '../../data/parks.json';
 import rawRules from '../../data/rules.json';
 import rawNotes from '../../data/entry-notes.json';
+import rawHistory from '../../data/history.json';
 import yose from '../../data/alerts/yose.json';
 import romo from '../../data/alerts/romo.json';
 import yell from '../../data/alerts/yell.json';
 import zion from '../../data/alerts/zion.json';
 import grca from '../../data/alerts/grca.json';
 import { validateEntryNotes, type EntryNote } from '../../scripts/validate-entry-notes';
+import { validateHistory } from '../../scripts/validate-history';
 import type { Rule } from './readiness';
 import type { CoverageInput, ReviewCoverage } from './source-coverage';
 export { parks };
@@ -22,6 +24,11 @@ export interface Snapshot {
 }
 const snapshots = [yose, romo, yell, zion, grca] as Snapshot[];
 export const snapshotFor = (code: string): Snapshot => snapshots.find((snapshot) => snapshot.park_code === code)!;
+// History and current notices must belong to the same reviewed data snapshot.
+if (rawHistory.length !== parks.length || new Set(rawHistory.map((item) => item.park_code)).size !== parks.length
+  || rawHistory.some((item) => !parks.some((park) => park.code === item.park_code))) throw new Error('history_inventory_mismatch');
+export const histories = rawHistory.map((item) => validateHistory(item, snapshotFor(item.park_code)));
+export const historyFor = (code: string) => histories.find((history) => history.park_code === code)!;
 export const rulesFor = (code: string) => rules.filter((rule) => rule.park_code === code);
 export const notesFor = (code: string) => notes.filter((note) => note.park_code === code);
 const reviewMetadata = ({ park_code, review_status, reviewed_at }: ReviewCoverage): ReviewCoverage => ({ park_code, review_status, reviewed_at });
@@ -31,7 +38,7 @@ export const coverageInput: CoverageInput = {
   snapshots: snapshots.map(({ park_code, collection_status, coverage_status, last_successful_fetch_at }) => ({ park_code, collection_status, coverage_status, last_successful_fetch_at })),
 };
 export const buildInfo = {
-  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, snapshots })).digest('hex').slice(0, 12)}`,
+  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, snapshots, histories })).digest('hex').slice(0, 12)}`,
   built_at: new Date().toISOString(), published_at: null,
   code_commit: process.env.GITHUB_SHA || null, live_collection_enabled: false,
 };
