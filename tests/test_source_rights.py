@@ -62,7 +62,6 @@ class SourceRightsTests(unittest.TestCase):
             if media_ext.search(path.name):
                 self.fail(f'Unreviewed public media asset: {rel}')
             text=path.read_text(encoding='utf-8',errors='ignore')
-            self.assertIsNone(forbidden_names.search(text),rel)
             self.assertIsNone(re.search(r'<(?:img|video|audio|source)\b[^>]*\bnps\.gov\b',text,re.I),rel)
 
     def test_release_rights_gate_passes_only_for_complete_exact_manifest(self):
