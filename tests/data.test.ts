@@ -2,9 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validateInventory, validateRule, validateSnapshot } from '../scripts/validate-data.ts';
+import { validateSourceRights } from '../scripts/validate-source-rights.ts';
 const parks = JSON.parse(readFileSync('data/parks.json', 'utf8'));
 const rules = JSON.parse(readFileSync('data/rules.json', 'utf8'));
 const snapshot = JSON.parse(readFileSync('data/alerts/yose.json', 'utf8'));
+const notes = JSON.parse(readFileSync('data/entry-notes.json', 'utf8'));
+const sourceRights = JSON.parse(readFileSync('data/source-rights.json', 'utf8'));
 test('production inventory contains exactly the five pilots', () => { validateInventory(parks); assert.equal(parks.length, 5); });
 test('every stored rule has valid official evidence and an excerpt hash', () => { for (const rule of rules) validateRule(rule, parks); });
 test('uncollected snapshots cannot claim a successful check', () => {
@@ -25,4 +28,17 @@ test('invalid dates, time windows and areas fail the build', () => {
 test('unknown collector states and duplicate park codes are rejected', () => {
   assert.throws(() => validateSnapshot({ ...snapshot, collection_status: 'all_clear' }, 'yose'));
   assert.throws(() => validateInventory([...parks, parks[0]]));
+});
+
+test('source-rights manifest exactly covers all public guidance records', () => {
+  validateSourceRights(sourceRights, [...rules, ...notes]);
+});
+test('source-rights coverage cannot omit or duplicate a public guidance record', () => {
+  assert.throws(() => validateSourceRights({ ...sourceRights, records: sourceRights.records.slice(1) }, [...rules, ...notes]));
+  assert.throws(() => validateSourceRights({ ...sourceRights, records: [...sourceRights.records, sourceRights.records[0]] }, [...rules, ...notes]));
+});
+test('source-rights evidence cannot claim marks, media or third-party material are reproduced', () => {
+  for (const change of [{ nps_marks_reproduced: true }, { media_reproduced: true }, { third_party_material_reproduced: true }]) {
+    assert.throws(() => validateSourceRights({ ...sourceRights, records: [{ ...sourceRights.records[0], ...change }, ...sourceRights.records.slice(1)] }, [...rules, ...notes]));
+  }
 });
