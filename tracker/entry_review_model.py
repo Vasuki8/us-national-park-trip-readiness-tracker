@@ -139,9 +139,16 @@ def make_event(kind: str, request: object, state: dict, saved_at: str) -> dict:
                 source = next((item for item in source_event['extraction']['sources'] if item['source_url'] == url), None)
                 require(source is not None and source['context'] is not None, 'review_source_event_mismatch')
                 related = [proposal for proposal in selected if proposal['source_url'] == url]
-                require(related and instant(source['checked_at']) == max(instant(proposal['checked_at']) for proposal in related),
-                        'stale_review_source_event')
-                require(instant(source['checked_at']) <= reviewed, 'invalid_review_clock')
+                source_checked = instant(source['checked_at'])
+                latest_retained = max(
+                    instant(capture['checked_at'])
+                    for event in state['events'] if event['kind'] == 'observation'
+                    for capture in event['request']['captures'] if capture['source_url'] == url
+                )
+                require(related
+                        and source_checked >= max(instant(proposal['checked_at']) for proposal in related)
+                        and source_checked == latest_retained, 'stale_review_source_event')
+                require(source_checked <= reviewed, 'invalid_review_clock')
                 baselines.append(_baseline_from_context(source, value['records'], value['reviewed_at']))
             baselines.sort(key=lambda item: item['source_url'])
             evidence = {'extraction': None, 'register': assessed['register'], 'checks': [],
