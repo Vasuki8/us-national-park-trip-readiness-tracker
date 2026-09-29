@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import os
+import posixpath
 import re
 import tempfile
 import time
@@ -11,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import unquote, urlencode, urlsplit
 from urllib.request import Request, HTTPRedirectHandler, build_opener
 
 class InvalidFeed(ValueError):
@@ -29,7 +30,7 @@ SAFE_DIAGNOSTIC_CODES = frozenset({
     'empty_field_id', 'empty_field_parkCode', 'empty_field_title',
     'empty_field_category', 'empty_field_url', 'park_code_mismatch',
     'source_path_mismatch', 'source_scheme_invalid', 'source_host_invalid',
-    'source_credentials_present', 'source_port_invalid', 'source_query_sensitive',
+    'source_credentials_present', 'source_port_invalid', 'source_query_sensitive', 'source_path_invalid',
 })
 
 def _instant(value: str) -> datetime:
@@ -60,24 +61,29 @@ def _record(raw: dict, park_code: str, now: str, previous: dict) -> dict:
     for key in ['id', 'parkCode', 'title', 'description', 'category', 'url']:
         if not isinstance(raw.get(key), str):
             raise InvalidFeed(f'invalid_field_{key}')
-        if key != 'description' and not raw[key].strip():
+        if key not in ('description', 'url') and not raw[key].strip():
             raise InvalidFeed(f'empty_field_{key}')
     if raw['parkCode'] != park_code:
         raise InvalidFeed('park_code_mismatch')
-    url = urlsplit(raw['url'])
-    if url.scheme != 'https':
-        raise InvalidFeed('source_scheme_invalid')
-    if url.hostname not in ('www.nps.gov', 'nps.gov', 'home.nps.gov'):
-        raise InvalidFeed('source_host_invalid')
-    if url.username or url.password:
-        raise InvalidFeed('source_credentials_present')
-    if url.port not in (None, 443):
-        raise InvalidFeed('source_port_invalid')
-    if re.search(r'api.?key|token|secret', url.query, re.IGNORECASE):
-        raise InvalidFeed('source_query_sensitive')
-    if not url.path.startswith(f'/{park_code}/'):
-        raise InvalidFeed('source_path_mismatch')
-    semantic = {key: raw[key] for key in ('id', 'title', 'description', 'category', 'url')}
+    link = raw['url'].strip() or None
+    if link is not None:
+        url = urlsplit(link)
+        if url.scheme != 'https':
+            raise InvalidFeed('source_scheme_invalid')
+        host = (url.hostname or '').lower()
+        if not (host == 'nps.gov' or host.endswith('.nps.gov')):
+            raise InvalidFeed('source_host_invalid')
+        if url.username or url.password:
+            raise InvalidFeed('source_credentials_present')
+        if url.port not in (None, 443):
+            raise InvalidFeed('source_port_invalid')
+        if re.search(r'api.?key|token|secret', url.query + url.fragment, re.IGNORECASE):
+            raise InvalidFeed('source_query_sensitive')
+        path = unquote(url.path)
+        if '\\' in path or (path and posixpath.normpath(path) != path):
+            raise InvalidFeed('source_path_invalid')
+    semantic = {key: raw[key] for key in ('id', 'title', 'description', 'category')}
+    semantic['url'] = link
     digest = hashlib.sha256(json.dumps(semantic, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
     old = previous.get(raw['id'], {})
     return {**semantic, 'park_code': park_code, 'area_id': None, 'scope_status': 'unclassified',
