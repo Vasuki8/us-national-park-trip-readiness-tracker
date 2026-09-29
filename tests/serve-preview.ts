@@ -12,7 +12,13 @@ function contents(folder:string):Record<string,string> {
 const production={...contents('data'),...contents('dist')};
 const generated=spawnSync('uv',['run','--frozen','python','tests/build_preview_fixture.py'],{encoding:'utf8',timeout:30_000});
 assert.equal(generated.status,0,'Synthetic preview preparation failed');
-const result=buildPreview(JSON.parse(generated.stdout).bundle_file);
+const result=buildPreview(JSON.parse(generated.stdout).bundle_file,(command,args,options)=>{
+  const build=spawnSync(command,args,{...options,encoding:'utf8'});
+  // Only this hardcoded synthetic fixture harness may expose bounded build diagnostics.
+  // The operator command keeps source-text diagnostics private and uses a clean child environment.
+  if(build.status!==0)console.error('Synthetic preview build diagnostic:',String(build.stderr).slice(-6000));
+  return build;
+});
 assert.deepEqual({...contents('data'),...contents('dist')},production,'Preview modified production files');
 const server=spawn(process.execPath,[astroBin(),'preview','--root',join(ROOT,'preview'),'--host','127.0.0.1','--port','4323'],{env:previewEnvironment(result.workspace),stdio:'inherit'});
 for(const signal of ['SIGTERM','SIGINT'] as const)process.on(signal,()=>server.kill(signal));
