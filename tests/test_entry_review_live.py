@@ -64,7 +64,7 @@ class LiveEntryReviewTests(unittest.TestCase):
         self.assertEqual(self.store.read()['revision'],first['ledger_revision'])
 
     def test_new_store_persists_all_five_captures_and_builds_five_packets(self):
-        result=self.run()
+        result=self.run_live()
         state=self.store.read()
         self.assertTrue(result['capture_complete']); self.assertTrue(result['review_packets_ready'])
         self.assertTrue(result['review_ready']); self.assertTrue(result['network_performed'])
@@ -83,7 +83,7 @@ class LiveEntryReviewTests(unittest.TestCase):
         self.assertNotIn(str(self.base),encoded)
 
     def test_existing_ledger_requires_current_head_and_appends_complete_batch(self):
-        first=self.run()
+        first=self.run_live()
         checked='2026-09-29T14:30:00.000Z'
         second=self.run_live(expected=first['ledger_revision'],checked=checked)
         state=self.store.read()
