@@ -76,9 +76,10 @@ def _record(raw: dict, park_code: str, now: str, previous: dict) -> dict:
             raise InvalidFeed('source_host_invalid')
         try:
             ipaddress.ip_address(host)
-            raise InvalidFeed('source_host_invalid')
         except ValueError:
             pass
+        else:
+            raise InvalidFeed('source_host_invalid')
         if 'nps.gov' in host and not (host == 'nps.gov' or host.endswith('.nps.gov')):
             raise InvalidFeed('source_host_invalid')
         if url.username or url.password:
