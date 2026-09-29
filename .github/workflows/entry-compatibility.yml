@@ -18,60 +18,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: One bounded request per fixed official source; metadata only
-        run: |
-          python - <<'PY'
-          import hashlib, http.client, json, re
-          from datetime import datetime, timezone
-          from tracker.entry_sources import PROFILES, digest
-          from tracker.entry_html import inspect_html, _BodyParser, SourceExtractionError, MAX_HTML, CONTROL, VOID, BLOCK
-          allowed = VOID | BLOCK | set('html head title a span script style button label select option svg path use symbol g noscript template b i strong em small u video audio iframe'.split())
-          rows = []
-          for code, profile in PROFILES.items():
-              row = {'park_code': code, 'source_url': profile['url'], 'started_at': datetime.now(timezone.utc).isoformat(), 'http_status': None, 'parsed': False}
-              conn = http.client.HTTPSConnection('www.nps.gov', timeout=15)
-              try:
-                  conn.request('GET', profile['url'].removeprefix('https://www.nps.gov'), headers={'User-Agent': 'ParkReadiness-development-compatibility-check/0.1', 'Accept': 'text/html', 'Accept-Encoding': 'identity'})
-                  response = conn.getresponse()
-                  row['http_status'] = response.status
-                  if response.status != 200:
-                      row['reason'] = 'http_not_success'; rows.append(row); continue
-                  if response.headers.get_content_type() != 'text/html' or response.getheader('Content-Encoding', 'identity').lower() != 'identity':
-                      row['reason'] = 'unsupported_response'; rows.append(row); continue
-                  raw = response.read(MAX_HTML + 1)
-                  row['byte_count'] = len(raw)
-                  if len(raw) > MAX_HTML:
-                      row['reason'] = 'response_too_large'; rows.append(row); continue
-                  row['raw_sha256'] = hashlib.sha256(raw).hexdigest()
-                  html = raw.decode('utf-8')
-                  row['control_codepoints'] = sorted({ord(m.group()) for m in CONTROL.finditer(html)})
-                  try:
-                      ctx = inspect_html(html, profile['heading'])
-                      row.update(parsed=True, reason='context_parsed_not_approved', context_hash=digest(ctx), text_characters=len(ctx['text']), link_count=len(ctx['links']))
-                  except SourceExtractionError as error:
-                      row['reason'] = str(error)
-                      class Diagnostic(_BodyParser):
-                          def __init__(self):
-                              super().__init__(); self.recent = []
-                          def note(self, kind, tag):
-                              self.recent = (self.recent + [[kind, tag if re.fullmatch('[a-z][a-z0-9:-]{0,39}', tag) else 'unrecognized']])[-8:]
-                          def handle_starttag(self, tag, attrs):
-                              self.note('start', tag); super().handle_starttag(tag, attrs)
-                          def handle_endtag(self, tag):
-                              self.note('end', tag); super().handle_endtag(tag)
-                      parser = Diagnostic()
-                      try:
-                          parser.feed(html); parser.close()
-                      except Exception:
-                          row['parser_position'] = parser.getpos()
-                          row['closed_bodies'] = parser.closed_bodies
-                          row['recent_tags'] = parser.recent
-                          row['stack_tail'] = [t if t in allowed else 'other' for t in parser.stack[-8:]]
-              except Exception:
-                  row['reason'] = 'capture_failed'
-              finally:
-                  conn.close()
-                  row['completed_at'] = datetime.now(timezone.utc).isoformat()
-              rows.append(row)
-          print(json.dumps({'schema_version': 1, 'diagnostic_only': True, 'all_contexts_parsed': all(r['parsed'] for r in rows), 'approval_performed': False, 'publication_performed': False, 'raw_captures_uploaded': False, 'sources': rows}, sort_keys=True))
-          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Capture five fixed sources and replay in a temporary private ledger
+        run: python -m tracker.entry_compatibility --live

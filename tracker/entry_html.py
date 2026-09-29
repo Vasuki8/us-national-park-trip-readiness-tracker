@@ -2,8 +2,9 @@
 
 The scope deliberately includes body navigation/footer and collapsed/hidden text.
 It excludes script/style content; media and linked/dynamically loaded text are not
-read. Strict balancing can reject browser-repairable HTML, never repair it into
-apparently verified evidence.
+read. Strict interior balancing can reject browser-repairable HTML. A completed
+document may have the observed inert script trailer and one redundant closing
+body/html pair; out-of-body prose and elements are never silently discarded.
 """
 from __future__ import annotations
 
@@ -43,6 +44,8 @@ class _BodyParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.stack: list[str] = []
         self.body_count = self.closed_bodies = self.nodes = 0
+        self.closed_html = 0
+        self.redundant_ends: list[str] = []
         self.blocks: list[str] = []
         self.buffer: list[str] = []
         self.links: list[str] = []
@@ -66,6 +69,11 @@ class _BodyParser(HTMLParser):
         require(tag != 'base', 'unsupported_document_base')
         if self.active():
             require(tag not in ('del', 'ins', 's', 'strike'), 'annotated_source_text')
+        if self.closed_bodies:
+            # NPS emits scripts after its first complete document. They remain
+            # outside this non-rendering scope; no new visible element is allowed.
+            require(not self.redundant_ends and tag in ('script', 'style')
+                    and self.stack in ([], ['html']), 'content_outside_body')
         if tag == 'body':
             self.body_count += 1
             require(self.body_count == 1 and 'head' not in self.stack, 'body_ambiguous')
@@ -92,6 +100,13 @@ class _BodyParser(HTMLParser):
     def handle_endtag(self, tag: str) -> None:
         if tag in VOID:
             return
+        if not self.stack and self.closed_bodies == self.closed_html == 1:
+            # Only the exact redundant closing pair observed in the NPS envelope.
+            # This cannot close a missing/misnested element within the document.
+            expected = 'body' if not self.redundant_ends else 'html'
+            require(len(self.redundant_ends) < 2 and tag == expected, 'ambiguous_html')
+            self.redundant_ends.append(tag)
+            return
         require(bool(self.stack) and self.stack[-1] == tag, 'ambiguous_html')
         if self.active():
             if tag == 'h1':
@@ -103,8 +118,12 @@ class _BodyParser(HTMLParser):
         self.stack.pop()
         if tag == 'body':
             self.closed_bodies += 1
+        if tag == 'html':
+            self.closed_html += 1
 
     def handle_data(self, data: str) -> None:
+        if not self.active() and not any(t in self.stack for t in ('head', 'script', 'style')):
+            require(not data.strip(), 'content_outside_body')
         if self.active():
             clean_text(data, MAX_TEXT, empty=True)
             self.text_size += len(data)
@@ -128,6 +147,7 @@ def inspect_html(html: object, expected_heading: str) -> dict:
     except Exception:
         raise SourceExtractionError('ambiguous_html') from None
     require(parser.body_count == parser.closed_bodies == 1 and not parser.stack, 'body_ambiguous')
+    require(parser.redundant_ends in ([], ['body', 'html']), 'ambiguous_html')
     require(parser.headings.count(expected_heading) == 1, 'heading_ambiguous')
     text = '\n'.join(parser.blocks)
     clean_text(text)
