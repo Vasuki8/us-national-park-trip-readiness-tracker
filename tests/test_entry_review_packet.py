@@ -52,6 +52,14 @@ class ReviewPacketTests(unittest.TestCase):
         self.assertNotIn('<script',html.lower())
         self.assertEqual(state_before['events'][0],self.store.read()['events'][0])
 
+    def test_packet_browser_policy_denies_network_navigation_and_forms(self):
+        html=build_review_packet(self.store,PARK,self.source_revision)['html'].lower()
+        self.assertIn('content-security-policy',html)
+        self.assertIn("default-src &#x27;none&#x27;",html)
+        self.assertIn("connect-src &#x27;none&#x27;",html)
+        for tag in ('<a ','<img','<iframe','<object','<embed','<link','<form','<button','<script'):
+            self.assertNotIn(tag,html)
+
     def test_manifest_is_metadata_only_and_binds_html(self):
         packet=build_review_packet(self.store,PARK,self.source_revision)
         manifest=packet['manifest']; encoded=json.dumps(manifest,sort_keys=True)
