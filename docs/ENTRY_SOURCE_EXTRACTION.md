@@ -2,9 +2,9 @@
 
 ## Purpose and boundary
 
-`tracker.entry_sources.inspect_entry_sources(records, captures, baselines, now)` turns supplied official-page HTML into observations accepted by the existing TypeScript `assessEntrySources` API. It does not fetch, persist, approve, publish, or change original guidance. It returns `observations` plus a separate private `sources` evidence list. The two should be retained together by a later protected operator workflow; the current API does no file I/O.
+`tracker.entry_sources.inspect_entry_sources(records, captures, baselines, now)` turns supplied official-page HTML into observations accepted by the existing TypeScript `assessEntrySources` API. It does not fetch, persist, approve, publish, or change original guidance. It returns `observations` plus a separate private `sources` evidence list. These are retained together by the protected operator ledger described in `docs/ENTRY_REVIEW_LEDGER.md`; the extraction API itself does no file I/O.
 
-The current six guidance bindings share five sources. Profiles bind each park to the exact URL and expected H1 in `PROFILES`. A successful context check requires a separately reviewed baseline for that page, tied to the full original guidance hashes. An approved short excerpt alone is never treated as an approved full-page context. No production context baselines are created in this increment.
+The current six guidance bindings share five sources. Profiles bind each park to the exact URL and expected H1 in `PROFILES`. A successful context check requires a separately reviewed baseline for that page, tied to the full original guidance hashes. An approved short excerpt alone is never treated as an approved full-page context. No production context baselines have been approved.
 
 ## What is compared
 
@@ -12,7 +12,7 @@ Scope `html-body-text-links-v1` contains normalized body text, block boundaries,
 
 This is not a browser renderer. Script/style content and comments cannot establish the approved excerpt. Media, CSS-driven presentation, dynamic requests, linked-page content and embedded documents are not inspected. New script behavior with unchanged source text is outside this scope. Matching context means only these selected representations match, not that all page behavior or actual park conditions are unchanged.
 
-Whitespace and inline emphasis can normalize without a change; body block boundaries remain distinct. Base elements and deletion/insertion/strike annotations require review, rather than silently retargeting links or accepting struck-out guidance. Input must have an explicitly closed, unique body and exactly one expected H1; a missing/duplicate excerpt or expected heading is not resolved by taking the first match. Strict tag balancing intentionally rejects some valid browser-repairable/optional-end-tag HTML. This may create conservative review rather than false confidence and must be tested against actual captured DOMs before enabling collection.
+Whitespace and inline emphasis can normalize without a change; body block boundaries remain distinct. Base elements and deletion/insertion/strike annotations require review, rather than silently retargeting links or accepting struck-out guidance. Input must have an explicitly closed, unique body and exactly one expected H1; a missing/duplicate excerpt or expected heading is not resolved by taking the first match. Strict interior tag balancing intentionally rejects some browser-repairable/optional-end-tag HTML. The September29 compatibility repair permits one exact redundant body/html closing pair after a completed document, but refuses appended visible text/elements instead of silently discarding them. See `docs/LIVE_ENTRY_COMPATIBILITY.md` for the observed envelope and its limits.
 
 ## Interfaces
 
@@ -41,7 +41,7 @@ Returned context can contain arbitrary third-party text and anchor strings from 
 
 ## Source-profile review
 
-On September 28, 2026 America/Toronto, the following public pages were opened through web retrieval to confirm their titles and textual scope. This is a heading/source-family review, NOT a raw DOM capture, availability measurement, context baseline approval or current travel advice:
+On September 28, 2026 America/Toronto, the following public pages were opened through web retrieval to confirm their titles and textual scope. That initial review was a heading/source-family review, NOT a raw DOM capture, availability measurement, context baseline approval or current travel advice:
 
 - Yosemite, Entrance Reservations: https://www.nps.gov/yose/planyourvisit/reservations.htm
 - Rocky Mountain, Timed Entry Permit System: https://www.nps.gov/romo/planyourvisit/timed-entry-permit-system.htm
@@ -57,4 +57,4 @@ Parser reference: https://docs.python.org/3/library/html.parser.html. Python's p
 
 Synthetic HTML is generated in `tests/test_entry_sources.py` and `tests/entry_source_fixtures.py`. It is not downloaded NPS HTML. The six cross-language tests run the actual Python extractor against the six repository guidance records and pass the resulting observations to the actual TypeScript gate/evaluator. Matching context cannot renew reviewed_at, and later matching text cannot clear pending proposals.
 
-The API is ready for protected operator orchestration, not automatic source monitoring. Next integrate private capture/evidence persistence and reviewer disposition, with expected-revision checks and no public writes. Real HTML compatibility and reviewed private context baselines must be established before any matching source coverage is claimed. Alert API-key validation remains separate; no keyed NPS API call was made for this work.
+Protected persistence and non-approving reviewer dispositions now exist in `docs/ENTRY_REVIEW_LEDGER.md`. On September 29, 2026, actual captures of all five configured entry pages passed the scoped extractor and temporary-ledger replay after a narrow document-trailer repair; see `docs/LIVE_ENTRY_COMPATIBILITY.md` for exact timestamps, hashes, scope and limitations. That diagnostic created no approved context baseline, renewed guidance or durable live archive. Operator-reviewed reference contexts and explicit approval/reconciliation remain prerequisites to matching source coverage. Alert API-key validation is separate; no keyed NPS API call is claimed.

@@ -1,14 +1,11 @@
 name: Entry HTML compatibility diagnostic
 on:
   workflow_dispatch:
-  push:
-    branches: [feat/pilot-foundation]
-    paths: [.github/workflows/entry-compatibility.yml]
 permissions:
   contents: read
 jobs:
   inspect:
-    if: github.repository == 'Vasuki8/us-national-park-trip-readiness-tracker' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[entry-compat-probe]'))
+    if: github.repository == 'Vasuki8/us-national-park-trip-readiness-tracker' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
