@@ -337,9 +337,9 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`ab562090b6e33624e96f9040e45e3dda15ee6db7`**.
+Code/test head: **`1ed3731e7590bc9b952276aac757a6c248611569`**.
 
-**Verify pilot #127, run `36629772353`, job `109615969906`, completed successfully.**
+**Verify pilot #130, run `36637313452`, job `109641517736`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
@@ -353,9 +353,9 @@ Code/test head: **`ab562090b6e33624e96f9040e45e3dda15ee6db7`**.
 
 The keyed-alert compatibility increment was driven by live read-only provider evidence plus synthetic regressions. Initial keyed runs proved authentication worked but quarantined Yosemite/Zion/Grand Canyon. Diagnostic-code tests then failed first before safe allowlisted diagnostics were added. Provider-compatible tests failed before nullable URLs, NPS subdomains, and safe provider-supplied external HTTPS links were accepted across collector, Python/TypeScript history validation, build validation, and rendering.
 
-The final current-head regression run #124 passed all 563 automated tests. Separately, keyed NPS preflight run **36628434444** passed all five parks with `gate_passed:true`; it used the same current collector semantics and performed no public writes.
+The final current-head regression run #130 passed all 563 automated tests. Separately, keyed NPS preflight run **36628434444** passed all five parks with `gate_passed:true`; it used the same current collector semantics and performed no public writes.
 
-Verification artifact `pilot-verification`, ID **11061727292**, contains the production site build, screenshots and lockfile—not API credentials, live raw payloads, private archives, or published alert data. CI-reported ZIP SHA-256: `8ec9862067bd8df43b2191f07fb71e29d4230654388d92cd13f575d53e2e3cdb`.
+Verification artifact `pilot-verification`, ID **11064403957**, contains the production site build, screenshots and lockfile—not API credentials, live raw payloads, private archives, or published alert data. CI-reported ZIP SHA-256: `36548eafd4330bec7afb8898a1ef32d2db37ab43585de3f21e53faf701cab1ae`.
 
 Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising/public-alert publication occurred.
 
@@ -391,4 +391,4 @@ The keyed NPS alert API compatibility gate is now validated. The next alert step
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation/docs: **563 tests** at `ab56209`, run #127. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation/docs: **563 tests** at `1ed3731`, run #130. PR #1 remains draft and unmerged.
