@@ -74,9 +74,10 @@ def _source(value: object, _code: str) -> None:
                 and not url.username and not url.password and url.port in (None, 443), 'invalid_source')
         try:
             ipaddress.ip_address(host)
-            raise HistoryError('invalid_source')
         except ValueError:
             pass
+        else:
+            raise HistoryError('invalid_source')
         require(not ('nps.gov' in host and not (host == 'nps.gov' or host.endswith('.nps.gov'))), 'invalid_source')
         path = unquote(url.path)
         require((not path or posixpath.normpath(path) == path) and '\\' not in path, 'invalid_source')
