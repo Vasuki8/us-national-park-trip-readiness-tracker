@@ -84,7 +84,7 @@ def _baseline_from_context(source: dict, records: list, reviewed_at: str) -> dic
     for record in guidance:
         require(normalized(context['text']).count(normalized(record['evidence']['excerpt'])) == 1,
                 'reviewed_excerpt_not_in_context')
-    return {'schema_version': 1, 'source_url': url, 'profile_id': source['profile_id'],
+    return {'schema_version': 2, 'source_url': url, 'profile_id': source['profile_id'],
             'guidance_hashes': {record['id']: digest(record) for record in guidance},
             'checked_at': source['checked_at'], 'reviewed_at': reviewed_at,
             'context': copy.deepcopy(context), 'context_hash': source['context_hash']}
