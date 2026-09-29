@@ -103,11 +103,11 @@ class ModelTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(HistoryError): validate_snapshot(bad)
 
     def test_alert_urls_are_optional_but_nonempty_links_must_be_safe_nps_urls(self):
-        for url in [None, 'https://go.nps.gov/short-link', 'https://www.nps.gov/subjects/developer/index.htm']:
+        for url in [None, 'https://go.nps.gov/short-link', 'https://www.nps.gov/subjects/developer/index.htm', 'https://inciweb.wildfire.gov/incident/example']:
             with self.subTest(url=url):
                 validate_snapshot(snapshot([notice(url=url)]))
         urls = ['https://www.nps.gov/yose/test?token=key', 'https://www.nps.gov/yose/test#api_key=key',
-                'https://www.nps.gov.evil.test/yose/test', 'https://example.com/yose/test',
+                'https://www.nps.gov.evil.test/yose/test', 'https://localhost/yose/test', 'https://127.0.0.1/yose/test',
                 'https://user:password@www.nps.gov/yose/test', 'https://www.nps.gov/yose/../grca/test',
                 'https://www.nps.gov/yose/%2e%2e/grca/test', 'https://www.nps.gov/yose/te\nst']
         for url in urls:
