@@ -253,6 +253,41 @@ The release-readiness `hosting_rollback` gate now moves from `blocked` to **`not
 
 Contract: `docs/PAGES_RELEASE.md`.
 
+## New: exact public NPS text source-rights evidence
+
+`data/source-rights.json` now records the commercial-use evidence for the **exact six public guidance records** and their five NPS source pages. This is deliberately narrower than a claim about all material on NPS websites.
+
+The review is grounded in the current official NPS disclaimer and Arrowhead-use guidance:
+
+- NPS-created material on the NPS website is generally considered public domain unless otherwise indicated;
+- NPS asks for source acknowledgement, and commercial republication should include a reference to the original U.S. Government work, such as **“No protection is claimed in original U.S. Government works.”**;
+- third-party material must not be assumed public domain; and
+- the NPS Arrowhead and other protected marks are not covered by the public-domain rule and require separate authorization.
+
+The manifest therefore allows only:
+
+- the six already-reviewed short NPS text excerpts;
+- the project's original planning summaries tied to those records; and
+- source attribution/links.
+
+It explicitly records **no third-party material, NPS marks, photographs, graphics, audio/video, or private raw captures** as approved for public reproduction.
+
+`scripts/validate-source-rights.ts` makes exact manifest coverage part of the normal build gate. Omitting or duplicating a guidance record, changing its source URL, claiming marks/media/third-party content, changing the policy URLs, or changing the commercial notice fails validation.
+
+The site footer now includes the commercial U.S. Government-work notice while retaining the existing independent/non-endorsement statement.
+
+The release-readiness source-rights gate now passes only when:
+
+- all six public guidance records retain their record-level rights metadata;
+- `source-rights.json` exactly covers all six record/source pairs;
+- every covered item remains classified as NPS government text with no third-party/mark/media reproduction;
+- the commercial notice is present in the public layout; and
+- the public application contains no media asset or reproduced NPS mark/media reference outside this text-only scope.
+
+This **passes the current public-text scope only**. It is not legal advice or blanket clearance for other NPS pages/content. Adding photos, graphics, logos/marks, audio/video, third-party material, or public raw source captures requires a new rights review and evidence update.
+
+Contract: `docs/SOURCE_RIGHTS.md`.
+
 ## TDD and self-review record
 
 The reconciliation contract was developed test-first.
@@ -269,17 +304,17 @@ Review was **author self-review**, not independent approval.
 
 ## Exact implementation verification
 
-Code/test head: **`726e73ddb498be1f44cf6f02fd141e0b99fa0314`**.
+Code/test head: **`df908a6b4d608ef5c57ca12a2b8bc872ac039bd4`**.
 
-**Verify pilot #91, run `36611072254`, job `109552320513`, completed successfully.**
+**Verify pilot #103, run `36619784653`, job `109581929909`, completed successfully.**
 
 | Check | Verified result |
 |---|---:|
-| Node core/data/review tests | 144 passed |
-| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup/readiness/Pages tests | 315 passed |
+| Node core/data/review/rights tests | 147 passed |
+| Python collector/archive/extraction/ledger/reconciliation/packet/live/backup/readiness/Pages/rights tests | 320 passed |
 | Generated-output tests | 18 passed |
 | Chromium browser tests | 74 passed |
-| **Total automated tests** | **551 passed** |
+| **Total automated tests** | **559 passed** |
 | Astro check | 24 files; 0 errors, 0 warnings, 0 hints |
 | Production static build | 14 HTML pages plus `build.json` |
 
@@ -287,7 +322,7 @@ The release-readiness increment adds nine Python methods. RED #79 (`36605123475`
 
 Coverage proves the current repository cannot report release-ready, `never_checked` alerts cannot be described as an all-clear, all five schema-v2 source baselines plus zero holds are required for the private source-review gate, a verified backup must match the exact current ledger head, public guidance rights metadata does not self-certify broader source rights, all three indexing controls are detected, no network/filesystem write occurs during evaluation, and CLI text/JSON/error output remains path-safe.
 
-Verification artifact `pilot-verification`, ID **11053432427**, contains the production site build, existing screenshots and lockfile—not private ledgers, backups, captures, packets, credentials, or deployed Pages state. CI-reported ZIP SHA-256: `873a9862211e71560b0a3474363381ad8093037bf4a3417d9c6dfa058724cc97`.
+Verification artifact `pilot-verification`, ID **11056593722**, contains the production site build, existing screenshots and lockfile—not private ledgers, backups, captures, packets, credentials, or deployed Pages state. CI-reported ZIP SHA-256: `f7b4fadbe2dc207049a37dc19a8080d3bfb6c36468d9ec0f18dd4cbf5cc9d12d`.
 
 Review was author self-review because no independent reviewer/subagent tool is available. No deployment/indexing/advertising state changed. This documentation-only handoff receives a separate CI run; do not infer it from #80.
 
@@ -305,7 +340,7 @@ No real reviewer has used the new reconciliation command on a durable NPS captur
 
 The private ledger remains owner-only local POSIX storage, not hosted durable storage, encryption, authenticated reviewer identity or multi-host storage. Backup/verify/restore mechanics are now tested, but no off-host target, retention schedule, removable-media policy or cloud backup has been configured. Hardware power-loss, native Windows/network filesystems and hostile same-user mutation remain outside verified guarantees.
 
-Source-content redistribution/rights review remains separate from guidance review. Hashes prove internal consistency, not factual truth, source authenticity or permission to republish.
+The exact six-record public NPS **text-only** rights scope now has explicit evidence and passes its release-readiness gate. This does not clear private raw captures, NPS marks/media, third-party material, or future source uses. Hashes prove internal consistency, not factual truth or source authenticity.
 
 The keyed NPS alerts preflight was rechecked on the current branch and is still blocked because the runner received no usable `NPS_API_KEY`. No provider request was made. See run 36607959537; do not treat its red conclusion as a product-test regression.
 
@@ -323,4 +358,4 @@ The keyed NPS alert API remains a separate gate and should use the existing pref
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **551 tests** at `726e73d`, run #91. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation: **559 tests** at `df908a6`, run #103. PR #1 remains draft and unmerged.
