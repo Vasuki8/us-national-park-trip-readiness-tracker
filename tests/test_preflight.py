@@ -95,7 +95,7 @@ class PreflightTests(unittest.TestCase):
         output = io.StringIO()
         with patch.dict('os.environ', {'NPS_API_KEY': ''}), redirect_stdout(output): result = main()
         report = json.loads(output.getvalue())
-        self.assertEqual(result, 0)  # Diagnostic completion, not integration approval.
+        self.assertEqual(result, 2)  # Missing configuration is an integration-gate failure.
         self.assertFalse(report['gate_passed']); self.assertEqual(report['status'], 'not_configured')
 
 if __name__ == '__main__': unittest.main()
