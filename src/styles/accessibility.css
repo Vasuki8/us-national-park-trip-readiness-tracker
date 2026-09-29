@@ -1,0 +1,19 @@
+/* Preserve the existing type scale when text is enlarged. Flexible children may
+   shrink to their grid/row, and long headings wrap instead of leaving the page. */
+.park-card,
+.park-intro > div {
+  min-width: 0;
+}
+
+h1,
+.park-card h3 a {
+  overflow-wrap: anywhere;
+}
+
+/* Secondary labels still convey information; keep readable contrast on all
+   backgrounds used by the light theme, including the cream checklist panel. */
+.step-number,
+.code-label,
+.park-number {
+  color: var(--muted);
+}

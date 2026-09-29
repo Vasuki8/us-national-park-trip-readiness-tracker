@@ -19,7 +19,8 @@ async function overflow(page: Page) {
         issues.push(`${element.tagName}.${element.className}:text outside viewport`);
       }
     }
-    for (const element of document.querySelectorAll<HTMLElement>('main input,main select,main button,main summary,.hero-note,.notice-panel,.decision')) {
+    // Measure content children, not the deliberately clipped decorative ::after.
+    for (const element of document.querySelectorAll<HTMLElement>('main input,main select,main button,main summary,.hero-note > *,.park-card h3 a,.notice-panel,.decision')) {
       if (element.getClientRects().length && element.clientWidth && element.scrollWidth > element.clientWidth + 1) issues.push(`${element.tagName}.${element.className}:clipped contents`);
     }
     return issues.slice(0, 15);
@@ -54,8 +55,10 @@ for (const route of routes) {
       await expect(skip).toBeFocused(); await expect(skip).toBeInViewport();
       await page.keyboard.press('Enter');
       await expect(page.locator('main')).toBeFocused();
+      const mainStops = page.locator('main a[href],main input:not(:disabled),main select:not(:disabled),main button:not(:disabled),main summary');
+      const next = await mainStops.count() ? mainStops.first() : page.locator('.site-footer a').first();
       await page.keyboard.press('Tab');
-      expect(await page.evaluate(() => !!document.activeElement?.closest('main'))).toBe(true);
+      await expect(next).toBeFocused();
       const summaries = page.locator('main summary');
       if (await summaries.count()) {
         await summaries.first().focus(); await page.keyboard.press('Enter');
@@ -82,7 +85,10 @@ test('page landmarks, labels, IDs and current-page navigation are coherent acros
       });
       document.querySelectorAll('nav a[href]').forEach((element) => {
         const current = element.getAttribute('aria-current');
-        const isHere = new URL(element.getAttribute('href')!, location.href).pathname === location.pathname;
+        const destination = new URL(element.getAttribute('href')!, location.href);
+        // Fragment jumps identify sections, not the current page in site navigation.
+        if (destination.hash) return;
+        const isHere = destination.pathname === location.pathname;
         if (current === 'page' && !isHere) problems.push('wrong_current_page');
         if (isHere && current !== 'page') problems.push('missing_current_page');
       });

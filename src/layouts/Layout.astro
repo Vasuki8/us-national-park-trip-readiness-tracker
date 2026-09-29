@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import '../styles/accessibility.css';
 interface Props { title: string; description?: string }
 const { title, description = 'Independent, source-backed planning checks for five U.S. national parks. Development pilot; not live condition monitoring.' } = Astro.props;
 const path = Astro.url.pathname;
@@ -20,15 +21,15 @@ const path = Astro.url.pathname;
     <header class="site-header wrap">
       <a class="brand" href="/" aria-label="Park Readiness home"><span class="brand-mark" aria-hidden="true">↗</span><span>Park <strong>Readiness</strong></span></a>
       <nav aria-label="Main navigation">
-        <a href="/parks/" aria-current={path.startsWith('/parks/') ? 'page' : undefined}>Explore parks</a>
+        <a href="/parks/" aria-current={path === '/parks/' ? 'page' : undefined}>Explore parks</a>
         <a href="/how-it-works/" aria-current={path === '/how-it-works/' ? 'page' : undefined}>How it works</a>
         <a href="/sources/" aria-current={path === '/sources/' ? 'page' : undefined}>Sources</a>
       </nav>
     </header>
-    <main id="main" class="wrap"><slot /></main>
+    <main id="main" class="wrap" tabindex="-1"><slot /></main>
     <footer class="site-footer wrap">
       <div><a class="brand footer-brand" href="/">Park <strong>Readiness</strong></a><p>Know what is checked. Know what is still unknown.</p><p class="small">Independent project. Not affiliated with or endorsed by the National Park Service.<br />Not an emergency service or a guarantee of access, conditions or safety.</p></div>
-      <nav aria-label="Footer navigation"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/terms/">Use & limitations</a><a href="/corrections/">Report a correction</a><a href="/changes/">Change history</a></nav>
+      <nav aria-label="Footer navigation"><a href="/about/" aria-current={path === '/about/' ? 'page' : undefined}>About</a><a href="/privacy/" aria-current={path === '/privacy/' ? 'page' : undefined}>Privacy</a><a href="/terms/" aria-current={path === '/terms/' ? 'page' : undefined}>Use & limitations</a><a href="/corrections/" aria-current={path === '/corrections/' ? 'page' : undefined}>Report a correction</a><a href="/changes/" aria-current={path === '/changes/' ? 'page' : undefined}>Change history</a></nav>
     </footer>
   </body>
 </html>
