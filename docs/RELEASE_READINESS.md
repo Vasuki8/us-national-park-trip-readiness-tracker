@@ -82,11 +82,18 @@ A verified backup passes only when its manifest matches the exact current ledger
 
 ### Source-rights review
 
-The report counts public dated/undated guidance records carrying `rights_basis` and `rights_reviewed_at`.
+The report requires both the record-level `rights_basis` / `rights_reviewed_at` fields and the exact-scope `data/source-rights.json` manifest.
 
-Incomplete metadata blocks the gate.
+The gate passes only when:
 
-Complete guidance metadata still yields `not_checked`, because those record-level fields do not independently certify the broader commercial/source-content rights questions around retained source captures. That external review must be established separately.
+- all six current public guidance records have rights metadata;
+- the manifest exactly matches all six guidance IDs and official source URLs;
+- every use remains `nps_government_text` limited to a short text excerpt plus original summary;
+- no third-party material, NPS marks, or media are claimed as reproduced;
+- the required commercial U.S. Government-work notice is present in the public footer; and
+- no public media asset or NPS-hosted/mark media use is detected in the current application.
+
+The manifest is grounded in the official NPS disclaimer and Arrowhead-use guidance. This pass applies only to the current six public text uses. It is not blanket clearance for NPS media, marks, third-party material, private raw captures, or future content.
 
 ### Hosting and rollback
 
@@ -122,9 +129,9 @@ The evaluator never enables ads or analytics.
 
 As of the verified implementation head on September 29, 2026:
 
-- **0 pass**
+- **1 pass**
 - **3 blocked**
-- **4 not checked**
+- **3 not checked**
 - **release_ready: false**
 
 The three explicit blockers are:
@@ -133,12 +140,13 @@ The three explicit blockers are:
 2. indexing is still disabled; and
 3. advertising is not enabled.
 
-The four not-checked gates are:
+The three not-checked gates are:
 
 1. durable source review, because no owner private ledger was supplied here;
-2. storage backup, for the same reason;
-3. broader source-rights review; and
-4. hosting/rollback, because the manual verified-artifact workflow exists but no real deployment or rollback has been exercised.
+2. storage backup, for the same reason; and
+3. hosting/rollback, because the manual verified-artifact workflow exists but no real deployment or rollback has been exercised.
+
+The current source-rights gate is the one passing gate, limited to the exact six public NPS text uses documented in `data/source-rights.json`.
 
 ## Safety properties
 
