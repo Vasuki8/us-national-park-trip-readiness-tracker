@@ -1,0 +1,7 @@
+---
+import Layout from '../../../../../src/layouts/Layout.astro';
+export function getStaticPaths() {
+  return ['changed', 'missing', 'failed', 'matching', 'sticky'].map((state) => ({ params: { state } }));
+}
+---
+<Layout title="Synthetic entry-review verification"><h1>Synthetic review test — not park conditions</h1><p>Review-warning contracts awaiting implementation.</p></Layout>
