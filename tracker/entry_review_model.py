@@ -133,7 +133,13 @@ def make_event(kind: str, request: object, state: dict, saved_at: str) -> dict:
             require(source_event is not None, 'review_source_event_mismatch')
             assessed = reconcile_gate(state['records'], state['register'], value['proposal_ids'], value['records'],
                                       value['reviewed_at'])
-            baselines = [baseline for baseline in state['baselines'] if baseline['source_url'] not in assessed['source_urls']]
+            if state['baselines']:
+                prior_baselines = state['baselines']
+            else:
+                latest_observation = next((event for event in reversed(state['events']) if event['kind'] == 'observation'), None)
+                prior_baselines = latest_observation['request']['baselines'] if latest_observation else []
+            baselines = [copy.deepcopy(baseline) for baseline in prior_baselines
+                         if baseline['source_url'] not in assessed['source_urls']]
             selected = [proposal for proposal in state['register']['proposals'] if proposal['id'] in value['proposal_ids']]
             for url in assessed['source_urls']:
                 source = next((item for item in source_event['extraction']['sources'] if item['source_url'] == url), None)
