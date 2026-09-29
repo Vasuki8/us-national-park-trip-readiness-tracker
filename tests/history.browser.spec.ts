@@ -55,7 +55,11 @@ test('synthetic history evidence works without JavaScript', async ({ browser }) 
   await expect(page.locator('[data-history-observation]')).toHaveCount(2);
   const detail = page.locator('[data-history] details').first(); await detail.locator('summary').click();
   await expect(detail.getByRole('link', { name: 'Official source' }).first()).toBeVisible();
-  await expect(page.locator('[data-history]')).toContainText('Without JavaScript');
+  // Playwright deliberately skips NOSCRIPT when aggregating ancestor text.
+  // Check the actual fallback paragraph so both rendered visibility and copy are proved.
+  const fallback = page.locator('[data-history] noscript p');
+  await expect(fallback).toBeVisible();
+  await expect(fallback).toContainText('Without JavaScript');
   await context.close();
 });
 test('populated histories and evidence hashes fit a 360px viewport', async ({ page }) => {
