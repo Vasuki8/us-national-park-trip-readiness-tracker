@@ -62,7 +62,7 @@ class PreflightTests(unittest.TestCase):
 
     def test_preflight_reports_safe_validation_reason_without_provider_text(self):
         report = self.run_check(transport=lambda code, start, key: {
-            'total':'1','start':str(start),'data':[record(code, parkCode='other')]
+            'total':'1','start':str(start),'data':[{**record(code), 'parkCode':'other'}]
         })
         self.assertFalse(report['gate_passed'])
         self.assertEqual(report['checks'][0]['collection_status'], 'quarantined')
