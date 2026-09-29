@@ -1,0 +1,21 @@
+---
+import { entryReviewLabels, type EntryHold } from '../lib/entry-review';
+interface Props { holds: EntryHold[] }
+const { holds } = Astro.props;
+const headingId = `entry-review-heading-${holds[0]?.park_code ?? 'none'}`;
+---
+{holds.length > 0 && <section class="panel entry-review-notice" data-entry-review-notice aria-labelledby={headingId}>
+  <p class="eyebrow">Pending source review</p>
+  <h2 id={headingId}>Entry guidance needs editorial review</h2>
+  <p>The listed source observations need review. The affected stored guidance is suspended; this does not establish a new entry requirement or an exemption.</p>
+  {holds.map((hold) => <article class="entry-review-item">
+    <h3>Stored guidance: <code>{hold.guidance_id}</code></h3>
+    {hold.reasons.map((reason) => <p class="small">{entryReviewLabels[reason]}.</p>)}
+    <p class="small muted">First unresolved check: <time datetime={hold.first_detected_at}>{hold.first_detected_at}</time>.<br />Latest check retained in this hold: <time datetime={hold.latest_held_check_at}>{hold.latest_held_check_at}</time>.</p>
+    <a class="text-link" href={hold.source_url}>Check the official entry source <span aria-hidden="true">↗</span></a>
+  </article>)}
+  <p class="note small">A check timestamp is not an approval date, an NPS update time, or the effective date of a restriction. Original approved evidence remains below for reference; do not rely on suspended guidance until it is reviewed.</p>
+</section>}
+<style>
+  .entry-review-notice{border-color:#d7c4a2;background:#fffdf8;overflow-wrap:anywhere}.entry-review-notice h2{font-size:1.5rem}.entry-review-notice>p{font-size:.85rem}.entry-review-item{min-width:0;border-top:1px solid var(--line);padding-top:18px;margin-top:18px}.entry-review-item h3{font-size:.95rem;line-height:1.6;letter-spacing:normal}.entry-review-item p{margin-bottom:10px}.entry-review-item code,.entry-review-item time{overflow-wrap:anywhere}.entry-review-notice>.note{margin-bottom:0}
+</style>

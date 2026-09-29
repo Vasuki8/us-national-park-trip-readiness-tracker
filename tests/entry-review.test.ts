@@ -147,3 +147,10 @@ test('defensive copies prevent accidental mutation of approved records and pendi
   result.guidance[0].summary = 'mutated'; result.holds.splice(0);
   assert.deepEqual({ records, register }, original);
 });
+
+test('sparse programmatic batches cannot pass as complete observation coverage', () => {
+  const batch = observations();
+  delete batch[0];
+  assert.throws(() => assessEntrySources(guidance(), batch, empty(), NOW));
+  assert.throws(() => assessEntrySources(guidance(), new Array(2), empty(), NOW));
+});

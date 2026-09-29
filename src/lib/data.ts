@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import parks from '../../data/parks.json';
 import rawRules from '../../data/rules.json';
 import rawNotes from '../../data/entry-notes.json';
+import rawEntryReview from '../../data/entry-review.json';
 import rawHistory from '../../data/history.json';
 import rawPlanningResources from '../../data/planning-resources.json';
 import yose from '../../data/alerts/yose.json';
@@ -10,15 +11,21 @@ import yell from '../../data/alerts/yell.json';
 import zion from '../../data/alerts/zion.json';
 import grca from '../../data/alerts/grca.json';
 import { validateEntryNotes, type EntryNote } from '../../scripts/validate-entry-notes';
+import { applyEntryReview } from '../../scripts/entry-review';
 import { validateHistory } from '../../scripts/validate-history';
 import { validatePlanningResources } from '../../scripts/validate-planning-resources';
 import type { Rule } from './readiness';
 import type { CoverageInput, ReviewCoverage } from './source-coverage';
 export { parks };
-export const rules = rawRules as Rule[];
+const approvedRules = rawRules as Rule[];
 // Validate notes at the server/build boundary; they never enter the date evaluator.
 validateEntryNotes(rawNotes, parks.map((park) => park.code));
-export const notes: EntryNote[] = rawNotes;
+// Pending proposals bind original records; only overlaid review states reach consumers.
+// No candidate replacement text is serialized to the browser or used as approved guidance.
+const entryReview = applyEntryReview<Rule | EntryNote>([...approvedRules, ...rawNotes], rawEntryReview, new Date());
+export const rules = entryReview.guidance.slice(0, approvedRules.length) as Rule[];
+export const notes = entryReview.guidance.slice(approvedRules.length) as EntryNote[];
+export const entryReviewHoldsFor = (code: string) => entryReview.holds.filter((hold) => hold.park_code === code);
 // Relevant links are not operational reviews and never enter rule/feed coverage.
 export const planningResources = validatePlanningResources(rawPlanningResources, parks.map((park) => park.code));
 export const planningResourcesFor = (code: string) => planningResources.filter((resource) => resource.park_code === code);
@@ -43,7 +50,7 @@ export const coverageInput: CoverageInput = {
   snapshots: snapshots.map(({ park_code, collection_status, coverage_status, last_successful_fetch_at }) => ({ park_code, collection_status, coverage_status, last_successful_fetch_at })),
 };
 export const buildInfo = {
-  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, snapshots, histories, planningResources })).digest('hex').slice(0, 12)}`,
+  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, rawEntryReview, snapshots, histories, planningResources })).digest('hex').slice(0, 12)}`,
   built_at: new Date().toISOString(), published_at: null,
   code_commit: process.env.GITHUB_SHA || null, live_collection_enabled: false,
 };

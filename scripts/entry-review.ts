@@ -134,6 +134,7 @@ export function assessEntrySources(records: SourceGuidance[], values: unknown, p
     if (o.status === 'observed') text(o.excerpt); else requireValue(o.excerpt === null);
     return o as EntrySourceObservation;
   });
+  requireValue(seen.size === records.length, 'entry_review_inventory_mismatch');
   const checks = observations.map((o) => {
     const r = map.get(o.guidance_id)!; const proposal = proposalFor(o, r);
     const earlier = register.proposals.filter((p) => p.guidance_id === r.id);

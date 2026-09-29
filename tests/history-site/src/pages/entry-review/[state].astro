@@ -1,7 +1,32 @@
 ---
 import Layout from '../../../../../src/layouts/Layout.astro';
+import EntryReviewNotice from '../../../../../src/components/EntryReviewNotice.astro';
+import rawRules from '../../../../../data/rules.json';
+import rawNotes from '../../../../../data/entry-notes.json';
+import { assessEntrySources, applyEntryReview, guidanceDigest, type EntrySourceObservation } from '../../../../../scripts/entry-review';
+import { evaluateEntry, type Rule } from '../../../../../src/lib/readiness';
+import type { EntryNote } from '../../../../../scripts/validate-entry-notes';
 export function getStaticPaths() {
   return ['changed', 'missing', 'failed', 'matching', 'sticky'].map((state) => ({ params: { state } }));
 }
+const state = Astro.params.state;
+const now = new Date('2026-09-29T03:00:00Z');
+const records: (Rule | EntryNote)[] = [...rawRules as Rule[], ...rawNotes as EntryNote[]];
+const batch = (checked_at: string): EntrySourceObservation[] => records.map((record) => ({
+  guidance_id: record.id, guidance_hash: guidanceDigest(record), source_url: record.evidence.url,
+  checked_at, status: 'observed', excerpt: record.evidence.excerpt,
+}));
+const observations = batch('2026-09-29T01:00:00Z');
+if (state === 'changed' || state === 'sticky') observations[0].excerpt += ' SYNTHETIC_REVIEW_CANDIDATE <script>window.entryReviewInjected=1</script>';
+if (state === 'missing' || state === 'failed') { observations[0].status = state; observations[0].excerpt = null; }
+let register = assessEntrySources(records, observations, { schema_version: 1, proposals: [] }, now).register;
+if (state === 'sticky') register = assessEntrySources(records, batch('2026-09-29T02:00:00Z'), register, now).register;
+const result = applyEntryReview(records, register, now);
+const rules = result.guidance.slice(0, rawRules.length) as Rule[];
+const decision = evaluateEntry(rules, { park_code: 'yose', date: '2026-09-29', time: '12:00', area: '*', special_case: false }, now);
 ---
-<Layout title="Synthetic entry-review verification"><h1>Synthetic review test — not park conditions</h1><p>Review-warning contracts awaiting implementation.</p></Layout>
+<Layout title="Synthetic entry-review verification">
+  <section class="page-intro"><p class="eyebrow">Isolated verification page</p><h1>Synthetic review test — not park conditions</h1><p>This fixture uses the real review gate, date evaluator and warning component. It is not an observed NPS source change.</p></section>
+  <EntryReviewNotice holds={result.holds} />
+  <section class="panel"><h2>Test decision</h2><p>Effective review status: <strong data-effective-review-status>{rules[0].review_status}</strong></p><p>Original approval: <time data-approved-clock datetime={rules[0].reviewed_at}>{rules[0].reviewed_at}</time></p><div data-review-decision data-state={decision.state}><h3>{decision.title}</h3><p>{decision.detail}</p></div></section>
+</Layout>
