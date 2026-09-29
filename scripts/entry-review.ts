@@ -190,6 +190,9 @@ export function reconcileEntryReview(
     .map((record) => record.id).sort();
   for (const [id, before] of currentMap) {
     const after = nextMap.get(id)!;
+    requireValue(Object.keys(after as any).sort().join(' ') === Object.keys(before as any).sort().join(' ')
+      && Object.keys(object(after.evidence)).sort().join(' ') === Object.keys(object(before.evidence)).sort().join(' '),
+      'entry_review_reconciliation_mismatch');
     requireValue(after.park_code === before.park_code && after.evidence.url === before.evidence.url,
       'entry_review_reconciliation_mismatch');
     if (!sourceUrls.includes(before.evidence.url)) {
