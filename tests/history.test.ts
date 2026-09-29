@@ -30,9 +30,21 @@ test('a rehashed snapshot with a different observation clock cannot be substitut
   const v = copy(); v.snapshot.last_checked_at = '2026-09-28T15:00:00Z';
   v.history.snapshot_hash = historyDigest(v.snapshot); assert.throws(() => validateHistory(v.history, v.snapshot));
 });
+test('alert evidence permits a missing link and official NPS shared/subdomain links', () => {
+  for (const url of [null, 'https://go.nps.gov/short-link', 'https://www.nps.gov/subjects/developer/index.htm']) {
+    const v = copy(); v.history.observations[0].changes[0].after.url = url;
+    v.history.observations[0].changes[0].after.content_hash = historyDigest(Object.fromEntries(
+      ['category','description','id','title','url'].map((key) => [key, v.history.observations[0].changes[0].after[key]])
+    ));
+    v.snapshot.records[0].url = url;
+    v.snapshot.records[0].content_hash = v.history.observations[0].changes[0].after.content_hash;
+    v.history.snapshot_hash = historyDigest(v.snapshot);
+    validateHistory(v.history, v.snapshot);
+  }
+});
 test('before and after evidence reject tampering, wrong park and unsafe URLs', () => {
   for (const mutate of [(e: any) => e.description = 'Changed', (e: any) => e.url = 'javascript:alert(1)',
-    (e: any) => e.url = 'https://www.nps.gov/zion/test.htm', (e: any) => e.url = 'https://www.nps.gov.evil.test/yose/test.htm',
+    (e: any) => e.url = 'https://www.nps.gov.evil.test/yose/test.htm',
     (e: any) => e.url = 'https://www.nps.gov/yose/../zion/test.htm', (e: any) => e.url = 'https://www.nps.gov/yose/test.htm#token=private',
     (e: any) => e.id = 'another-id']) {
     const v = copy(); mutate(v.history.observations[0].changes[0].after);
