@@ -7,6 +7,7 @@ and prepares read-only review packets for sources with active holds.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import sys
@@ -54,12 +55,18 @@ def _initial_records() -> tuple[list, dict]:
         raise ReviewStoreError('invalid_live_review_inventory') from None
 
 
-def _current_inputs(state: dict) -> tuple[list, dict]:
+def _current_inputs(state: dict) -> tuple[list, list, dict]:
     if not state['events']:
-        return _initial_records()
+        records, seed = _initial_records()
+        return records, [], seed
     first = state['events'][0]
-    require(first['kind'] == 'observation', 'invalid_live_review_history')
-    return state['records'], first['request']['seed_register']
+    latest = next((event for event in reversed(state['events']) if event['kind'] == 'observation'), None)
+    require(first['kind'] == 'observation' and latest is not None, 'invalid_live_review_history')
+    # Explicit reconciliation baselines live in state and are injected internally
+    # by make_event. Before any reconciliation, preserve the latest validated
+    # legacy baseline input so a live append cannot manufacture fresh holds.
+    baselines = [] if state['baselines'] else copy.deepcopy(latest['request']['baselines'])
+    return copy.deepcopy(state['records']), baselines, copy.deepcopy(first['request']['seed_register'])
 
 
 def _validate_pair(code: str, capture: dict, receipt: dict, now: datetime) -> dict:
@@ -105,7 +112,7 @@ def run_live_capture(store: EntryReviewStore, packet_output_dir: Path, *,
     output = _preflight_output(store, packet_output_dir)
     before = store.read()
     require(before['revision'] == expected_revision, 'stale_review_revision')
-    records, seed = _current_inputs(before)
+    records, baselines, seed = _current_inputs(before)
 
     pairs = [capture_source(code, live=True) for code in PROFILES]
     current_now = datetime.now(timezone.utc) if now is None else now
@@ -119,7 +126,7 @@ def run_live_capture(store: EntryReviewStore, packet_output_dir: Path, *,
     saved = store.record({
         'records': records,
         'captures': captures,
-        'baselines': [],
+        'baselines': baselines,
         'seed_register': seed,
     }, expected_revision=expected_revision, now=current_now)
 
