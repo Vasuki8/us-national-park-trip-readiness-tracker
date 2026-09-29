@@ -10,7 +10,8 @@ from html import escape
 from pathlib import Path
 from unittest.mock import patch
 
-from tracker.entry_sources import PROFILES
+from tracker.entry_sources import PROFILES, PROFILE_VERSION, digest
+from tracker.entry_html import inspect_html
 from tracker.entry_review_store import EntryReviewStore, ReviewStoreError
 from tracker.entry_review_live import run_live_capture, main
 
@@ -93,6 +94,38 @@ class LiveEntryReviewTests(unittest.TestCase):
         self.assertNotEqual(second['ledger_revision'],first['ledger_revision'])
         self.assertEqual({c['checked_at'] for c in state['events'][-1]['request']['captures']},{checked})
         self.assertEqual(state['records'],state['events'][0]['request']['records'])
+
+    def test_existing_legacy_baseline_is_preserved_on_live_append(self):
+        seed=json.loads((ROOT/'data/entry-review.json').read_text())
+        initial_checked='2026-09-29T13:00:00.000Z'
+        captures=[fake_pair(code,checked=initial_checked)[0] for code in PROFILES]
+        yell_html=next(c['html'] for c in captures if c['source_url']==PROFILES['yell']['url'])
+        context=inspect_html(yell_html,PROFILES['yell']['heading'])
+        baseline={
+            'schema_version':1,
+            'source_url':PROFILES['yell']['url'],
+            'profile_id':f'{PROFILE_VERSION}:yell',
+            'guidance_hashes':{r['id']:digest(r) for r in RECORDS if r['park_code']=='yell'},
+            'checked_at':'2026-09-29T12:00:00.000Z',
+            'reviewed_at':'2026-09-29T12:30:00.000Z',
+            'context':context,
+            'context_hash':digest(context),
+        }
+        first=self.store.record(
+            {'records':RECORDS,'captures':captures,'baselines':[baseline],'seed_register':seed},
+            expected_revision=None,now=datetime(2026,9,29,13,30,tzinfo=timezone.utc))
+        self.assertEqual(
+            next(s for s in self.store.read()['events'][-1]['extraction']['sources']
+                 if s['source_url']==PROFILES['yell']['url'])['reason'],
+            'matching_reviewed_context')
+        result=self.run_live(expected=first['revision'])
+        state=self.store.read()
+        yell_source=next(s for s in state['events'][-1]['extraction']['sources']
+                         if s['source_url']==PROFILES['yell']['url'])
+        self.assertEqual(yell_source['reason'],'matching_reviewed_context')
+        self.assertFalse(any(p['source_url']==PROFILES['yell']['url'] for p in state['register']['proposals']))
+        yell_row=next(row for row in result['sources'] if row['park_code']=='yell')
+        self.assertEqual(yell_row['packet_status'],'not_needed')
 
     def test_failed_source_is_durably_recorded_and_never_gets_fake_packet(self):
         result=self.run_live(failed_code='zion')
