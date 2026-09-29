@@ -26,7 +26,7 @@ class ReviewPacketTests(unittest.TestCase):
         value=request()
         value['captures'][0]['html']=(
             '<html><body><h1>Entrance Reservations</h1>'
-            f'<p>{QUOTE}</p><p>{SCRIPT_TEXT}</p><p>Synthetic surrounding context.</p>'
+            f'<p>{QUOTE}</p><p>&lt;script&gt;window.packetInjected=1&lt;/script&gt;</p><p>Synthetic surrounding context.</p>'
             '</body></html>'
         )
         self.first=self.store.record(value,expected_revision=None,now=NOW)
