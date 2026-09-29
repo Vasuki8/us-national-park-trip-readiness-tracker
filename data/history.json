@@ -1,0 +1,57 @@
+[
+  {
+    "schema_version": 1,
+    "park_code": "yose",
+    "head_observation_id": null,
+    "snapshot_hash": "90d886b7e25bc8ffb20251a350ce1074fe71e5c55f524e2b4936fd69669e3def",
+    "total_observations": 0,
+    "omitted_observations": 0,
+    "total_changes": 0,
+    "omitted_changes": 0,
+    "observations": []
+  },
+  {
+    "schema_version": 1,
+    "park_code": "romo",
+    "head_observation_id": null,
+    "snapshot_hash": "1853e589ceffc145abb20e3d3c1ea61641552cddeeba1b93e97932b1ad45d5c6",
+    "total_observations": 0,
+    "omitted_observations": 0,
+    "total_changes": 0,
+    "omitted_changes": 0,
+    "observations": []
+  },
+  {
+    "schema_version": 1,
+    "park_code": "yell",
+    "head_observation_id": null,
+    "snapshot_hash": "f04b9cc294cb8db429574cec89447b5768b738c3bee41fd31b62dc97c76d7f47",
+    "total_observations": 0,
+    "omitted_observations": 0,
+    "total_changes": 0,
+    "omitted_changes": 0,
+    "observations": []
+  },
+  {
+    "schema_version": 1,
+    "park_code": "zion",
+    "head_observation_id": null,
+    "snapshot_hash": "aef817eef79c1e5ffcd3093a8281d70c00becfeae01f3fffd922e9c881608e6f",
+    "total_observations": 0,
+    "omitted_observations": 0,
+    "total_changes": 0,
+    "omitted_changes": 0,
+    "observations": []
+  },
+  {
+    "schema_version": 1,
+    "park_code": "grca",
+    "head_observation_id": null,
+    "snapshot_hash": "31006e172bfa2c3f2646fc18f81b1405687f51a3296086d6bfed6e0c2c462155",
+    "total_observations": 0,
+    "omitted_observations": 0,
+    "total_changes": 0,
+    "omitted_changes": 0,
+    "observations": []
+  }
+]

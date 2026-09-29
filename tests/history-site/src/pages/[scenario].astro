@@ -1,0 +1,7 @@
+---
+import Layout from '../../../../src/layouts/Layout.astro';
+export function getStaticPaths() {
+  return ['empty', 'baseline', 'mixed', 'failed', 'truncated'].map((scenario) => ({ params: { scenario } }));
+}
+---
+<Layout title="Synthetic history test"><h1>Synthetic test data — not park conditions</h1><p>Timeline contract awaiting implementation.</p></Layout>
