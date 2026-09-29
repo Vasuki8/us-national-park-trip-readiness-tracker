@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isCalendarDate } from '../src/lib/readiness.ts';
+import { validateSourceRights } from './validate-source-rights.ts';
 const hosts = new Set(['www.nps.gov', 'nps.gov', 'home.nps.gov']);
 const required = (value: unknown) => assert.ok(typeof value === 'string' && value.trim().length > 0);
 const validTime = (value: unknown) => typeof value === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
@@ -93,10 +94,12 @@ export function validateSnapshot(snapshot: any, code: string): void {
 }
 export function validateData(root = 'data'): void {
   const read = (path: string) => JSON.parse(readFileSync(resolve(root, path), 'utf8'));
-  const parks = read('parks.json'); const rules = read('rules.json');
+  const parks = read('parks.json'); const rules = read('rules.json'); const notes = read('entry-notes.json');
+  const sourceRights = read('source-rights.json');
   validateInventory(parks); assert.ok(Array.isArray(rules));
   assert.equal(new Set(rules.map((r: any) => r.id)).size, rules.length);
   rules.forEach((r: any) => validateRule(r, parks));
+  validateSourceRights(sourceRights, [...rules, ...notes]);
   assert.deepEqual(readdirSync(resolve(root, 'alerts')).filter((p) => p.endsWith('.json')).sort(), parks.map((p: any) => `${p.code}.json`).sort());
   for (const park of parks) validateSnapshot(read(`alerts/${park.code}.json`), park.code);
   console.log(`Validated ${parks.length} parks, ${rules.length} reviewed rules and ${parks.length} alert snapshots.`);
