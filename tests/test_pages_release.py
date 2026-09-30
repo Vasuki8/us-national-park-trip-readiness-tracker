@@ -102,6 +102,35 @@ class PagesReleaseWorkflowTests(unittest.TestCase):
         self.assertRegex(robots,r'(?m)^disallow:\s*/\s*$')
         self.assertIn('x-robots-tag: noindex',headers)
 
+    def test_live_verification_uses_the_deployment_url_and_exact_selected_artifact(self):
+        text=self.text()
+        deploy=text.index('id: deployment')
+        probe=text.index('name: Verify the actual hosted release')
+        self.assertLess(deploy,probe)
+        step=text[probe:]
+        for value in ('steps.deployment.outputs.page_url','steps.artifact.outputs.site_path',
+                      'github.event.inputs.target_sha','github.event.inputs.mode',
+                      'node _verified/scripts/verify-pages-live.mjs',
+                      '--directory "$SITE_DIRECTORY"','--url "$PAGE_URL"',
+                      '--commit "$TARGET_SHA"','--mode "$RELEASE_MODE"'):
+            self.assertIn(value,step)
+        self.assertIn('node-version:',text)
+        self.assertIn('"24"',text)
+        self.assertNotIn('continue-on-error:',step)
+
+    def test_receipt_is_retained_on_failed_checks_without_uploading_tools_to_pages(self):
+        text=self.text()
+        self.assertIn('test -f _verified/scripts/verify-pages-live.mjs',text)
+        self.assertIn('> pages-live-verification.json',text)
+        self.assertIn("if: always() && steps.deployment.outcome == 'success'",text)
+        self.assertIn('name: pages-live-verification',text)
+        self.assertIn('path: pages-live-verification.json',text)
+        self.assertIn('if-no-files-found: error',text)
+        ci=(ROOT/'.github/workflows/ci.yml').read_text(encoding='utf-8')
+        self.assertIn('scripts/verify-pages-live.mjs',ci.split('actions/upload-artifact@v4',1)[1])
+        pages_upload=text.split('actions/upload-pages-artifact@v3',1)[1].split('- name:',1)[0]
+        self.assertNotIn('scripts/',pages_upload)
+
 class PagesArtifactSelectionTests(unittest.TestCase):
     SHA = 'a' * 40
     BASE = '/us-national-park-trip-readiness-tracker/'

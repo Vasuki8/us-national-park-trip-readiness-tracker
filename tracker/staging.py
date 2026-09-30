@@ -14,7 +14,7 @@ from .history_store import HistoryStore
 
 PILOT_CODES = ('yose', 'romo', 'yell', 'zion', 'grca')
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROTECTED_DIRS = ('data', 'public', 'src', 'dist', 'tracker', 'tests', 'docs', '.git', '.github')
+PROTECTED_DIRS = ('data', 'public', 'src', 'dist', 'dist-pages', 'tracker', 'tests', 'docs', '.git', '.github')
 MAX_PENDING_BYTES = 6 * MAX_OBJECT_BYTES
 MAX_PENDING_FILES = 32
 

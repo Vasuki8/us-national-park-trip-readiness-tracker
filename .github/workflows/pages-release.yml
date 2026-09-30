@@ -108,6 +108,7 @@ jobs:
           set -euo pipefail
           test -f _verified/dist/index.html
           test -f _verified/dist/build.json
+          test -f _verified/scripts/verify-pages-live.mjs
           if find _verified -type l -print -quit | grep -q .; then
             echo "Refusing a Pages artifact containing symlinks." >&2
             exit 1
@@ -153,6 +154,31 @@ jobs:
         with:
           path: ${{ steps.artifact.outputs.site_path }}
 
+      - name: Set up the live verifier runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
       - name: Deploy verified artifact
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify the actual hosted release
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          SITE_DIRECTORY: ${{ steps.artifact.outputs.site_path }}
+          TARGET_SHA: ${{ github.event.inputs.target_sha }}
+          RELEASE_MODE: ${{ github.event.inputs.mode }}
+        run: |
+          node _verified/scripts/verify-pages-live.mjs \
+            --directory "$SITE_DIRECTORY" --url "$PAGE_URL" \
+            --commit "$TARGET_SHA" --mode "$RELEASE_MODE" > pages-live-verification.json
+
+      - name: Retain the live verification report
+        if: always() && steps.deployment.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-live-verification
+          path: pages-live-verification.json
+          if-no-files-found: error
+          retention-days: 7

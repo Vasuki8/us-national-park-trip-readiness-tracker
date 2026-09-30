@@ -1,11 +1,109 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), after offline private capture setup checks**.
+Updated: **September 30, 2026 (Toronto time), after completing and verifying live Pages release/rollback checks**.
 
 **Private entry capture now offers an offline setup check before the explicit live run. Release readiness binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, with separate pilot/indexed/advertising targets. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
+**The private alert staging, archive-import and candidate-bundle destination guards now also protect `dist-pages/` and its descendants, matching the existing protection for `dist/`. This increment repairs the private/public file boundary introduced by the project-path build. It does not perform real source collection, human review, backup or deployment.**
+
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
-Branch: `main`. PR #1 was automatically marked merged after the pilot fast-forward update. No Pages release workflow was dispatched.
+Continuation branch: `fix/protect-pages-private-data`, based on `main` at `25495bdf28d2ab31ddb3198acafca1ffd7d40240`. PR #1 was automatically marked merged after the earlier pilot fast-forward update. No Pages release workflow was dispatched.
+
+## Completed: verify the actual hosted Pages release and rollback
+
+The next development priority is making the five-park pilot live. The existing manual Pages workflow previously stopped after GitHub accepted a deployment. It now checks the actual returned URL against the exact selected verified artifact, for both deploy and rollback, and retains a separate success/failure report. Operator contract: `docs/PAGES_RELEASE.md`; implementation: `scripts/verify-pages-live.mjs`.
+
+Every public regular file except the host configuration `_headers` is compared by SHA-256, including HTML at real directory URLs, scripts/styles, images, robots and the public build manifest. The manifest must match the requested commit and hosting base before network requests. Non-200 responses, redirects, stale/mismatched content, transport errors, unsafe URLs, symlinks and oversized artifacts/responses refuse verification. Three attempts allow brief hosting propagation; ten-second requests run within a two-minute network budget. The report includes commit/snapshot/base, mode, counts and observed home-page headers; absent headers remain null. Matching the verified bytes preserves its existing noindex metadata, but no project robots or custom `_headers` policy is inferred as a domain-wide HTTP control.
+
+Verify pilot now retains the dependency-free verifier outside both static outputs. Pages still uploads only the selected static directory, installs no product dependencies, checks out no source and performs no rebuild or collection. Node setup occurs before deployment. A failed live check fails the job and retains `pages-live-verification.json`; it does not automatically reverse a completed deployment. An artifact predating the retained verifier fails layout validation before upload, so prepare at least two eligible post-change default-branch artifacts for an older-version rollback. PR-only runs remain ineligible; retention remains seven days.
+
+Eight new Node test cases exercise root/project URLs, all file classes, deploy/rollback identity mismatches, HTTP errors/redirects/encoding, propagation retry, invalid URL/manifest inputs, symlinks, size bounds and redacted transport failures. Two new workflow contracts cover URL/artifact wiring, failure reporting and the verifier/public-upload boundary. The tests were observed failing before the new verifier/integration existed. All eight focused cases and **398 local Python tests** passed; independent review found no Critical/Important issues and independently passed eight Node cases plus 19 workflow tests. Network cases use synthetic responses and do not establish a real hosted-site check. The local full npm command still hit the known sandbox subprocess/I/O failures in `build-preview`, `entry-review-store`, `entry-source-extraction` and `preview-io`; full CI passed all Node tests below.
+
+Implementation commit `fb600c53b4705ae6e4cf192017e5448e7003922a`, tree `653e4a165d47dfbecda66843e933fb8220b5d82d`, passed [Verify pilot #149](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36735262681), job `109955241867`:
+
+- **158 Node, 398 Python, 40 generated-site and 78 Chromium tests: 674 total.**
+- Astro check: 25 files, zero errors/warnings/hints; root/project builds: 14 HTML pages each.
+- Root accessibility screenshot retention passed.
+- Artifact `pilot-verification`: `11105954073`, digest `sha256:093b4e1d1f218d23110f03cdc05f38b7068d8f18d80121c7ea6bf89b331d776a`, expires October 7, 2026.
+
+This handoff update follows completed implementation, independent review and successful full CI. Work remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2). No Pages workflow was dispatched and no real URL, rollback or source approval was verified. Public guidance/alerts remain unchanged; the pilot report remains **1 pass, 1 blocked, 3 not checked**, and indexing/ads remain disabled. A live-verification report alone does not promote any readiness gate.
+
+### Next work toward launch
+
+1. Complete the real owner-controlled capture, human context review and current-head backup/separate-copy session in `docs/DURABLE_COLLECTION_SESSION.md`. Durable destinations and a local NPS key have not been supplied here; the successful Actions API probe is not public-data publication.
+2. Finish a deliberate reviewed public-data promotion path using the existing private archive/history projection, with a reviewable candidate and exact paired snapshots/history. The current projection and private preview do not authorize or perform publication. Keep private captures, ledger, packets, archives and backups outside the repository and hosted site. Preserve the existing collection/review/backup tools rather than rebuilding them.
+3. Integrate reviewed launch code into the default branch, obtain successful default-branch push builds and retain two eligible artifacts. Configure GitHub Pages to use GitHub Actions and confirm the actual root/project URL. The expected free project URL is `https://vasuki8.github.io/us-national-park-trip-readiness-tracker/`, not a verified live URL.
+4. Once the earlier data/trust gates are deliberately cleared, dispatch the existing manual release with the exact eligible commit/run and confirmation. Inspect the retained live report and browser behavior at that URL. Deliberately roll back to the older eligible artifact, verify it, restore the intended release and retain the reports before claiming hosting/rollback evidence. Review external evidence separately; the read-only readiness CLI still does not auto-accept a deployment receipt.
+
+The preceding source-rights handoff commit `2bfcde4c1595c0fcdb369da5fb614d3a724a44e2` passed [Verify pilot #148](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36730398865), job `109938146513`: **664 tests**, zero Astro diagnostics and both 14-page builds. Artifact `11105186391`, digest `sha256:19ebaffee91e738a543eafa3b85760a7f782a062bfb17b5fefdd2d660ef132bc`, retained that prior verified state.
+
+## Completed: validate guidance before source-rights coverage
+
+The source-rights gate previously built a set of guidance ID/source pairs without first validating its input inventory. It could pass empty guidance with an empty manifest, collapse duplicate/conflicting IDs, accept an unofficial or wrong-park URL when the manifest matched it, or approve a reduced inventory missing a pilot source. These false passes were reproduced using disposable repository copies.
+
+The three-line repair reuses the existing `_guidance_inventory` checker and requires nonempty coverage of every fixed pilot source before rights-manifest evaluation. Guidance must have unique valid IDs and exact park/source bindings. Invalid input returns `blocked` with `public_guidance_inventory_invalid`; a matching edited manifest cannot override it. Valid record/manifest reordering, rights metadata and manifest-policy checks, footer checks and report schema remain unchanged. Operator contract: `docs/RELEASE_READINESS.md`.
+
+Six regression methods produced **20 failing cases** before the repair, covering empty inventories, identical/conflicting/cross-file IDs, nonofficial or mismatched bindings, each missing pilot source and all release targets. The order-preservation case remains accepted. All **22 source-rights tests**, the **396-test local Python suite**, data validation and diff checks passed. Independent read-only review found no issues and independently reran all 22 source-rights tests.
+
+Repair commit `fea95b4d875773a144adffcbd159b79819f89007`, tree `c2afd236649dfbfb2ed63de382581f411fa3d359`, passed [Verify pilot #147](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36729360019), job `109934524323`:
+
+- **150 Node, 396 Python, 40 generated-site and 78 Chromium tests: 664 total.**
+- Astro check: 25 files, zero errors/warnings/hints.
+- Root and GitHub project-path builds: 14 HTML pages each; screenshot retention passed.
+- Artifact `pilot-verification`: `11104206230`, digest `sha256:98a341dccec41088b2a1964d3cc73a88cfc5686e2fb5ac128f29015c3ea1d6ac`, expires October 7, 2026.
+
+This handoff was updated after the repair and full CI completed. Work remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2). The actual public inventory remains unchanged at six records and still passes its exact source-rights gate. The pilot remains blocked with required counts **1 pass, 1 blocked, 3 not checked**. No provider request, source approval, public-data publication, deployment, indexing or advertising occurred.
+
+The next real trust milestone remains the owner-controlled session in `docs/DURABLE_COLLECTION_SESSION.md`: durable working/separate backup roots, five-source capture and human review, then private alert staging and reviewed publication. This environment still has no supplied durable destinations or local NPS key. The completed inventory and footer checks should be preserved rather than rebuilt; real capture/backup/review and hosting/rollback evidence remain separate gates.
+
+## Completed: require the public footer notice in release checks
+
+The source-rights gate previously accepted its required government-work notice as a substring anywhere in `Layout.astro`. Reproduction showed that an HTML comment, a hidden span or Astro frontmatter alone could keep the gate passing after the real footer notice was removed.
+
+The gate now uses `tracker/source_notice.py` to recognize literal, unconditional text in one direct-body footer. Frontmatter, source-only contexts, inert/hidden content, dynamic/replacement ancestor attributes, conditional/component markup, default-hidden popovers and duplicate document elements cannot establish notice evidence. Complex or truncated Astro source anywhere is refused before HTML-like comments/strings/attribute expressions can invent a footer. The canonical layout, complete property lookups outside the footer, ordinary inline formatting, whitespace and HTML entities remain supported. Report schema/reasons are unchanged; every release target requires this gate. Operator contract: `docs/RELEASE_READINESS.md`.
+
+Eleven new regression methods extend the source-rights suite from 5 to 16 methods. The initial tests produced **46 failures** against the old substring check. Independent review then reproduced JavaScript comment/template/attribute spoofing, hidden popovers and duplicate document markup; **11 additional failing cases** were reproduced before correcting those gaps. Explicit head/title and comparison-expression subcases also cover the same source-spoofing paths. The final local **390-test Python suite**, data validation and diff checks passed.
+
+Independent follow-up review found no remaining Critical/Important findings and independently passed all 16 source-rights methods plus nine additional probes. Its optional browser probe could not run because bundled Chromium was absent and system Chromium hit a sandbox `setsockopt` denial. This is a conservative source recognizer, not an arbitrary Astro evaluator, computed-CSS visibility audit or proof of deployed output; unfamiliar layouts require review. CI supplies the normal build/browser verification below.
+
+Repair commit `2e315071be82135ab3ae452163547bd7ea6f88c0`, tree `36eda55db035b8c1eb4d6aea64daa8b7fa3c31e0`, passed [Verify pilot #145](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36725117066), job `109919897288`:
+
+- **150 Node, 390 Python, 40 generated-site and 78 Chromium tests: 658 total.**
+- Astro check: 25 files, zero errors/warnings/hints.
+- Root and GitHub project-path builds: 14 HTML pages each; screenshot retention passed.
+- Artifact `pilot-verification`: `11102014924`, digest `sha256:31e60d93c76e04d97846219f991c784cd9f7e5ceb0eb2da34d1e02e0f4d60ca0`, expires October 7, 2026.
+
+This handoff update follows the completed repair and successful full CI. Work remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2). The actual pilot is still blocked with required counts **1 pass, 1 blocked, 3 not checked**. Public guidance/alerts, provider credentials, source approvals, deployment, indexing and ads were unchanged.
+
+The next real trust milestone is the owner-controlled capture/review/staging/backup session in `docs/DURABLE_COLLECTION_SESSION.md`. No durable working/backup roots or local NPS key have been supplied to this environment. Preserve the existing capture, ledger, reconciliation, backup and staging tools; do not substitute an ephemeral workspace or repository for the private evidence store. Real human review remains a separate action.
+
+The footer repair's final handoff commit `82918b84b902231c2c99213220fa3a36d2b121c8` also passed [Verify pilot #146](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36725960947): **658 tests**, zero Astro diagnostics, both 14-page builds and screenshot retention. Artifact `pilot-verification`: `11104065177`, digest `sha256:33b24e3219d542fe4b4f7dd6ec9a6fe9d7fbc9ccdce708cf06e12a09bf128c64`.
+
+## New: protect the project Pages output from private alert writes
+
+The GitHub Pages build introduced the publishable `dist-pages/` directory, but the existing private staging, history CLI and preview-bundle destination lists still protected only `dist/`. A synthetic reproduction wrote seven private JSON files beneath a temporary project's `dist-pages/` while the reports still claimed no site-data writes. No real provider data or actual public output was used in that reproduction.
+
+All three existing destination guards now include `dist-pages/`, including nested paths. Single-park and five-park live staging refuse before any provider request or file creation; history imports and private candidate exports refuse before archive/output writes. Allowed owner-controlled destinations and the existing ignored `state/` workflow are retained. No public guidance, snapshots, frontend code, package files or workflows changed.
+
+Three new regression methods cover eight unsafe root/nested cases. All eight cases failed against the original code, then passed with the three-list repair. The 76 affected staging/history/preview tests and the complete **379-test Python suite** pass. Data validation and `git diff --check` also pass.
+
+Independent read-only review found no Critical, Important or Minor findings. The reviewer reran 68 focused Python tests and two additional history-report checks, confirming that the shared history guard refuses before store access. No review changes were needed.
+
+Local verification needs a normal `umask 022`: the cloud shell's `077` converted pre-existing tests' intentionally insecure `0755` fixtures into secure `0700` directories, producing five failures and one cascading error before that environment-only adjustment. The existing `npm test` attempt also encountered baseline local limitations in `build-preview.test.ts`, `entry-review-store.test.ts`, `entry-source-extraction.test.ts` and `preview-io.test.ts`; local Astro dependencies are absent and subprocess I/O differs from CI. The normal frontend/build/browser suite must be verified by the unchanged `Verify pilot` workflow on the proposed branch before integration. These local failures are not claimed as passing checks.
+
+The proposed repair at `ab9c630197300761536f9bb6d44d8e441892c855` passed [Verify pilot #143](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36675415344): **150 Node, 379 Python, 40 generated-site and 78 Chromium tests (647 total)**, zero Astro diagnostics, root/project 14-page builds and screenshot retention. Artifact `pilot-verification` is `11079736068`, digest `sha256:81d7ee6a427f9a42856bd088aa8ac13776dbbe44894ab8b4209ef2cecd52a51a`. This resolves the local frontend/build/browser verification limitations for that exact code commit. The branch remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2).
+
+The next real trust milestone remains the owner-controlled durable capture/review/staging/backup session described below. This repair clears no release gate and must not be treated as source review or authorization to publish.
+
+## New: checked durable collection runbook
+
+`docs/DURABLE_COLLECTION_SESSION.md` now joins the existing operator contracts into one first-session sequence: choose durable private working/separate backup roots, check offline setup, capture five entry sources, verify a backup and a second copy before human review, reconcile actual reviewed guidance, back up the new head, collect alerts privately, inspect recovery state and read release gates.
+
+A disposable synthetic rehearsal exercised the real CLI setup/status/backup/verify/restore/readiness commands and the existing live operator with mocked transport. It produced five packets and six unresolved holds, verified both backup copies, restored the exact original ledger state, checked all five offline alert summaries without creating staging files and left public data byte-for-byte unchanged. The readiness report remained blocked. No real source requests, review approvals or durable-storage evidence were created. Temporary rehearsal files were discarded.
+
+The current cloud environment has no local `NPS_API_KEY` and no supplied owner-controlled durable working/backup destination. The GitHub Actions secret is not a local credential. The real session still requires those storage choices and the owner's human review; the runbook does not clear a release gate.
+
+The runbook commit `7d20ad06764b79222c55dc6918e3b909a0e508ef` passed [Verify pilot #144](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36720210942): 150 Node, 379 Python, 40 generated-site and 78 Chromium tests (**647 total**), zero Astro diagnostics, both 14-page builds and screenshot retention. Artifact `pilot-verification`: `11098955656`, digest `sha256:de6093dd1c8deb78a69997895f2e11c8647e446cd0bf327f02426d15691a439d`.
 
 The local development commit `679fa089fdddb08c09e976c16afead4c5ecedb2f` was recreated through the connected GitHub app as `3fe0e878`; both commits have the identical tree `b0d120ccd6a353333f7cf244f8dd490c0b8612e4`. The `main` push passed Verify pilot #132, run `36651035959`, job `109684980194`: 148 Node, 328 Python, 18 generated-site, and 74 Chromium tests (**568 total**), Astro check with zero diagnostics, and a 14-page build. Artifact `pilot-verification` is `11070417444`. This integrates code only; it does not satisfy private review, public alert collection, hosting, indexing, or advertising gates.
 

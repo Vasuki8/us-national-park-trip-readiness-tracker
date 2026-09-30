@@ -17,6 +17,7 @@ from .entry_review_store import EntryReviewStore
 from .entry_sources import PROFILES, digest
 from .entry_html import SourceExtractionError
 from .indexing_controls import pilot_meta_noindex, pilot_robots_disallow_all, pilot_header_noindex
+from .source_notice import public_footer_notice
 
 GATE_ORDER = (
     'durable_source_review',
@@ -245,6 +246,9 @@ def _rights(root: Path) -> dict:
         'commercial_notice_present': False,
         'nps_marks_or_media_detected': False,
     }
+    inventory = _guidance_inventory(records)
+    if inventory is None or not all(inventory[1].values()):
+        return _gate('source_rights','blocked','public_guidance_inventory_invalid', base)
     if complete != len(records):
         return _gate('source_rights','blocked','guidance_rights_metadata_incomplete', base)
 
@@ -304,7 +308,7 @@ def _rights(root: Path) -> dict:
         layout = (root/'src'/'layouts'/'Layout.astro').read_text(encoding='utf-8')
     except (OSError, UnicodeError):
         raise ReviewStoreError('release_readiness_repository_unreadable') from None
-    base['commercial_notice_present'] = expected_notice in layout
+    base['commercial_notice_present'] = public_footer_notice(layout, expected_notice)
     if not base['commercial_notice_present']:
         return _gate('source_rights','blocked','commercial_government_work_notice_missing', base)
 

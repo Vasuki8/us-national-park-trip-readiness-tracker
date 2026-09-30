@@ -15,7 +15,7 @@ These commands do not need or read an API key, make network requests, change the
 
 Collection remains the existing explicit operation. It must first be validated with an owner-controlled NPS key. A future producer integration should archive every resulting attempt in order, including failures, before considering publication. Do not chain archival after collection only with `&&`: collection deliberately exits nonzero for a failed/quarantined response. Do not enable a schedule merely because these synthetic tests pass.
 
-`state/` is ignored by Git. The CLI rejects archive destinations in this repository's website, data, source, documentation and Git directories. Choose an owner-controlled private local directory. Do not upload the archive as an Actions artifact or add it to static assets without a separate source-use and publication review.
+`state/` is ignored by Git. The CLI rejects archive destinations in this repository's website, data, source, documentation and Git directories, including both `dist/` and `dist-pages/` and their descendants. Destination checks happen before importing a snapshot or writing an archive. Choose an owner-controlled private local directory. Do not upload the archive as an Actions artifact or add it to static assets without a separate source-use and publication review.
 
 ## Evidence and commit structure
 

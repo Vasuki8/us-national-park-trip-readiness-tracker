@@ -97,6 +97,31 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result, 2)
             self.assertIn('unsafe_archive_destination', err.getvalue())
 
+    def test_record_refuses_pages_output_without_writing_archive(self):
+        original = self.input.read_bytes()
+        for nested in (False, True):
+            with self.subTest(nested=nested):
+                project = Path(self.tmp.name)/f'project-{nested}'
+                project.mkdir()
+                output = project/'dist-pages'
+                if nested:
+                    output.mkdir()
+                    (output/'index.html').write_text('retained public page')
+                destination = output/'private-history' if nested else output
+                before = {p:p.read_bytes() for p in project.rglob('*') if p.is_file()}
+                out, err = io.StringIO(), io.StringIO()
+                with patch('tracker.history.PROJECT_ROOT', project), \
+                     contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = main(['record', '--snapshot', str(self.input),
+                                 '--archive-dir', str(destination)])
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), '')
+                self.assertIn('unsafe_archive_destination', err.getvalue())
+                self.assertEqual(before, {p:p.read_bytes() for p in project.rglob('*') if p.is_file()})
+                self.assertFalse(destination.exists())
+                self.assertEqual(self.input.read_bytes(), original)
+
+
     def test_large_change_report_has_explicit_truncation_not_silent_loss(self):
         old = snapshot([]); store = HistoryStore(self.root); store.append(old)
         store.append(snapshot([notice(str(i), now=T1) for i in range(101)], now=T1))
