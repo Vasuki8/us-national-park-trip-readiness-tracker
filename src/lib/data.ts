@@ -53,4 +53,5 @@ export const buildInfo = {
   snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, rawEntryReview, snapshots, histories, planningResources })).digest('hex').slice(0, 12)}`,
   built_at: new Date().toISOString(), published_at: null,
   code_commit: process.env.GITHUB_SHA || null, live_collection_enabled: false,
+  base_path: import.meta.env.BASE_URL,
 };

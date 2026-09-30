@@ -8,7 +8,7 @@ A searchable five-park directory, static park pages, source-backed dated entry c
 
 Reviews expire after seven days; unsupported years and areas never inherit an exemption. Directory age labels update in the browser without a new build. Stored source reviews, dated rules and recent successful alert checks are counted separately.
 
-The Python NPS alerts collector has conservative pagination, retry limits, response validation, last-good retention, clock checks and atomic writes. All committed alert snapshots are `never_checked`: no live NPS request has been verified and collection is not scheduled. Removed notices never imply a reopening.
+The Python NPS alerts collector has conservative pagination, retry limits, response validation, last-good retention, clock checks and atomic writes. A keyed read-only preflight has passed for all five parks. All committed alert snapshots remain `never_checked`; durable private collection, review and publication are still pending. Collection is not scheduled. Removed notices never imply a reopening.
 
 There are no ads, accounts, analytics, paid APIs, booking inventory or weather forecasts. All pages are `noindex, nofollow` and robots are disallowed until the production gates are met. The pilot is not affiliated with the National Park Service.
 
@@ -29,9 +29,14 @@ npm run build
 npm run test:site
 npx playwright install chromium
 npm run test:browser
+npm run build:pages
+npm run test:site:pages
+npm run test:browser:pages
 ```
 
-`npm run preview` serves the built static site. Windows users can run these commands in PowerShell. No API key is required to build the committed development snapshot. The Astro build validates undated source notes separately from the dated-rule and alert schema checks.
+`npm run preview` serves the root build. `npm run preview:pages` serves the GitHub project build at `/us-national-park-trip-readiness-tracker/` on port 4324. Use a POSIX/WSL shell for the full command list. No API key is required to build the committed development snapshot. The Astro build validates undated source notes separately from the dated-rule and alert schema checks.
+
+GitHub Pages release/rollback remains manual and uses an already verified artifact matching the configured hosting path. The website is not live. See `docs/PAGES_RELEASE.md` for the deployment contract and `docs/RELEASE_READINESS.md` for the remaining gates.
 
 ## Read-only integration preflight first
 
@@ -41,22 +46,21 @@ Obtain your own NPS API key and provide `NPS_API_KEY` privately, not in command 
 uv run --frozen python -m tracker.preflight
 ```
 
-The initial GitHub preflight received an empty key and reported **not_configured / gate_passed=false**. This is a blocked integration gate, even though the diagnostic job completed. Add `NPS_API_KEY` as a repository Actions secret and rerun the existing preflight. See `docs/NPS_PREFLIGHT.md`. The diagnostic never publishes or writes park snapshots.
+The successful keyed GitHub preflight is run `36628434444`: all five parks passed with `gate_passed:true`. See `docs/NPS_PREFLIGHT.md`. The diagnostic never publishes or writes park snapshots; rerun it with your privately supplied key when checking provider compatibility.
 
-## Explicit local collection — not connected to publication
+## Durable private collection
 
-Only after reviewing a successful preflight, collection can be tested locally:
+After reviewing a successful preflight, collect into owner-controlled durable private POSIX/WSL storage outside the repository:
 
 ```sh
-uv run --frozen python -m tracker --park yose --data-dir data/alerts
-npm run validate:data
-npm run build
+uv run --frozen python -m tracker.stage collect --live --park all --staging-dir /absolute/private/alert-staging
+uv run --frozen python -m tracker.stage status --park all --staging-dir /absolute/private/alert-staging
 ```
 
-A failed request exits nonzero and retains last-good records with failure metadata. A suspicious record drop is quarantined rather than treated as closure removal. Live compatibility, durable evidence and publication safeguards must be verified before enabling schedules. Do not publish newly collected records without the remaining evidence, rights and publication reviews.
+A failed request retains last-good records with failure metadata. A suspicious record drop is quarantined rather than treated as closure removal. The batch can have partial committed progress; inspect status and recover pending receipts before retrying. These commands do not publish or back up data. See `docs/STAGING_COLLECTION.md`. Durable evidence, backup and review remain required before public collection or schedules.
 
 ## Handoff
 
-Read `PROJECT_STATUS.md` first, then `docs/DEVELOPMENT.md`. The approved design is in `docs/superpowers/specs/2026-09-28-national-park-trip-readiness-design.md`. Implementation plans are in `docs/superpowers/plans/`; the latest continuation is `2026-09-28-source-readiness.md`. Source-scope decisions are documented in `docs/ENTRY_SOURCE_REVIEW.md`.
+Read `PROJECT_STATUS.md` first, then `docs/DEVELOPMENT.md`. The approved product design is in `docs/superpowers/specs/2026-09-28-national-park-trip-readiness-design.md`. Implementation plans are in `docs/superpowers/plans/`; the project Pages increment is `2026-09-30-pages-base-path.md`. Source-scope decisions are documented in `docs/ENTRY_SOURCE_REVIEW.md`.
 
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.

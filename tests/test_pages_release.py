@@ -1,5 +1,10 @@
 """Manual-only GitHub Pages deployment/rollback workflow contracts."""
 import re
+import json
+import os
+import subprocess
+import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -61,15 +66,15 @@ class PagesReleaseWorkflowTests(unittest.TestCase):
         text=self.text()
         self.assertIn('dist/build.json',text)
         self.assertIn('dist/index.html',text)
-        self.assertRegex(text,r'path:\s*_verified/dist')
-        self.assertIn('find _verified/dist -type l',text)
+        self.assertIn('steps.artifact.outputs.site_path',text)
+        self.assertIn('find _verified -type l',text)
 
-    def test_pages_project_subpath_is_refused_before_upload(self):
+    def test_pages_path_is_matched_to_verified_artifact_before_upload(self):
         text=self.text()
         self.assertIn('id: pages',text)
         self.assertIn('steps.pages.outputs.base_path',text)
-        self.assertIn('Current verified build requires Pages root hosting',text)
-        guard=text.index('Current verified build requires Pages root hosting')
+        self.assertIn('Select the verified build matching the Pages path',text)
+        guard=text.index('Select the verified build matching the Pages path')
         upload=text.index('actions/upload-pages-artifact@v3')
         deploy=text.index('actions/deploy-pages@v4')
         self.assertLess(guard,upload)
@@ -96,5 +101,83 @@ class PagesReleaseWorkflowTests(unittest.TestCase):
         self.assertIn('noindex',layout)
         self.assertRegex(robots,r'(?m)^disallow:\s*/\s*$')
         self.assertIn('x-robots-tag: noindex',headers)
+
+class PagesArtifactSelectionTests(unittest.TestCase):
+    SHA = 'a' * 40
+    BASE = '/us-national-park-trip-readiness-tracker/'
+
+    def select(self, path, manifests, raw_manifests=()):
+        text = WORKFLOW.read_text(encoding='utf-8')
+        step = text.split('name: Select the verified build matching the Pages path', 1)[1]
+        script = textwrap.dedent(step.split('script: |\n', 1)[1].split('\n      - name:', 1)[0])
+        wrapper = '''const outputs = {}; let error = null;
+const core = { setOutput: (key, value) => outputs[key] = value,
+  setFailed: message => { error = message; process.exitCode = 1; } };
+async function selectArtifact() {
+''' + script + '''\n}
+selectArtifact().then(() => console.log(JSON.stringify({ outputs, error })));
+'''
+        with tempfile.TemporaryDirectory() as folder:
+            for directory, manifest in manifests.items():
+                root = Path(folder) / '_verified' / directory
+                root.mkdir(parents=True)
+                (root / 'index.html').write_text('<h1>Synthetic test</h1>', encoding='utf-8')
+                content = manifest if directory in raw_manifests else json.dumps(manifest)
+                (root / 'build.json').write_text(content, encoding='utf-8')
+            result = subprocess.run(['node', '-e', wrapper], cwd=folder,
+                env={**os.environ, 'PAGES_BASE_PATH': path, 'TARGET_SHA': self.SHA},
+                capture_output=True, text=True, timeout=10)
+        self.assertTrue(result.stdout, result.stderr)
+        return result.returncode, json.loads(result.stdout)
+
+    def manifest(self, base):
+        return {'base_path': base, 'code_commit': self.SHA}
+
+    def test_root_and_project_select_only_matching_outputs(self):
+        manifests = {'dist': self.manifest('/'), 'dist-pages': self.manifest(self.BASE)}
+        for path, expected in [('', '_verified/dist'), ('/', '_verified/dist'),
+                (self.BASE, '_verified/dist-pages'), (self.BASE.rstrip('/'), '_verified/dist-pages')]:
+            with self.subTest(path=path):
+                code, result = self.select(path, manifests)
+                self.assertEqual(code, 0)
+                self.assertIsNone(result['error'])
+                self.assertEqual(result['outputs']['site_path'], expected)
+
+    def test_legacy_manifest_is_root_only(self):
+        legacy = {'code_commit': self.SHA}
+        self.assertEqual(self.select('', {'dist': legacy})[0], 0)
+        code, result = self.select(self.BASE, {'dist': legacy, 'dist-pages': legacy})
+        self.assertEqual(code, 1)
+        self.assertEqual(result['outputs'], {})
+
+    def test_missing_project_artifact_fails_without_output(self):
+        code, result = self.select(self.BASE, {'dist': self.manifest('/')})
+        self.assertEqual(code, 1)
+        self.assertEqual(result['outputs'], {})
+
+    def test_mismatched_and_invalid_manifest_paths_fail_without_output(self):
+        for base in ['/', '/different-project/', None, 42]:
+            with self.subTest(base=base):
+                code, result = self.select(self.BASE, {'dist-pages': self.manifest(base)})
+                self.assertEqual(code, 1)
+                self.assertEqual(result['outputs'], {})
+
+    def test_manifest_commit_must_match_requested_verified_commit(self):
+        manifest = {**self.manifest(self.BASE), 'code_commit': 'b' * 40}
+        code, result = self.select(self.BASE, {'dist-pages': manifest})
+        self.assertEqual(code, 1)
+        self.assertEqual(result['outputs'], {})
+
+    def test_non_object_manifest_fails_without_output(self):
+        for manifest in [None, [], 'invalid']:
+            with self.subTest(manifest=manifest):
+                code, result = self.select(self.BASE, {'dist-pages': manifest})
+                self.assertEqual(code, 1)
+                self.assertEqual(result['outputs'], {})
+
+    def test_malformed_json_manifest_fails_without_output(self):
+        code, result = self.select(self.BASE, {'dist-pages': '{broken'}, raw_manifests=('dist-pages',))
+        self.assertEqual(code, 1)
+        self.assertEqual(result['outputs'], {})
 
 if __name__=='__main__': unittest.main()

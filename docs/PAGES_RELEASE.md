@@ -41,7 +41,12 @@ It does not:
 - regenerate data; or
 - modify Git history.
 
-Deployment therefore uses the exact `dist/` that was already verified.
+CI builds and verifies two static outputs from the same commit and public-data snapshot:
+
+- `dist/`: domain-root hosting (`/`);
+- `dist-pages/`: the free GitHub project path (`/us-national-park-trip-readiness-tracker/`).
+
+Deployment uses the exact matching output retained in that verification artifact.
 
 ## Artifact boundary
 
@@ -49,23 +54,35 @@ Before upload, the workflow requires:
 
 - `_verified/dist/index.html`;
 - `_verified/dist/build.json`; and
-- no symlinks anywhere under `_verified/dist`.
+- no symlinks anywhere under `_verified`.
 
-Only `_verified/dist` is passed to `actions/upload-pages-artifact@v3`.
+The selected output also requires its own `index.html` and readable object `build.json`. Its `code_commit` must equal the requested `target_sha`. Only the selected static directory is passed to `actions/upload-pages-artifact@v3`; screenshots, lockfiles and the other build are excluded.
 
-## GitHub Pages base-path guard
+## GitHub Pages path matching
 
-The current Astro output and navigation use root-absolute URLs such as `/parks/` and root asset paths.
+Internal navigation uses Astro's configured base path, and Astro prefixes bundled scripts/styles. External NPS links and fragment links retain their destinations. The manifest records the exact `base_path`.
 
-The normal GitHub project Pages URL for this repository would use a base path such as:
+The normal GitHub project Pages URL for this repository uses:
 
 `/us-national-park-trip-readiness-tracker/`
 
-Deploying the current artifact there would break root-absolute navigation/assets.
+CI checks every generated page, internal destination and bundled asset under both paths. Four project-path Chromium checks cover navigation/search, entry/checklist interaction, footer/fragment navigation, all 14 pages and metadata. Both builds preserve noindex and the same public-data snapshot ID.
 
-The workflow therefore runs `actions/configure-pages@v5`, reads its documented `base_path` output, and **refuses any nonempty base path before upload/deployment**.
+The release workflow reads `actions/configure-pages@v5`'s `base_path`, normalizes the trailing slash, and selects `dist` for root hosting or `dist-pages` for project hosting. A missing output, mismatched manifest path or mismatched commit fails before upload. It does not rewrite or rebuild an artifact.
 
-A real release currently requires Pages root hosting—for example, a correctly configured custom domain—or a future code change that makes the entire site base-path aware and re-verifies that output.
+Earlier verification artifacts lacking `base_path` remain root-only candidates, provided their commit matches. They cannot be released at the project URL. A custom domain is no longer required by the build.
+
+Local verification (POSIX/WSL shell):
+
+```sh
+npm run build
+npm run test:site
+npm run build:pages
+npm run test:site:pages
+npm run test:browser:pages
+```
+
+`npm run preview:pages` serves the project build at port 4324 and the project path. The browser harness passes `--ignore-lock` so Astro stays in the foreground and Playwright manages its lifetime.
 
 ## Permissions
 
@@ -103,7 +120,7 @@ The verified application still contains:
 - `robots.txt` blocking crawlers; and
 - the repository's `_headers` noindex/security directives.
 
-GitHub Pages does not establish that the custom `_headers` file is applied as HTTP response headers, so effective production headers must be tested after an actual deployment. Meta robots and `robots.txt` remain independent indexing blocks.
+GitHub Pages does not establish that the custom `_headers` file is applied as HTTP response headers, so effective production headers must be tested after an actual deployment. Every page retains meta noindex. A project-path `robots.txt` is not the domain-root robots policy; it must not be counted as a separate crawler block at project hosting. Root hosting retains both the meta and root robots blocks.
 
 Advertising/analytics remain disabled.
 
@@ -119,4 +136,4 @@ Therefore:
 - indexing remains blocked; and
 - PR #1 is merged, but code integration did not perform a Pages release.
 
-A real deployment should occur only after the earlier data/trust gates are deliberately cleared and the root-hosting/base-path requirement is resolved.
+A real deployment should occur only after the earlier data/trust gates are deliberately cleared. No live URL or real rollback has been verified by the project-path development tests.

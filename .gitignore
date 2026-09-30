@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-pages/
 .astro/
 .venv/
 __pycache__/

@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **September 29, 2026 (America/Toronto), after main integration**.
+Updated: **September 30, 2026 (UTC), during project Pages development**.
 
 **The private alert staging command now supports both a sequential five-park collection run and an offline five-park status report. The entry-review ledger's backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
@@ -16,6 +16,18 @@ The eventual product remains AdSense-first, light-theme and free of paid-data de
 The public build remains 14 HTML pages plus `build.json`, with park/state search, five park pages, date-aware entry guidance, source evidence, checklists, notice history and seven official planning links per park. Yosemite and Rocky Mountain have dated rules; Yellowstone, Zion and Grand Canyon retain undated source observations. Public alert snapshots remain `never_checked`; public histories and the public entry-review register remain empty.
 
 Existing alert collection/archive/staging, candidate previews, visitor history, accessibility repairs, source-change gate, HTML extraction, live entry-page compatibility diagnostic and private review ledger remain in place. Do not rebuild them.
+
+## New: free GitHub project hosting support
+
+The build supports both a domain root and `/us-national-park-trip-readiness-tracker/`. Internal page links, breadcrumbs, directory cards and current-page navigation include the configured Astro base; bundled scripts/styles use the same path. External NPS and fragment links retain their destinations.
+
+CI verifies `dist/` and `dist-pages/` separately and retains both in `pilot-verification`. Each manifest records `base_path`; both outputs use the same public-data snapshot. The manual Pages workflow selects only the output matching the configured Pages path and requested commit, refusing missing or mismatched builds before upload. Older manifests lacking a path remain root-only candidates. Release still deploys an existing verified artifact without rebuilding.
+
+This removes the custom-domain requirement from the code-side hosting path. It does not create a live website, verify rollback, clear private review/collection gates, or enable indexing/ads. See `docs/PAGES_RELEASE.md`.
+
+Local verification passed 150 Node tests, 339 Python tests, both 20-test generated-site checks, Astro check with zero diagnostics, and two 14-page builds. Project HTTP checks passed locally, but three Chromium interaction tests could not launch because the browser download failed. Exact-head GitHub CI remains the browser verification gate for this increment.
+
+Independent review found no Critical/Important issues. It separately audited 279 links/assets across all 14 pages per output, including fragment targets, with no missing files, escaped base paths or missing fragments; external destinations matched. One minor test-coverage gap is deferred: the static regex scan skips query/fragment-bearing and relative URLs. Current generated destinations passed the broader independent audit.
 
 ## New: five-park private alert staging run
 

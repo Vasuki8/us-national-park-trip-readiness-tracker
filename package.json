@@ -7,11 +7,15 @@
   "scripts": {
     "dev": "astro dev",
     "build": "npm run validate:data && astro build",
+    "build:pages": "npm run validate:data && astro build --base /us-national-park-trip-readiness-tracker/ --outDir dist-pages",
     "preview": "astro preview",
+    "preview:pages": "astro preview --base /us-national-park-trip-readiness-tracker/ --outDir dist-pages --port 4324",
     "check": "astro check",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:site": "node --test tests/site.test.mjs",
+    "test:site:pages": "SITE_TEST_OUTPUT=dist-pages SITE_TEST_BASE=/us-national-park-trip-readiness-tracker/ node --test tests/site.test.mjs",
     "test:browser": "playwright test",
+    "test:browser:pages": "playwright test --config playwright.pages.config.ts",
     "validate:data": "node --experimental-strip-types scripts/validate-data.ts"
   },
   "dependencies": { "astro": "7.3.5" },

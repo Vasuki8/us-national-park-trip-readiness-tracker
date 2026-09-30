@@ -103,7 +103,7 @@ A manual GitHub Pages deployment/rollback workflow is now present, so this gate 
 
 The workflow can only reuse a successful default-branch `Verify pilot` artifact whose run ID and exact commit SHA are explicitly supplied. It has not been dispatched, so no live production URL or rollback behavior has been verified.
 
-The current build uses root-absolute URLs. The release workflow refuses a nonempty GitHub Pages `base_path`, preventing deployment to the default project-page subpath where those URLs would break. Root-hosting/custom-domain configuration or a future base-path-aware build is still required before a real deployment can succeed.
+CI now verifies root and GitHub project-path builds. The manual release workflow selects the existing verified output whose manifest `base_path` matches the configured Pages path and whose `code_commit` matches the requested commit. Missing or mismatched outputs fail before upload. The free project URL is supported without requiring a custom domain; a real deployment URL and rollback still need verification.
 
 The evaluator never deploys.
 

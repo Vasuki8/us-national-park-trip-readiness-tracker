@@ -108,7 +108,7 @@ jobs:
           set -euo pipefail
           test -f _verified/dist/index.html
           test -f _verified/dist/build.json
-          if find _verified/dist -type l -print -quit | grep -q .; then
+          if find _verified -type l -print -quit | grep -q .; then
             echo "Refusing a Pages artifact containing symlinks." >&2
             exit 1
           fi
@@ -117,21 +117,41 @@ jobs:
         id: pages
         uses: actions/configure-pages@v5
 
-      - name: Refuse a GitHub project-page subpath
-        shell: bash
+      - name: Select the verified build matching the Pages path
+        id: artifact
+        uses: actions/github-script@v7
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-        run: |
-          set -euo pipefail
-          if [ -n "$PAGES_BASE_PATH" ]; then
-            echo "Current verified build requires Pages root hosting; project subpath would break root-absolute URLs." >&2
-            exit 1
-          fi
+          TARGET_SHA: ${{ github.event.inputs.target_sha }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const base = (process.env.PAGES_BASE_PATH || '').replace(/\/+$/, '') + '/';
+            const directory = base === '/' ? '_verified/dist' : '_verified/dist-pages';
+            let manifest;
+            try {
+              if (!fs.existsSync(`${directory}/index.html`)) throw new Error('missing index');
+              manifest = JSON.parse(fs.readFileSync(`${directory}/build.json`, 'utf8'));
+            } catch {
+              core.setFailed('The selected verified artifact has no readable build for this Pages path.');
+              return;
+            }
+            if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+              core.setFailed('The verified build manifest is invalid.');
+              return;
+            }
+            // Older verified artifacts predate the field and can only serve a root site.
+            const artifactBase = manifest.base_path === undefined ? '/' : manifest.base_path;
+            if (artifactBase !== base || manifest.code_commit !== process.env.TARGET_SHA) {
+              core.setFailed('The verified build does not match the configured Pages path and requested commit.');
+              return;
+            }
+            core.setOutput('site_path', directory);
 
       - name: Package only the verified static site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _verified/dist
+          path: ${{ steps.artifact.outputs.site_path }}
 
       - name: Deploy verified artifact
         id: deployment

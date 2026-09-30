@@ -1,6 +1,7 @@
 ---
 import { parks, coverageInput, buildInfo } from '../lib/data';
 import { summarizeCoverage } from '../lib/source-coverage';
+import { siteUrl } from '../lib/urls';
 const states = [...new Set(parks.flatMap((park) => park.states))].sort();
 const coverage = summarizeCoverage(coverageInput, new Date());
 ---
@@ -14,7 +15,7 @@ const coverage = summarizeCoverage(coverageInput, new Date());
   <div class="park-grid">
     {parks.map((park, index) => <article class="park-card" data-park-card data-search={`${park.name} ${park.code} ${park.states.join(' ')}`.toLowerCase()} data-states={JSON.stringify(park.states)}>
       <div class="card-top"><span class="park-number">{String(index + 1).padStart(2, '0')}</span><span class="code-label">NPS · {park.code.toUpperCase()}</span></div>
-      <p class="eyebrow card-state">{park.states.join(' · ')}</p><h3><a href={`/parks/${park.slug}/`}>{park.name}<span aria-hidden="true">↗</span></a></h3>
+      <p class="eyebrow card-state">{park.states.join(' · ')}</p><h3><a href={siteUrl(`/parks/${park.slug}/`, import.meta.env.BASE_URL)}>{park.name}<span aria-hidden="true">↗</span></a></h3>
       <p class="card-summary">{park.summary}</p>
       <div class="card-bottom"><span class="tag" data-entry-label={park.code}>{coverage.rows.find((row) => row.code === park.code)?.entryLabel}</span><span class="small muted" data-alert-label={park.code}>{coverage.rows.find((row) => row.code === park.code)?.alertLabel}</span></div>
     </article>)}

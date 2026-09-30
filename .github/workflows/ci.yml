@@ -34,14 +34,18 @@ jobs:
       - run: npm run check
       - run: npm run build
       - run: npm run test:site
+      - run: npm run build:pages
+      - run: npm run test:site:pages
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
+      - run: npm run test:browser:pages
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: pilot-verification
           path: |
             dist/
+            dist-pages/
             test-results/
             package-lock.json
           retention-days: 7
