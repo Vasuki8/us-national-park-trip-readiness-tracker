@@ -148,6 +148,12 @@ The gate passes only when:
 
 The manifest is grounded in the official NPS disclaimer and Arrowhead-use guidance. This pass applies only to the current six public text uses. It is not blanket clearance for NPS media, marks, third-party material, private raw captures, or future content.
 
+The commercial notice must be recognizable literal text in one unconditional `<footer>` directly under the layout's HTML body. The source check excludes frontmatter, comments, attributes, scripts, styles, templates and other non-notice contexts. Explicit hiding, inline styles, dynamic/replacement attributes on notice ancestors, Astro conditionals, components and malformed/duplicate footers cannot establish this evidence. Ordinary inline formatting, HTML entities and whitespace are accepted. A missing or unrecognized notice blocks every release target with `commercial_government_work_notice_missing`; report schema and evidence fields are unchanged.
+
+This is a conservative recognizer of the current static layout, not an Astro evaluator, CSS visibility audit or proof of a deployed footer. Stylesheet changes, runtime behavior and hosted output still require build/browser and operator review. An unfamiliar layout requires explicit review rather than a substring-based pass.
+
+Complex Astro expressions anywhere in the layout require review because JavaScript comments, strings or JSX can contain HTML-like text that a plain HTML parser would otherwise mistake for document structure. Complete property lookups such as the current `{title}` remain accepted outside the footer. Markup-containing or truncated attribute expressions, default-hidden popovers and duplicate document elements also cannot supply notice evidence.
+
 ### Hosting and rollback
 
 A manual GitHub Pages deployment/rollback workflow is now present, so this gate is `not_checked` rather than `blocked`.
