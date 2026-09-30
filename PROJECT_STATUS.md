@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), after rehearsing the durable collection operator sequence**.
+Updated: **September 30, 2026 (UTC), after completing and verifying the public footer-notice release-check repair**.
 
 **Private entry capture now offers an offline setup check before the explicit live run. Release readiness binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, with separate pilot/indexed/advertising targets. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
@@ -8,6 +8,27 @@ Updated: **September 30, 2026 (UTC), after rehearsing the durable collection ope
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Continuation branch: `fix/protect-pages-private-data`, based on `main` at `25495bdf28d2ab31ddb3198acafca1ffd7d40240`. PR #1 was automatically marked merged after the earlier pilot fast-forward update. No Pages release workflow was dispatched.
+
+## Completed: require the public footer notice in release checks
+
+The source-rights gate previously accepted its required government-work notice as a substring anywhere in `Layout.astro`. Reproduction showed that an HTML comment, a hidden span or Astro frontmatter alone could keep the gate passing after the real footer notice was removed.
+
+The gate now uses `tracker/source_notice.py` to recognize literal, unconditional text in one direct-body footer. Frontmatter, source-only contexts, inert/hidden content, dynamic/replacement ancestor attributes, conditional/component markup, default-hidden popovers and duplicate document elements cannot establish notice evidence. Complex or truncated Astro source anywhere is refused before HTML-like comments/strings/attribute expressions can invent a footer. The canonical layout, complete property lookups outside the footer, ordinary inline formatting, whitespace and HTML entities remain supported. Report schema/reasons are unchanged; every release target requires this gate. Operator contract: `docs/RELEASE_READINESS.md`.
+
+Eleven new regression methods extend the source-rights suite from 5 to 16 methods. The initial tests produced **46 failures** against the old substring check. Independent review then reproduced JavaScript comment/template/attribute spoofing, hidden popovers and duplicate document markup; **11 additional failing cases** were reproduced before correcting those gaps. Explicit head/title and comparison-expression subcases also cover the same source-spoofing paths. The final local **390-test Python suite**, data validation and diff checks passed.
+
+Independent follow-up review found no remaining Critical/Important findings and independently passed all 16 source-rights methods plus nine additional probes. Its optional browser probe could not run because bundled Chromium was absent and system Chromium hit a sandbox `setsockopt` denial. This is a conservative source recognizer, not an arbitrary Astro evaluator, computed-CSS visibility audit or proof of deployed output; unfamiliar layouts require review. CI supplies the normal build/browser verification below.
+
+Repair commit `2e315071be82135ab3ae452163547bd7ea6f88c0`, tree `36eda55db035b8c1eb4d6aea64daa8b7fa3c31e0`, passed [Verify pilot #145](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36725117066), job `109919897288`:
+
+- **150 Node, 390 Python, 40 generated-site and 78 Chromium tests: 658 total.**
+- Astro check: 25 files, zero errors/warnings/hints.
+- Root and GitHub project-path builds: 14 HTML pages each; screenshot retention passed.
+- Artifact `pilot-verification`: `11102014924`, digest `sha256:31e60d93c76e04d97846219f991c784cd9f7e5ceb0eb2da34d1e02e0f4d60ca0`, expires October 7, 2026.
+
+This handoff update follows the completed repair and successful full CI. Work remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2). The actual pilot is still blocked with required counts **1 pass, 1 blocked, 3 not checked**. Public guidance/alerts, provider credentials, source approvals, deployment, indexing and ads were unchanged.
+
+The next real trust milestone is the owner-controlled capture/review/staging/backup session in `docs/DURABLE_COLLECTION_SESSION.md`. No durable working/backup roots or local NPS key have been supplied to this environment. Preserve the existing capture, ledger, reconciliation, backup and staging tools; do not substitute an ephemeral workspace or repository for the private evidence store. Real human review remains a separate action.
 
 ## New: protect the project Pages output from private alert writes
 
@@ -32,6 +53,8 @@ The next real trust milestone remains the owner-controlled durable capture/revie
 A disposable synthetic rehearsal exercised the real CLI setup/status/backup/verify/restore/readiness commands and the existing live operator with mocked transport. It produced five packets and six unresolved holds, verified both backup copies, restored the exact original ledger state, checked all five offline alert summaries without creating staging files and left public data byte-for-byte unchanged. The readiness report remained blocked. No real source requests, review approvals or durable-storage evidence were created. Temporary rehearsal files were discarded.
 
 The current cloud environment has no local `NPS_API_KEY` and no supplied owner-controlled durable working/backup destination. The GitHub Actions secret is not a local credential. The real session still requires those storage choices and the owner's human review; the runbook does not clear a release gate.
+
+The runbook commit `7d20ad06764b79222c55dc6918e3b909a0e508ef` passed [Verify pilot #144](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36720210942): 150 Node, 379 Python, 40 generated-site and 78 Chromium tests (**647 total**), zero Astro diagnostics, both 14-page builds and screenshot retention. Artifact `pilot-verification`: `11098955656`, digest `sha256:de6093dd1c8deb78a69997895f2e11c8647e446cd0bf327f02426d15691a439d`.
 
 The local development commit `679fa089fdddb08c09e976c16afead4c5ecedb2f` was recreated through the connected GitHub app as `3fe0e878`; both commits have the identical tree `b0d120ccd6a353333f7cf244f8dd490c0b8612e4`. The `main` push passed Verify pilot #132, run `36651035959`, job `109684980194`: 148 Node, 328 Python, 18 generated-site, and 74 Chromium tests (**568 total**), Astro check with zero diagnostics, and a 14-page build. Artifact `pilot-verification` is `11070417444`. This integrates code only; it does not satisfy private review, public alert collection, hosting, indexing, or advertising gates.
 
