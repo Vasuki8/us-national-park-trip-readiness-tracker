@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), after protecting the GitHub Pages output from private alert writes**.
+Updated: **September 30, 2026 (UTC), after rehearsing the durable collection operator sequence**.
 
 **Private entry capture now offers an offline setup check before the explicit live run. Release readiness binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, with separate pilot/indexed/advertising targets. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
@@ -21,7 +21,17 @@ Independent read-only review found no Critical, Important or Minor findings. The
 
 Local verification needs a normal `umask 022`: the cloud shell's `077` converted pre-existing tests' intentionally insecure `0755` fixtures into secure `0700` directories, producing five failures and one cascading error before that environment-only adjustment. The existing `npm test` attempt also encountered baseline local limitations in `build-preview.test.ts`, `entry-review-store.test.ts`, `entry-source-extraction.test.ts` and `preview-io.test.ts`; local Astro dependencies are absent and subprocess I/O differs from CI. The normal frontend/build/browser suite must be verified by the unchanged `Verify pilot` workflow on the proposed branch before integration. These local failures are not claimed as passing checks.
 
+The proposed repair at `ab9c630197300761536f9bb6d44d8e441892c855` passed [Verify pilot #143](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36675415344): **150 Node, 379 Python, 40 generated-site and 78 Chromium tests (647 total)**, zero Astro diagnostics, root/project 14-page builds and screenshot retention. Artifact `pilot-verification` is `11079736068`, digest `sha256:81d7ee6a427f9a42856bd088aa8ac13776dbbe44894ab8b4209ef2cecd52a51a`. This resolves the local frontend/build/browser verification limitations for that exact code commit. The branch remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2).
+
 The next real trust milestone remains the owner-controlled durable capture/review/staging/backup session described below. This repair clears no release gate and must not be treated as source review or authorization to publish.
+
+## New: checked durable collection runbook
+
+`docs/DURABLE_COLLECTION_SESSION.md` now joins the existing operator contracts into one first-session sequence: choose durable private working/separate backup roots, check offline setup, capture five entry sources, verify a backup and a second copy before human review, reconcile actual reviewed guidance, back up the new head, collect alerts privately, inspect recovery state and read release gates.
+
+A disposable synthetic rehearsal exercised the real CLI setup/status/backup/verify/restore/readiness commands and the existing live operator with mocked transport. It produced five packets and six unresolved holds, verified both backup copies, restored the exact original ledger state, checked all five offline alert summaries without creating staging files and left public data byte-for-byte unchanged. The readiness report remained blocked. No real source requests, review approvals or durable-storage evidence were created. Temporary rehearsal files were discarded.
+
+The current cloud environment has no local `NPS_API_KEY` and no supplied owner-controlled durable working/backup destination. The GitHub Actions secret is not a local credential. The real session still requires those storage choices and the owner's human review; the runbook does not clear a release gate.
 
 The local development commit `679fa089fdddb08c09e976c16afead4c5ecedb2f` was recreated through the connected GitHub app as `3fe0e878`; both commits have the identical tree `b0d120ccd6a353333f7cf244f8dd490c0b8612e4`. The `main` push passed Verify pilot #132, run `36651035959`, job `109684980194`: 148 Node, 328 Python, 18 generated-site, and 74 Chromium tests (**568 total**), Astro check with zero diagnostics, and a 14-page build. Artifact `pilot-verification` is `11070417444`. This integrates code only; it does not satisfy private review, public alert collection, hosting, indexing, or advertising gates.
 
