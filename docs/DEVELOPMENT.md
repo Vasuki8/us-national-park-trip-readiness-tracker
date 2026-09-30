@@ -32,7 +32,7 @@ Durable review also requires the public guidance inventory to match the private 
 
 The private entry capture command has an offline `--check-only` mode for path/head/input-availability checks. It shares setup validation with `--live`, including existing owner-only ledger and packet parents, and emits metadata without requests or writes. A successful setup check is not source approval or release readiness. See `docs/PERSISTENT_ENTRY_CAPTURE.md`.
 
-The editing environment cannot download npm dependencies. The one-time feature-branch lock generator ran without lifecycle scripts; a separate job without source checkout committed only the generated lockfile. It checked the exact repository, branch and unchanged head. Its workflow is removed once the lockfile exists. Normal builds use npm ci; there is no permanent write-enabled dependency bootstrap.
+The initial editing environment could not download npm dependencies, so a temporary feature-branch job generated the lockfile without lifecycle scripts and a separate job committed only that lockfile. That bootstrap workflow has been removed. Local development and normal CI now use `npm ci` with the committed lockfile; there is no permanent write-enabled dependency bootstrap.
 
 ## Review notes
 

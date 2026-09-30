@@ -1,6 +1,30 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (Toronto time), after completing and verifying live Pages release/rollback checks**.
+Updated: **September 30, 2026 (Toronto time), after repository consolidation and preparation for local Codex development**.
+
+## Current main and local development handoff
+
+Repository: [Vasuki8/us-national-park-trip-readiness-tracker](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker). Continue from **`main`**. [PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2) is merged at `467ecbe6ddd695132d3e779215554f9852028b53`, preserving all reviewed safeguards and the previously merged [PR #3](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/3) manual NPS-preflight repair. PR #1 is already merged. The branch audit found no unique unpublished code in the nine older local development branches: their complete trees match existing main-history snapshots. The remote foundation branch is already an ancestor of main; the separate preflight branch has the exact content already integrated by PR #3.
+
+Fresh independent review found one footer-notice bypass: `<plaintext hidden />` could pass the source check while Astro expanded it to terminal hidden text consuming the following footer in browsers. The recognizer now explicitly refuses plaintext regardless of parser version. The regression failed before the fix and passed afterward. The correction published as `560e87d1f3d0932b0204e01854bf2897f8266551` has the same tree as local commit `06cf50ed7d4288e61b0de92557dfd7bef738d88e`; the merge tree `05f195189751559552569658626bf83cd2b2686f` was checked against the reviewed current-main/PR candidate. No Critical, Important or Minor review findings remain.
+
+Local consolidation checks passed **399 Python tests**, including all **23 source-rights tests on Python 3.12.3 and 3.12.14**. Before the narrow correction, the combined current-main/PR checkout also passed **158 Node tests**, **40 generated-site tests**, Astro check with zero diagnostics, and both 14-page builds. Independent review reran the focused rights/path/workflow checks and all eight live-verifier Node cases. The prior PR head passed [Verify pilot #150](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36736074852) with 674 tests and retained screenshots.
+
+The exact merged main commit `467ecbe6ddd695132d3e779215554f9852028b53` passed [Verify pilot](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36759197048), job `110037100043`: **158 Node + 399 Python + 40 generated-site + 78 Chromium tests = 675 total**, zero Astro diagnostics, both 14-page builds and screenshot retention. Artifact `pilot-verification` is `11118285148`, digest `sha256:89e5db7cd20e2a2e6548b56daaf19d115995eb342444ffd7352234a447b3e6da`, retained through October 7, 2026. This subsequent documentation handoff triggers another default-branch push check; verify the exact downloaded commit in [Verify pilot](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/workflows/ci.yml).
+
+The local setup and clone/ZIP instructions are in `README.md`; `AGENTS.md` supplies concise project instructions for Codex. Open the actual repository root, use Node.js 24 and Python 3.12+ with uv, run `npm ci` and `uv sync --frozen`, then `npm run dev`. Use a POSIX/WSL shell for the full tests and private evidence tools; on Windows keep private evidence in the WSL Linux filesystem. Ordinary tests use `umask 022`; the private operator runbook uses `umask 077` separately.
+
+**The website is still unpublished.** No Pages deployment, real durable NPS capture, human context approval, real ledger backup, public-data promotion, indexing or advertising was performed during consolidation. Public alert snapshots remain `never_checked`. Required readiness counts remain pilot **1 pass / 1 blocked / 3 not checked**, indexed **1 / 2 / 3**, and advertising **1 / 3 / 3**. Merging and green CI do not clear these trust gates.
+
+The next priorities for local development are:
+
+1. Supply owner-controlled private working and separate backup destinations plus a private NPS key; follow `docs/DURABLE_COLLECTION_SESSION.md` for real capture, human review, current-head backups and private alert staging.
+2. Complete the deliberate reviewed public-data promotion path using existing archive/history projection and a reviewable candidate. Keep every private evidence file outside the repository and public outputs.
+3. After clearing the required data/trust gates, obtain two eligible successful default-branch artifacts, configure Pages for Actions, and follow `docs/PAGES_RELEASE.md` for explicit deployment, live verification and a deliberate rollback/restoration drill. The expected project URL is not yet a verified live website.
+
+## Historical implementation record
+
+The following notes preserve the implementation evidence and operational details from earlier increments. Branch names, draft-PR states and environment limitations below describe their recorded point in time; the current main handoff above supersedes them.
 
 **Private entry capture now offers an offline setup check before the explicit live run. Release readiness binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, with separate pilot/indexed/advertising targets. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 

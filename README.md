@@ -14,10 +14,20 @@ There are no ads, accounts, analytics, paid APIs, booking inventory or weather f
 
 ## Local development
 
+Clone `main` to retain Git history for subsequent pulls and pushes:
+
+```sh
+git clone --branch main https://github.com/Vasuki8/us-national-park-trip-readiness-tracker.git
+cd us-national-park-trip-readiness-tracker
+```
+
+You can also [download the main ZIP](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/archive/refs/heads/main.zip) and extract it. A ZIP does not include Git history. Open the extracted project folder containing `package.json`, `pyproject.toml`, `AGENTS.md` and `PROJECT_STATUS.md`, rather than its parent folder or generated output.
+
 Use Node.js 24, npm and Python 3.12+ with `uv`.
 
 ```sh
 npm ci
+uv sync --frozen
 npm run dev
 ```
 
@@ -34,7 +44,9 @@ npm run test:site:pages
 npm run test:browser:pages
 ```
 
-`npm run preview` serves the root build. `npm run preview:pages` serves the GitHub project build at `/us-national-park-trip-readiness-tracker/` on port 4324. Use a POSIX/WSL shell for the full command list. No API key is required to build the committed development snapshot. The Astro build validates undated source notes separately from the dated-rule and alert schema checks.
+`npm run dev` prints the local website URL. `npm run preview` serves the root build. `npm run preview:pages` serves the GitHub project build at `/us-national-park-trip-readiness-tracker/` on port 4324. Use a POSIX/WSL shell for the full command list. Native Windows can run the frontend preview, but the private evidence tools and full suite rely on POSIX permissions; use WSL and its Linux filesystem for those workflows. Run ordinary development tests with `umask 022`; the separate private operator session uses `umask 077`. No API key is required to build the committed development snapshot. The Astro build validates undated source notes separately from the dated-rule and alert schema checks.
+
+Open this repository root in Codex. The project instructions are in `AGENTS.md`; start with: "Read AGENTS.md and PROJECT_STATUS.md, review the next development priorities, and continue development with appropriate verification." Keep any NPS key and real private evidence outside the project folder.
 
 GitHub Pages release/rollback remains manual and uses an already verified artifact matching the configured hosting path. After deployment, it checks the actual hosted pages/assets against that artifact and retains a separate live-verification report, including failures. The website is not live. See `docs/PAGES_RELEASE.md` for deployment, live checks and rollback preparation, and `docs/RELEASE_READINESS.md` for the remaining gates.
 
