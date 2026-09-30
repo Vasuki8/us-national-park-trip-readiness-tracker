@@ -17,6 +17,20 @@ The public build remains 14 HTML pages plus `build.json`, with park/state search
 
 Existing alert collection/archive/staging, candidate previews, visitor history, accessibility repairs, source-change gate, HTML extraction, live entry-page compatibility diagnostic and private review ledger remain in place. Do not rebuild them.
 
+## New: complete local static-link coverage
+
+The generated-site gate now scans every emitted HTML page with a dependency-free Python HTML parser instead of the root-relative-only regex. It resolves local `href`/`src` URLs under the domain-root or GitHub project hosting base, including relative destinations, queries and percent-encoded names, and checks local HTML fragment IDs/named anchors. Escaped project paths, missing files and missing fragments fail the existing Node gate. External URLs are skipped without network requests.
+
+Nine regression/characterization methods exercise the real Node gate against temporary outputs under both bases; a tenth exercises the real filesystem checker with older Python parser defaults. The initial six methods reproduced **24 failing subcases** against the old scan, including missed broken destinations/fragments, a newly emitted page and valid external URLs falsely treated as local. The text-element characterization checks that text contents do not supply links or fragment IDs, and an explicit raw/text parser guard preserves this behavior on older supported Python versions. Comments, scripts and inert template contents cannot satisfy a missing fragment; the template element itself retains its normal fragment identity. Both existing 14-page outputs passed the expanded scan with **209 local href/src URLs each**. This closes the earlier Pages review's deferred local-link coverage gap.
+
+Independent review reproduced a trailing-slash normalization gap: regular files requested as directories could pass. Four new root/project cases failed before the fix; trailing-slash local URLs now require directory targets. The older-parser configuration regression also failed before the explicit text-element guard. Review also reproduced Unicode-whitespace URL trimming and suppression of a template element's own ID; six broken-path cases and two valid-template cases failed before those fixes. URL trimming now uses only ASCII C0/space and only template contents are inert.
+
+The helper is a static test utility, not a full browser parser or external-link crawler. It refuses `<base>` elements and covers literal `href`/`src` plus local HTML fragments; `srcset`, CSS URLs, dynamic links and non-HTML fragments remain outside its stated scope. No public data, private source evidence, deployment, indexing or advertising changed. The real private capture/review and hosting gates remain unverified.
+
+Final local verification passed **360 Python tests, 150 Node tests and 40 generated-site tests**, with zero Astro diagnostics and two 14-page builds. The restricted Node run reported subprocess failures in `entry-review-store.test.ts`, `entry-source-extraction.test.ts` and `preview-io.test.ts`; the unrestricted full `npm test` run passed all 150 tests with working subprocess output. Both existing site commands also passed with that access. GitHub CI provides the 78 browser checks and retained screenshot evidence for the published commit.
+
+The preceding readiness handoff at `cf9f62c144fdf0186af0945e5b969b4020bbbdea` passed Verify pilot #139, run `36662854515`, job `109721147012`, including the root screenshot-retention guard. That result covers the **618-test** readiness-target increment.
+
 ## New: milestone-specific readiness targets
 
 The report previously required advertising and indexing for a pilot release, contradicting the approved pilot's exclusion of active ads. `tracker.release_readiness` now defaults to `--target pilot` (ad-free and unindexed), with separate `indexed` and `advertising` targets. Durable source review, public alert data, a current verified backup, source rights and hosting/rollback remain required for all three.
@@ -27,7 +41,7 @@ The actual pilot remains **BLOCKED**, with required counts **1 pass, 1 blocked, 
 
 Eleven additional test methods cover target scoping, a synthetic otherwise-ready ad-free pilot, every failed/unverified core gate, detected ads, partial/complete indexing-control removal, target validation, CLI labels/exit codes and input redaction. The initial regressions failed before implementation. Synthetic READY cases model external core proofs only inside tests; they are not real review approvals.
 
-Independent review found an indexing bypass in the inherited substring checks: commenting out the actual meta tag, limiting robots to a named agent, or narrowing the header path still looked intact. Regressions reproduced that issue and related conditional/component/allow/scoped-header cases. The pilot guard now recognizes active literal head metadata, the canonical wildcard robots group without exceptions, and globally scoped unqualified noindex headers; unfamiliar configurations require review. All 20 focused readiness tests pass. Existing static link test gaps remain deferred from the earlier Pages increment.
+Independent review found an indexing bypass in the inherited substring checks: commenting out the actual meta tag, limiting robots to a named agent, or narrowing the header path still looked intact. Regressions reproduced that issue and related conditional/component/allow/scoped-header cases. The pilot guard now recognizes active literal head metadata, the canonical wildcard robots group without exceptions, and globally scoped unqualified noindex headers; unfamiliar configurations require review. All 20 focused readiness tests pass. The earlier static link test gap is closed by the increment above.
 
 The final local Python suite passed **350 tests**. The current target reports remain blocked with required counts pilot **1/1/3**, indexed **1/2/3**, and advertising **1/3/3** (pass/blocked/not checked). The Pages code preceding this increment passed exact-head Verify pilot #137, run `36657771103`, at `a14b7430a25bfbb5995d4aecc7a6a902733f3753`, including the screenshot-retention guard; artifact `11073014127` retained both builds and root visual evidence.
 
@@ -45,7 +59,7 @@ Code commit `5751fc47218bc5c7f0062a706f38ad8b01be9ae1` passed Verify pilot #136,
 
 A follow-up separates the project suite's output into `test-results/pages` so its Playwright cleanup preserves the root suite's screenshots. A local synthetic evidence marker failed preservation before that setting and passed afterward, with the real project HTTP test executed both times. CI now requires all three root mobile/200% text screenshots to remain after the project run and before artifact upload. This is a verification-artifact repair; the generated site and release gates are unchanged.
 
-Independent review found no Critical/Important issues. It separately audited 279 links/assets across all 14 pages per output, including fragment targets, with no missing files, escaped base paths or missing fragments; external destinations matched. One minor test-coverage gap is deferred: the static regex scan skips query/fragment-bearing and relative URLs. Current generated destinations passed the broader independent audit.
+Independent review found no Critical/Important issues. It separately audited 279 links/assets across all 14 pages per output, including fragment targets, with no missing files, escaped base paths or missing fragments; external destinations matched. The then-deferred query/fragment/relative URL test gap is now covered by the offline local-link gate described above.
 
 ## New: five-park private alert staging run
 

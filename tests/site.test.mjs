@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 const routes = ['', 'parks', 'parks/yosemite', 'parks/rocky-mountain', 'parks/yellowstone', 'parks/zion', 'parks/grand-canyon', 'how-it-works', 'sources', 'changes', 'about', 'privacy', 'terms', 'corrections'];
 const output = process.env.SITE_TEST_OUTPUT || 'dist';
 const base = process.env.SITE_TEST_BASE || '/';
@@ -25,14 +25,9 @@ test('all park pages show uncollected alerts and official sources', () => {
   }
 });
 test('internal page links and bundled assets stay under the base and resolve', () => {
-  for (const route of routes) {
-    const html = readFileSync(`${output}/${route ? route + '/' : ''}index.html`, 'utf8');
-    for (const [, url] of html.matchAll(/(?:href|src)="(\/[^"#?]*)"/g)) {
-      assert.ok(url.startsWith(base), `${route} escapes ${base}: ${url}`);
-      const local = url.slice(base.length);
-      assert.ok(existsSync(join(output, local, url.endsWith('/') ? 'index.html' : '')), `${route} -> ${url}`);
-    }
-  }
+  const result = spawnSync('python3', ['tests/site_links.py', '--output', output, '--base', base], { encoding: 'utf8', timeout: 30_000 });
+  assert.equal(result.status, 0, result.error?.message || result.stdout + result.stderr);
+  console.log(result.stdout.trim());
 });
 test('active navigation identifies the current path under the hosting base', () => {
   for (const route of ['parks', 'how-it-works', 'sources', 'about', 'privacy', 'terms', 'corrections', 'changes']) {
