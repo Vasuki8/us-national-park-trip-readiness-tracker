@@ -16,11 +16,13 @@ The browser recalculates freshness every minute and when the tab becomes visible
 
 The collector uses only a fixed NPS HTTPS endpoint. Its private key is in a request header, and redirects are disabled. It permits three attempts with bounded waits, 100 pages and 5,000 total records. Pagination counts must remain stable and IDs unique. A drop of more than half the last-good records is quarantined for review. This conservative threshold intentionally favors retaining notices over implying reopening; a later operator workflow must resolve legitimate mass removals.
 
-Notice evidence currently consists of normalized text and an integrity hash. Raw-response archival and complete historical change publication are not implemented. Do not claim audit-complete history. Astro escapes notice strings and browser scripts use textContent, not untrusted innerHTML. Source URLs must belong to the requested park. Legitimate cross-park/empty provider URLs require a reviewed handling rule before acceptance.
+The private collector/archive/staging path now retains raw response evidence and immutable history receipts; see `docs/STAGING_COLLECTION.md`. Public alert snapshots remain `never_checked`, and no real durable capture has been performed here. Astro escapes notice strings and browser scripts use textContent, not untrusted innerHTML. `parkCode` determines alert scope; a provider URL can be absent, or a validated provider-supplied HTTPS destination. Nullable URLs and safe external links are covered by the tested normalization contract documented in `docs/NPS_PREFLIGHT.md`.
 
 ## Release boundaries
 
-Normal PR CI has read-only repository permissions and no source API key. There is no deployment or scheduled collection workflow. Hosting, complete source review, production publisher/privacy details, source rights, canonical domain, operator reporting and rollback remain gates before public indexing.
+Normal PR CI has read-only repository permissions and no source API key. A manual verified-artifact Pages deployment/rollback workflow exists; there is no scheduled collection. CI verifies both domain-root and free GitHub project-path builds. No production deployment has been dispatched. See `docs/PAGES_RELEASE.md`.
+
+The read-only readiness report defaults to the approved ad-free, unindexed pilot. Its JSON schema is version 2, with explicit required gates and separate `indexed`/`advertising` targets. Every target requires durable review, public alert data, backup, source rights, and hosting/rollback evidence. Changed indexing safeguards or detected ads cannot be bypassed by selecting `pilot`. See `docs/RELEASE_READINESS.md`.
 
 The editing environment cannot download npm dependencies. The one-time feature-branch lock generator ran without lifecycle scripts; a separate job without source checkout committed only the generated lockfile. It checked the exact repository, branch and unchanged head. Its workflow is removed once the lockfile exists. Normal builds use npm ci; there is no permanent write-enabled dependency bootstrap.
 

@@ -15,6 +15,7 @@ from .entry_review_backup import verify_backup
 from .entry_review_io import REPO_ROOT, ReviewStoreError
 from .entry_review_store import EntryReviewStore
 from .entry_sources import PROFILES
+from .indexing_controls import pilot_meta_noindex, pilot_robots_disallow_all, pilot_header_noindex
 
 GATE_ORDER = (
     'durable_source_review',
@@ -35,6 +36,12 @@ GATE_NAMES = {
     'advertising': 'Advertising readiness',
 }
 STATUSES = {'pass','blocked','not_checked'}
+RELEASE_TARGETS = ('pilot','indexed','advertising')
+REQUIRED_GATES = {
+    'pilot': GATE_ORDER[:5],
+    'indexed': GATE_ORDER[:6],
+    'advertising': GATE_ORDER,
+}
 
 
 def _gate(identifier: str, status: str, reason: str, evidence: dict) -> dict:
@@ -286,17 +293,17 @@ def _hosting(root: Path) -> dict:
 
 def _indexing(root: Path) -> dict:
     try:
-        layout = (root/'src'/'layouts'/'Layout.astro').read_text(encoding='utf-8').lower()
-        robots = (root/'public'/'robots.txt').read_text(encoding='utf-8').lower()
-        headers = (root/'public'/'_headers').read_text(encoding='utf-8').lower()
+        layout = (root/'src'/'layouts'/'Layout.astro').read_text(encoding='utf-8')
+        robots = (root/'public'/'robots.txt').read_text(encoding='utf-8')
+        headers = (root/'public'/'_headers').read_text(encoding='utf-8')
     except (OSError, UnicodeError):
         raise ReviewStoreError('release_readiness_repository_unreadable') from None
-    meta = 'noindex' in layout
-    robots_block = bool(re.search(r'(?m)^\s*disallow:\s*/\s*$', robots))
-    header = 'x-robots-tag' in headers and 'noindex' in headers
+    meta = pilot_meta_noindex(layout)
+    robots_block = pilot_robots_disallow_all(robots)
+    header = pilot_header_noindex(headers)
     disabled = meta or robots_block or header
     return _gate('indexing','blocked' if disabled else 'not_checked',
-                 'indexing_explicitly_disabled' if disabled else 'indexing_controls_removed_but_live_crawlability_not_verified', {
+                 'indexing_explicitly_disabled' if disabled else 'indexing_controls_not_confirmed_and_live_crawlability_not_verified', {
                      'meta_noindex':meta,
                      'robots_disallow_all':robots_block,
                      'header_noindex':header,
@@ -325,8 +332,10 @@ def _advertising(root: Path) -> dict:
 
 
 def evaluate_readiness(root: Path = REPO_ROOT, *, private_state: dict | None = None,
-                       backup_manifest: dict | None = None) -> dict:
+                       backup_manifest: dict | None = None, release_target: str = 'pilot') -> dict:
     """Return a deterministic report. This function performs no network or writes."""
+    if release_target not in RELEASE_TARGETS:
+        raise ReviewStoreError('invalid_release_readiness_arguments')
     root = Path(root)
     gates = [
         _durable_review(private_state),
@@ -339,14 +348,31 @@ def evaluate_readiness(root: Path = REPO_ROOT, *, private_state: dict | None = N
     ]
     if [gate['id'] for gate in gates] != list(GATE_ORDER):
         raise ReviewStoreError('invalid_release_readiness_state')
+    for gate in gates:
+        required = gate['id'] in REQUIRED_GATES[release_target]
+        reason = 'release_target' if required else 'later_target'
+        # Selecting a pilot target cannot bypass changed publication safeguards.
+        if gate['id'] == 'indexing' and release_target == 'pilot' and not all(
+                gate['evidence'].get(control) is True
+                for control in ('meta_noindex','robots_disallow_all','header_noindex')):
+            required, reason = True, 'pilot_indexing_controls_changed'
+        if gate['id'] == 'advertising' and release_target != 'advertising' and gate['evidence'].get('ad_integration_markers'):
+            required, reason = True, 'ad_integration_present'
+        gate['required'] = required
+        gate['required_reason'] = reason
+        gate['blocking'] = required and gate['status'] != 'pass'
     summary = {status:sum(1 for gate in gates if gate['status'] == status)
                for status in ('pass','blocked','not_checked')}
-    release_ready = all(gate['status'] == 'pass' for gate in gates)
+    required_summary = {status:sum(1 for gate in gates if gate['required'] and gate['status'] == status)
+                        for status in ('pass','blocked','not_checked')}
+    release_ready = not any(gate['blocking'] for gate in gates)
     return {
-        'schema_version':1,
+        'schema_version':2,
         'purpose':'pilot_release_readiness',
+        'release_target':release_target,
         'release_ready':release_ready,
         'summary':summary,
+        'required_summary':required_summary,
         'gates':gates,
         'network_performed':False,
         'writes_performed':False,
@@ -357,12 +383,21 @@ def evaluate_readiness(root: Path = REPO_ROOT, *, private_state: dict | None = N
 
 
 def _text(report: dict) -> str:
-    lines = [f"Pilot release readiness: {'READY' if report['release_ready'] else 'BLOCKED'}"]
+    titles = {'pilot':'Pilot', 'indexed':'Indexed pilot', 'advertising':'Advertising'}
+    target = report['release_target']
+    lines = [f"{titles[target]} release readiness: {'READY' if report['release_ready'] else 'BLOCKED'}"]
     labels = {'pass':'PASS','blocked':'BLOCKED','not_checked':'NOT CHECKED'}
     for gate in report['gates']:
-        lines.append(f"[{labels[gate['status']]}] {gate['name']} — {gate['reason']}")
+        suffix = ' (later target; not required)' if not gate['required'] else ''
+        if gate['required_reason'] == 'pilot_indexing_controls_changed':
+            suffix = ' (required: pilot indexing controls changed)'
+        elif gate['required_reason'] == 'ad_integration_present':
+            suffix = ' (required: ad integration detected)'
+        lines.append(f"[{labels[gate['status']]}] {gate['name']} — {gate['reason']}{suffix}")
     summary = report['summary']
-    lines.append(f"Summary: {summary['pass']} pass, {summary['blocked']} blocked, {summary['not_checked']} not checked")
+    lines.append(f"Summary (all gates): {summary['pass']} pass, {summary['blocked']} blocked, {summary['not_checked']} not checked")
+    required = report['required_summary']
+    lines.append(f"Required for {target}: {required['pass']} pass, {required['blocked']} blocked, {required['not_checked']} not checked")
     return '\n'.join(lines)+'\n'
 
 
@@ -375,6 +410,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         parser = _Parser(description='Read-only pilot release-readiness report.')
         parser.add_argument('--format', choices=('text','json'), default='text')
+        parser.add_argument('--target', choices=RELEASE_TARGETS, default='pilot')
         parser.add_argument('--store', type=Path)
         parser.add_argument('--backup', type=Path)
         args = parser.parse_args(argv)
@@ -382,7 +418,8 @@ def main(argv: list[str] | None = None) -> int:
             raise ReviewStoreError('invalid_release_readiness_arguments')
         private = EntryReviewStore(args.store).read() if args.store is not None else None
         backup = verify_backup(args.backup) if args.backup is not None else None
-        report = evaluate_readiness(REPO_ROOT, private_state=private, backup_manifest=backup)
+        report = evaluate_readiness(REPO_ROOT, private_state=private, backup_manifest=backup,
+                                    release_target=args.target)
         if args.format == 'json':
             sys.stdout.write(json.dumps(report,sort_keys=True,separators=(',',':'))+'\n')
         else:

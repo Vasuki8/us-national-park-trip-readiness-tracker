@@ -38,6 +38,8 @@ npm run test:browser:pages
 
 GitHub Pages release/rollback remains manual and uses an already verified artifact matching the configured hosting path. The website is not live. See `docs/PAGES_RELEASE.md` for the deployment contract and `docs/RELEASE_READINESS.md` for the remaining gates.
 
+The read-only readiness report defaults to an ad-free, unindexed pilot. Use `--target indexed` or `--target advertising` to include the corresponding later-release gates. Source review, public alert data, backup, source rights and hosting/rollback remain required for every target. Detected ads or changed pilot indexing controls still require review.
+
 ## Read-only integration preflight first
 
 Obtain your own NPS API key and provide `NPS_API_KEY` privately, not in command arguments, committed files or a public/frontend-prefixed variable.

@@ -1,8 +1,8 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), after project Pages verification**.
+Updated: **September 30, 2026 (UTC), during release-target development**.
 
-**The private alert staging command now supports both a sequential five-park collection run and an offline five-park status report. The entry-review ledger's backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
+**Release readiness now has separate pilot, indexed and advertising targets, with conservative indexing/ad activation guards. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Branch: `main`. PR #1 was automatically marked merged after the pilot fast-forward update. No Pages release workflow was dispatched.
@@ -16,6 +16,20 @@ The eventual product remains AdSense-first, light-theme and free of paid-data de
 The public build remains 14 HTML pages plus `build.json`, with park/state search, five park pages, date-aware entry guidance, source evidence, checklists, notice history and seven official planning links per park. Yosemite and Rocky Mountain have dated rules; Yellowstone, Zion and Grand Canyon retain undated source observations. Public alert snapshots remain `never_checked`; public histories and the public entry-review register remain empty.
 
 Existing alert collection/archive/staging, candidate previews, visitor history, accessibility repairs, source-change gate, HTML extraction, live entry-page compatibility diagnostic and private review ledger remain in place. Do not rebuild them.
+
+## New: milestone-specific readiness targets
+
+The report previously required advertising and indexing for a pilot release, contradicting the approved pilot's exclusion of active ads. `tracker.release_readiness` now defaults to `--target pilot` (ad-free and unindexed), with separate `indexed` and `advertising` targets. Durable source review, public alert data, a current verified backup, source rights and hosting/rollback remain required for all three.
+
+All seven gate statuses/evidence remain visible. JSON schema 2 adds `release_target`, per-gate `required`/`required_reason`, and `required_summary`. `blocking` now means required and not passed for the selected target. The full `summary` remains unchanged. Detected ad integration always requires advertising review; removing any pilot indexing control requires indexing review. The report remains read-only.
+
+The actual pilot remains **BLOCKED**, with required counts **1 pass, 1 blocked, 3 not checked**. The one explicit required blocker is uncollected public alerts; missing durable review, backup and live hosting/rollback evidence remain unverified. Disabled indexing and ads are later-target gates. No source/backup/hosting gate was cleared and no website, ads or indexing was activated. See `docs/RELEASE_READINESS.md` for schema migration and the target table.
+
+Eleven additional test methods cover target scoping, a synthetic otherwise-ready ad-free pilot, every failed/unverified core gate, detected ads, partial/complete indexing-control removal, target validation, CLI labels/exit codes and input redaction. The initial regressions failed before implementation. Synthetic READY cases model external core proofs only inside tests; they are not real review approvals.
+
+Independent review found an indexing bypass in the inherited substring checks: commenting out the actual meta tag, limiting robots to a named agent, or narrowing the header path still looked intact. Regressions reproduced that issue and related conditional/component/allow/scoped-header cases. The pilot guard now recognizes active literal head metadata, the canonical wildcard robots group without exceptions, and globally scoped unqualified noindex headers; unfamiliar configurations require review. All 20 focused readiness tests pass. Existing static link test gaps remain deferred from the earlier Pages increment.
+
+The final local Python suite passed **350 tests**. The current target reports remain blocked with required counts pilot **1/1/3**, indexed **1/2/3**, and advertising **1/3/3** (pass/blocked/not checked). The Pages code preceding this increment passed exact-head Verify pilot #137, run `36657771103`, at `a14b7430a25bfbb5995d4aecc7a6a902733f3753`, including the screenshot-retention guard; artifact `11073014127` retained both builds and root visual evidence.
 
 ## New: free GitHub project hosting support
 
@@ -207,17 +221,17 @@ The seven gates are:
 6. search indexing; and
 7. advertising readiness.
 
-Status values are only `pass`, `blocked`, or `not_checked`. Every non-pass status is release-blocking.
+Status values are only `pass`, `blocked`, or `not_checked`. In schema 2, a non-pass status is release-blocking when its gate is required for the selected target. The default pilot requires the first five gates; unchanged indexing controls and absent ads remain later-target gates.
 
 The current repository-only result is deliberately **BLOCKED**:
 
 - durable source review — `not_checked`: no owner private ledger supplied;
 - NPS alert API — `blocked`: all five public snapshots are still `never_checked`;
 - storage backup — `not_checked`: no owner private ledger/verified backup supplied;
-- source rights — `not_checked`: all six public guidance records carry rights metadata, but broader source-content/commercial rights review is external and is not self-certified by those fields;
-- hosting/rollback — `blocked`: no production deployment path is configured;
-- indexing — `blocked`: HTML meta robots, `robots.txt`, and response headers all still disable indexing;
-- advertising — `blocked`: no ad integration is enabled.
+- source rights — `pass`: the exact six public NPS text uses have record-level metadata and the matching rights manifest; this does not clear broader or future uses;
+- hosting/rollback — `not_checked`: a manual verified-artifact deployment path exists, but no live URL or rollback is verified;
+- indexing — `blocked` for its later target: repository controls remain intact; not required for the default pilot;
+- advertising — `blocked` for its later target: no ad integration is enabled; not required for the default pilot.
 
 The alert gate intentionally never describes `never_checked` snapshots as “no alerts” or an all-clear. If future public snapshots become successful, the static report still returns `not_checked` until freshness/provider compatibility has release evidence rather than self-promoting collection success.
 

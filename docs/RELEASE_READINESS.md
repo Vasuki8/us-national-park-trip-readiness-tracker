@@ -8,6 +8,8 @@ It does not decide that the product should launch. It reports what the repositor
 
 Missing evidence is never a pass.
 
+The default target is an **ad-free, unindexed pilot**, matching the approved pilot scope. Search indexing and advertising are separate later targets. A disabled later feature does not block an otherwise reviewed pilot; detected ad integration or changed pilot indexing controls still requires review.
+
 ## Commands
 
 Repository-only human-readable report:
@@ -21,6 +23,15 @@ Repository-only JSON report:
 ```sh
 uv run --frozen python -m tracker.release_readiness --format json
 ```
+
+Later-target reports:
+
+```sh
+uv run --frozen python -m tracker.release_readiness --target indexed --format text
+uv run --frozen python -m tracker.release_readiness --target advertising --format json
+```
+
+`--target` accepts only `pilot` (default), `indexed`, or `advertising`.
 
 After an owner-controlled private ledger and verified backup exist:
 
@@ -37,8 +48,8 @@ The CLI prints no supplied private path.
 
 Exit codes:
 
-- `0`: every gate is `pass`;
-- `1`: a normal report was produced but at least one gate is `blocked` or `not_checked`;
+- `0`: every required gate for the selected target is `pass`;
+- `1`: a normal report was produced but at least one required gate is `blocked` or `not_checked`;
 - `2`: arguments/evidence could not be safely evaluated.
 
 ## Gate statuses
@@ -49,7 +60,35 @@ Every gate has one of exactly three statuses:
 - `blocked` — available evidence explicitly shows the gate is not ready;
 - `not_checked` — the needed evidence is absent or requires external validation.
 
-Both `blocked` and `not_checked` block `release_ready`.
+Both `blocked` and `not_checked` block `release_ready` when the gate is required. All seven gates remain visible, including gates belonging to a later target.
+
+## Release targets and report schema
+
+| Gate | Pilot | Indexed pilot | Advertising |
+|---|---|---|---|
+| Durable source review | Required | Required | Required |
+| NPS alert data | Required | Required | Required |
+| Private backup | Required | Required | Required |
+| Source rights | Required | Required | Required |
+| Hosting and rollback | Required | Required | Required |
+| Search indexing | Later, while all pilot controls remain intact | Required | Required |
+| Advertising | Later, while no integration is detected | Required if integration is detected | Required |
+
+For a pilot report, removal of **any** of the three repository indexing controls makes indexing review required, even if another control remains. This prevents selecting `pilot` to bypass a partially changed publication configuration. Detected ad integration makes advertising review required for either `pilot` or `indexed`.
+
+An intact pilot exemption requires recognizable active controls: one literal robots meta tag in an unconditional HTML head, the canonical `User-agent: *` / `Disallow: /` group without exceptions, and an unqualified noindex header under global `/*` rules. Comments, conditional/component markup, named-agent-only rules, allow exceptions, narrowed header paths and scoped/removal headers are not proof. Unknown configurations require review; this is a conservative recognizer of the pilot configuration, not a complete Astro, robots or hosting-policy interpreter.
+
+Parser references: [Robots Exclusion Protocol, RFC 9309](https://www.rfc-editor.org/rfc/rfc9309.html) and [Cloudflare Pages header configuration](https://developers.cloudflare.com/pages/configuration/headers/). Recognizing `_headers` does not establish that GitHub Pages serves those headers.
+
+JSON is now **schema version 2**. The purpose remains `pilot_release_readiness`. It adds:
+
+- `release_target`: the selected target;
+- `required` and `required_reason` on every gate;
+- `required_summary`: status counts for required gates only.
+
+The existing `summary` still counts all seven gates. `blocking` now means **required and not passed** for this target. Consumers of schema version 1 must account for that changed meaning before accepting version 2. Gate status, evidence and reason remain visible even when a later gate is not required. The text output labels those gates explicitly and shows both summaries.
+
+`release_ready` remains an evidence result for the named target, not deployment authorization. Target selection changes the report only; it does not change the site or activate features.
 
 ## Gates
 
@@ -109,38 +148,42 @@ The evaluator never deploys.
 
 ### Search indexing
 
-The evaluator checks three independent repository controls:
+The evaluator checks three repository controls:
 
 - the page `meta robots` directive;
 - `public/robots.txt`; and
-- the `X-Robots-Tag` response header.
+- the `X-Robots-Tag` directive in `public/_headers`.
 
-If any still disables indexing, the gate is `blocked`.
+If any still disables indexing, the gate's status is `blocked` for an indexed release. This gate is not required for a default pilot with all three controls intact.
 
-If all are removed, the gate becomes `not_checked` until actual crawlability/indexability is verified. The evaluator never changes these controls.
+If all are removed, the gate becomes `not_checked` until actual crawlability/indexability is verified. A partial or complete removal requires review in a pilot report as well. Repository markers do not prove effective production response headers or domain-root robots behavior; GitHub project hosting is discussed in `docs/PAGES_RELEASE.md`. The evaluator never changes these controls.
 
 ### Advertising readiness
 
-If no known advertising integration markers are present in `src/` or `public/`, the gate is `blocked`.
+If no known advertising integration markers are present in `src/` or `public/`, the gate is `blocked` for the advertising target, but not required for the ad-free pilot or indexed pilot.
 
-If ad integration is later present, the gate becomes `not_checked` until policy/consent/readiness review is separately established.
+If ad integration is later present, the gate becomes `not_checked` until policy/consent/readiness review is separately established. That review is required regardless of the selected target. Choosing `pilot` cannot bypass detected ad integration.
 
 The evaluator never enables ads or analytics.
 
 ## Current repository result
 
-As of the verified implementation head on September 29, 2026:
+As of the September 30, 2026 release-target implementation:
 
 - **1 pass**
 - **3 blocked**
 - **3 not checked**
 - **release_ready: false**
 
-The three explicit blockers are:
+Those are counts across all seven gates. For the default pilot, the required summary is **1 pass, 1 blocked, 3 not checked**.
+
+The three gates with blocked statuses are:
 
 1. all five alert snapshots are `never_checked`;
 2. indexing is still disabled; and
 3. advertising is not enabled.
+
+Only the uncollected public alerts are a required explicit blocker for the default pilot. Disabled indexing and ads remain visible as later-target gates, consistent with the approved ad-free pilot. They are still required for their respective later releases.
 
 The three not-checked gates are:
 

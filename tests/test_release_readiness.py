@@ -3,11 +3,12 @@ import io
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import ExitStack, contextmanager, redirect_stdout, redirect_stderr
 from pathlib import Path
 from unittest.mock import patch
 
-from tracker.release_readiness import evaluate_readiness, main
+from tracker.release_readiness import evaluate_readiness, main, _gate
+from tracker.entry_review_io import ReviewStoreError
 
 ROOT=Path(__file__).resolve().parents[1]
 ALL_URLS={
@@ -48,6 +49,17 @@ def backup_manifest(revision='a'*64):
       'network_performed':False,'approval_performed':False,'publication_performed':False,
     }
 
+@contextmanager
+def synthetic_core_ready():
+    """Model externally verified core gates; never create real approval evidence."""
+    with ExitStack() as stack:
+        for function, identifier in [('_durable_review','durable_source_review'),
+                ('_alerts','nps_alert_api'), ('_backup','storage_backup'),
+                ('_rights','source_rights'), ('_hosting','hosting_rollback')]:
+            stack.enter_context(patch(f'tracker.release_readiness.{function}',
+                return_value=_gate(identifier,'pass','synthetic_test_only',{})))
+        yield
+
 class ReleaseReadinessTests(unittest.TestCase):
     def gate(self, report, gate_id):
         return next(g for g in report['gates'] if g['id']==gate_id)
@@ -71,6 +83,159 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(self.gate(report,'advertising')['status'],'blocked')
         self.assertEqual(report['summary']['pass'],1)
         self.assertEqual(report['summary']['blocked']+report['summary']['not_checked'],6)
+
+    def test_pilot_requires_core_gates_but_not_disabled_future_features(self):
+        report=evaluate_readiness(ROOT)
+        self.assertEqual(report['schema_version'],2)
+        self.assertEqual(report['release_target'],'pilot')
+        self.assertEqual([gate['id'] for gate in report['gates'] if gate['required']], [
+            'durable_source_review','nps_alert_api','storage_backup','source_rights','hosting_rollback'])
+        self.assertEqual(report['required_summary'],{'pass':1,'blocked':1,'not_checked':3})
+        self.assertFalse(self.gate(report,'indexing')['blocking'])
+        self.assertFalse(self.gate(report,'advertising')['blocking'])
+        self.assertFalse(report['release_ready'])
+
+    def test_reviewed_ad_free_unindexed_pilot_can_pass_without_enabling_ads(self):
+        with synthetic_core_ready():
+            report=evaluate_readiness(ROOT)
+        self.assertTrue(report['release_ready'])
+        self.assertEqual(report['required_summary'],{'pass':5,'blocked':0,'not_checked':0})
+        self.assertEqual(self.gate(report,'advertising')['status'],'blocked')
+        self.assertFalse(report['advertising_changed'])
+        self.assertFalse(report['indexing_changed'])
+
+    def test_every_core_gate_still_blocks_pilot_when_failed_or_unchecked(self):
+        for function, identifier in [('_durable_review','durable_source_review'),
+                ('_alerts','nps_alert_api'), ('_backup','storage_backup'),
+                ('_rights','source_rights'), ('_hosting','hosting_rollback')]:
+            for status in ('blocked','not_checked'):
+                with self.subTest(gate=identifier,status=status), synthetic_core_ready(), \
+                        patch(f'tracker.release_readiness.{function}',
+                            return_value=_gate(identifier,status,'synthetic_test_only',{})):
+                    report=evaluate_readiness(ROOT)
+                    self.assertFalse(report['release_ready'])
+                    self.assertTrue(self.gate(report,identifier)['blocking'])
+                    self.assertTrue(self.gate(report,identifier)['required'])
+
+    def test_indexed_and_advertising_targets_require_their_later_gates(self):
+        with synthetic_core_ready():
+            indexed=evaluate_readiness(ROOT,release_target='indexed')
+            advertising=evaluate_readiness(ROOT,release_target='advertising')
+        self.assertFalse(indexed['release_ready']); self.assertFalse(advertising['release_ready'])
+        self.assertTrue(self.gate(indexed,'indexing')['required'])
+        self.assertFalse(self.gate(indexed,'advertising')['required'])
+        self.assertTrue(all(gate['required'] for gate in advertising['gates']))
+
+    def test_detected_ad_integration_still_blocks_a_pilot_target(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            self.copy_indexing_controls(root)
+            (root/'public'/'synthetic-ad.js').write_text('window.adsbygoogle = [];')
+            with synthetic_core_ready():
+                for target in ('pilot','indexed'):
+                    with self.subTest(target=target):
+                        report=evaluate_readiness(root,release_target=target)
+                        gate=self.gate(report,'advertising')
+                        self.assertTrue(gate['required']); self.assertTrue(gate['blocking'])
+                        self.assertEqual(gate['required_reason'],'ad_integration_present')
+                        self.assertFalse(report['release_ready'])
+
+    def copy_indexing_controls(self, root):
+        for file in ('src/layouts/Layout.astro','public/robots.txt','public/_headers'):
+            destination=root/file
+            destination.parent.mkdir(parents=True,exist_ok=True)
+            destination.write_bytes((ROOT/file).read_bytes())
+
+    def test_partial_or_complete_indexing_control_removal_blocks_pilot(self):
+        controls=('src/layouts/Layout.astro','public/robots.txt','public/_headers')
+        for removed in [(file,) for file in controls]+[controls]:
+            with self.subTest(removed=removed), tempfile.TemporaryDirectory() as folder:
+                root=Path(folder); self.copy_indexing_controls(root)
+                for file in removed:
+                    (root/file).write_text('synthetic test: indexing control removed')
+                with synthetic_core_ready():
+                    report=evaluate_readiness(root)
+                gate=self.gate(report,'indexing')
+                self.assertTrue(gate['required']); self.assertTrue(gate['blocking'])
+                self.assertEqual(gate['required_reason'],'pilot_indexing_controls_changed')
+                self.assertFalse(report['release_ready'])
+
+    def test_comment_conditional_agent_and_path_changes_cannot_fake_intact_controls(self):
+        meta='<meta name="robots" content="noindex, nofollow" />'
+        mutations=[
+            ('src/layouts/Layout.astro',lambda text:text.replace(meta,f'<!-- {meta} -->')),
+            ('src/layouts/Layout.astro',lambda text:text.replace(meta,f'{{/* {meta} */}}')),
+            ('src/layouts/Layout.astro',lambda text:text.replace(meta,f'{{false && {meta}}}')),
+            ('src/layouts/Layout.astro',lambda text:text.replace(meta,meta.replace('<meta','<Meta'))),
+            ('src/layouts/Layout.astro',lambda text:text.replace('<head>','<Head>').replace('</head>','</Head>')),
+            ('src/layouts/Layout.astro',lambda text:text.replace(meta,f'<script>const fake = \'{meta}\';</script>')),
+            ('src/layouts/Layout.astro',lambda text:text.replace(meta,'').replace('<body>',f'<body>{meta}')),
+            ('public/robots.txt',lambda text:text.replace('User-agent: *','User-agent: Googlebot')),
+            ('public/robots.txt',lambda text:text+'Allow: /public/\n'),
+            ('public/robots.txt',lambda text:text+'\nUser-agent: Googlebot\nDisallow:\n'),
+            ('public/robots.txt',lambda text:'\n'.join('# '+line for line in text.splitlines())),
+            ('public/_headers',lambda text:text.replace('/*','/private/*')),
+            ('public/_headers',lambda text:text.replace('  X-Robots-Tag:','  # X-Robots-Tag:')),
+            ('public/_headers',lambda text:text.replace('X-Robots-Tag:','X-Example:')),
+            ('public/_headers',lambda text:text.replace('noindex, nofollow','googlebot: noindex')),
+            ('public/_headers',lambda text:text.replace('noindex, nofollow','googlebot: noindex, nofollow, noindex')),
+            ('public/_headers',lambda text:text+'\n/public/*\n  ! X-Robots-Tag\n'),
+        ]
+        for number,(file,mutate) in enumerate(mutations):
+            with self.subTest(case=number,file=file), tempfile.TemporaryDirectory() as folder:
+                root=Path(folder); self.copy_indexing_controls(root)
+                (root/file).write_text(mutate((root/file).read_text()))
+                with synthetic_core_ready():
+                    report=evaluate_readiness(root)
+                self.assertFalse(report['release_ready'])
+                self.assertTrue(self.gate(report,'indexing')['required'])
+                self.assertTrue(self.gate(report,'indexing')['blocking'])
+
+    def test_recognized_active_controls_allow_formatting_without_requiring_indexing(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder); self.copy_indexing_controls(root)
+            layout=root/'src/layouts/Layout.astro'
+            layout.write_text(layout.read_text().replace(
+                '<meta name="robots" content="noindex, nofollow" />',
+                '<meta content="NOINDEX, NOFOLLOW" name="ROBOTS" />'))
+            (root/'public/robots.txt').write_text('# Pilot\nUSER-AGENT: *\n\nDISALLOW: / # all paths\n')
+            (root/'public/_headers').write_text('# Pilot\n/*\n\tX-Robots-Tag: NOINDEX, NOFOLLOW\n')
+            with synthetic_core_ready():
+                report=evaluate_readiness(root)
+            self.assertTrue(report['release_ready'])
+            self.assertFalse(self.gate(report,'indexing')['required'])
+
+    def test_invalid_release_target_is_refused_without_echoing_input(self):
+        with self.assertRaisesRegex(ReviewStoreError,'^invalid_release_readiness_arguments$'):
+            evaluate_readiness(ROOT,release_target='/private/sentinel/path')
+
+    def test_cli_target_selection_and_later_gate_labels_are_explicit(self):
+        out,err=io.StringIO(),io.StringIO()
+        with redirect_stdout(out),redirect_stderr(err):
+            code=main(['--target','pilot','--format','text'])
+        self.assertEqual(code,1); self.assertEqual(err.getvalue(),'')
+        self.assertIn('Required for pilot: 1 pass, 1 blocked, 3 not checked',out.getvalue())
+        self.assertIn('later target; not required',out.getvalue())
+        out,err=io.StringIO(),io.StringIO()
+        with redirect_stdout(out),redirect_stderr(err):
+            code=main(['--target','advertising','--format','json'])
+        self.assertEqual(code,1); self.assertEqual(err.getvalue(),'')
+        report=json.loads(out.getvalue())
+        self.assertEqual(report['release_target'],'advertising')
+        self.assertTrue(all(gate['required'] for gate in report['gates']))
+
+        out,err=io.StringIO(),io.StringIO()
+        with synthetic_core_ready(), redirect_stdout(out), redirect_stderr(err):
+            code=main(['--target','pilot','--format','json'])
+        self.assertEqual(code,0); self.assertEqual(err.getvalue(),'')
+        self.assertTrue(json.loads(out.getvalue())['release_ready'])
+
+    def test_cli_invalid_target_is_sanitized_and_produces_no_report(self):
+        out,err=io.StringIO(),io.StringIO()
+        with redirect_stdout(out),redirect_stderr(err):
+            code=main(['--target','/private/sentinel/path','--format','json'])
+        self.assertEqual(code,2); self.assertEqual(out.getvalue(),'')
+        self.assertEqual(err.getvalue(),'invalid_release_readiness_arguments\n')
 
     def test_never_checked_alerts_can_never_be_described_as_clear_or_ready(self):
         report=evaluate_readiness(ROOT)
@@ -127,7 +292,9 @@ class ReleaseReadinessTests(unittest.TestCase):
             before=marker.stat().st_mtime_ns
             with patch('socket.create_connection',side_effect=AssertionError('network forbidden')), \
                  patch('urllib.request.urlopen',side_effect=AssertionError('network forbidden')):
-                report=evaluate_readiness(ROOT)
+                for target in ('pilot','indexed','advertising'):
+                    report=evaluate_readiness(ROOT,release_target=target)
+                    self.assertFalse(report['network_performed']); self.assertFalse(report['writes_performed'])
             self.assertEqual(marker.read_text(),'unchanged'); self.assertEqual(marker.stat().st_mtime_ns,before)
             self.assertFalse(report['network_performed']); self.assertFalse(report['writes_performed'])
 
