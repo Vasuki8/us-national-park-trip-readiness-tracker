@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), after completing and verifying the public footer-notice release-check repair**.
+Updated: **September 30, 2026 (Toronto time), after completing and verifying the source-rights inventory repair**.
 
 **Private entry capture now offers an offline setup check before the explicit live run. Release readiness binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, with separate pilot/indexed/advertising targets. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
@@ -8,6 +8,25 @@ Updated: **September 30, 2026 (UTC), after completing and verifying the public f
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Continuation branch: `fix/protect-pages-private-data`, based on `main` at `25495bdf28d2ab31ddb3198acafca1ffd7d40240`. PR #1 was automatically marked merged after the earlier pilot fast-forward update. No Pages release workflow was dispatched.
+
+## Completed: validate guidance before source-rights coverage
+
+The source-rights gate previously built a set of guidance ID/source pairs without first validating its input inventory. It could pass empty guidance with an empty manifest, collapse duplicate/conflicting IDs, accept an unofficial or wrong-park URL when the manifest matched it, or approve a reduced inventory missing a pilot source. These false passes were reproduced using disposable repository copies.
+
+The three-line repair reuses the existing `_guidance_inventory` checker and requires nonempty coverage of every fixed pilot source before rights-manifest evaluation. Guidance must have unique valid IDs and exact park/source bindings. Invalid input returns `blocked` with `public_guidance_inventory_invalid`; a matching edited manifest cannot override it. Valid record/manifest reordering, rights metadata and manifest-policy checks, footer checks and report schema remain unchanged. Operator contract: `docs/RELEASE_READINESS.md`.
+
+Six regression methods produced **20 failing cases** before the repair, covering empty inventories, identical/conflicting/cross-file IDs, nonofficial or mismatched bindings, each missing pilot source and all release targets. The order-preservation case remains accepted. All **22 source-rights tests**, the **396-test local Python suite**, data validation and diff checks passed. Independent read-only review found no issues and independently reran all 22 source-rights tests.
+
+Repair commit `fea95b4d875773a144adffcbd159b79819f89007`, tree `c2afd236649dfbfb2ed63de382581f411fa3d359`, passed [Verify pilot #147](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36729360019), job `109934524323`:
+
+- **150 Node, 396 Python, 40 generated-site and 78 Chromium tests: 664 total.**
+- Astro check: 25 files, zero errors/warnings/hints.
+- Root and GitHub project-path builds: 14 HTML pages each; screenshot retention passed.
+- Artifact `pilot-verification`: `11104206230`, digest `sha256:98a341dccec41088b2a1964d3cc73a88cfc5686e2fb5ac128f29015c3ea1d6ac`, expires October 7, 2026.
+
+This handoff was updated after the repair and full CI completed. Work remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2). The actual public inventory remains unchanged at six records and still passes its exact source-rights gate. The pilot remains blocked with required counts **1 pass, 1 blocked, 3 not checked**. No provider request, source approval, public-data publication, deployment, indexing or advertising occurred.
+
+The next real trust milestone remains the owner-controlled session in `docs/DURABLE_COLLECTION_SESSION.md`: durable working/separate backup roots, five-source capture and human review, then private alert staging and reviewed publication. This environment still has no supplied durable destinations or local NPS key. The completed inventory and footer checks should be preserved rather than rebuilt; real capture/backup/review and hosting/rollback evidence remain separate gates.
 
 ## Completed: require the public footer notice in release checks
 
@@ -29,6 +48,8 @@ Repair commit `2e315071be82135ab3ae452163547bd7ea6f88c0`, tree `36eda55db035b8c1
 This handoff update follows the completed repair and successful full CI. Work remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2). The actual pilot is still blocked with required counts **1 pass, 1 blocked, 3 not checked**. Public guidance/alerts, provider credentials, source approvals, deployment, indexing and ads were unchanged.
 
 The next real trust milestone is the owner-controlled capture/review/staging/backup session in `docs/DURABLE_COLLECTION_SESSION.md`. No durable working/backup roots or local NPS key have been supplied to this environment. Preserve the existing capture, ledger, reconciliation, backup and staging tools; do not substitute an ephemeral workspace or repository for the private evidence store. Real human review remains a separate action.
+
+The footer repair's final handoff commit `82918b84b902231c2c99213220fa3a36d2b121c8` also passed [Verify pilot #146](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36725960947): **658 tests**, zero Astro diagnostics, both 14-page builds and screenshot retention. Artifact `pilot-verification`: `11104065177`, digest `sha256:33b24e3219d542fe4b4f7dd6ec9a6fe9d7fbc9ccdce708cf06e12a09bf128c64`.
 
 ## New: protect the project Pages output from private alert writes
 
