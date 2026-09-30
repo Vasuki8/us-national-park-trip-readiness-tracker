@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), during release-target development**.
+Updated: **September 30, 2026 (UTC), after release-target verification**.
 
 **Release readiness now has separate pilot, indexed and advertising targets, with conservative indexing/ad activation guards. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
@@ -30,6 +30,8 @@ Eleven additional test methods cover target scoping, a synthetic otherwise-ready
 Independent review found an indexing bypass in the inherited substring checks: commenting out the actual meta tag, limiting robots to a named agent, or narrowing the header path still looked intact. Regressions reproduced that issue and related conditional/component/allow/scoped-header cases. The pilot guard now recognizes active literal head metadata, the canonical wildcard robots group without exceptions, and globally scoped unqualified noindex headers; unfamiliar configurations require review. All 20 focused readiness tests pass. Existing static link test gaps remain deferred from the earlier Pages increment.
 
 The final local Python suite passed **350 tests**. The current target reports remain blocked with required counts pilot **1/1/3**, indexed **1/2/3**, and advertising **1/3/3** (pass/blocked/not checked). The Pages code preceding this increment passed exact-head Verify pilot #137, run `36657771103`, at `a14b7430a25bfbb5995d4aecc7a6a902733f3753`, including the screenshot-retention guard; artifact `11073014127` retained both builds and root visual evidence.
+
+The release-target code on `main`, commit `5f3a94a50c2f6f5d37bf02c4a7000f8bf36f7014`, passed Verify pilot #138, run `36662233981`, job `109719292377`: **150 Node, 350 Python, 40 generated-site and 78 Chromium tests, 618 total**, zero Astro diagnostics, and root/project 14-page builds. The screenshot-retention check also passed. Artifact `pilot-verification` is `11074687668`, digest `sha256:3febb905a15504d9fe4d9a5098f1cf0ffc0317d265b3252b2a15dcf758fc30df`. This verifies the report logic and guard regressions, not a real private approval or deployment.
 
 ## New: free GitHub project hosting support
 
