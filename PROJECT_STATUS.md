@@ -1,12 +1,13 @@
 # Project status and handoff
 
-Updated: **September 29, 2026 (America/Toronto)**.
+Updated: **September 29, 2026 (America/Toronto), after main integration**.
 
 **The private alert staging command now supports a sequential five-park operator run. The entry-review ledger's backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
-Branch: `feat/pilot-foundation`. Draft PR #1 remains unmerged.  
-Main remains `a9d9c19e8307828c5bdb6f331e24ca3fe7afffce`. No deployment was performed.
+Branch: `main`, commit `3fe0e878b9b33b457497bff5e761dd33cb962b06`. PR #1 was automatically marked merged after the fast-forward update. No Pages release workflow was dispatched.
+
+The local development commit `679fa089fdddb08c09e976c16afead4c5ecedb2f` was recreated through the connected GitHub app as `3fe0e878`; both commits have the identical tree `b0d120ccd6a353333f7cf244f8dd490c0b8612e4`. The `main` push passed Verify pilot #132, run `36651035959`, job `109684980194`: 148 Node, 328 Python, 18 generated-site, and 74 Chromium tests (**568 total**), Astro check with zero diagnostics, and a 14-page build. Artifact `pilot-verification` is `11070417444`. This integrates code only; it does not satisfy private review, public alert collection, hosting, indexing, or advertising gates.
 
 ## Standing product direction
 
@@ -255,7 +256,7 @@ The workflow grants only `contents: read`, `actions: read`, `pages: write`, and 
 
 Rollback is the same artifact path with `mode: rollback` and an older successful default-branch Verify run. It never runs `git revert`, `git reset`, or pushes source changes. The current `pilot-verification` artifact retention is seven days, so this rollback mechanism only covers verified runs whose artifacts have not expired.
 
-No release workflow was dispatched during this milestone. The website remains unpublished, PR #1 remains draft/unmerged, and all existing `noindex` controls remain unchanged. `public/_headers` is retained in the build, but GitHub Pages does not by itself establish that those custom response headers are effective; real hosting/header behavior remains part of the post-deployment verification gate.
+No release workflow was dispatched during the implementation or the later `main` integration. PR #1 is now marked merged, and all existing `noindex` controls remain unchanged. `public/_headers` is retained in the build, but GitHub Pages does not by itself establish that those custom response headers are effective; real hosting/header behavior remains part of the post-deployment verification gate.
 
 The release-readiness `hosting_rollback` gate now moves from `blocked` to **`not_checked`**: a deployment/rollback mechanism exists, but no real production URL or rollback has been exercised.
 
@@ -343,7 +344,7 @@ The final review-focus tests also cover absent and duplicated approved excerpts,
 
 Review was **author self-review**, not independent approval.
 
-## Exact implementation verification
+## Earlier implementation verification
 
 Code/test head: **`1ed3731e7590bc9b952276aac757a6c248611569`**.
 
@@ -361,7 +362,7 @@ Code/test head: **`1ed3731e7590bc9b952276aac757a6c248611569`**.
 
 The keyed-alert compatibility increment was driven by live read-only provider evidence plus synthetic regressions. Initial keyed runs proved authentication worked but quarantined Yosemite/Zion/Grand Canyon. Diagnostic-code tests then failed first before safe allowlisted diagnostics were added. Provider-compatible tests failed before nullable URLs, NPS subdomains, and safe provider-supplied external HTTPS links were accepted across collector, Python/TypeScript history validation, build validation, and rendering.
 
-The final current-head regression run #130 passed all 563 automated tests. Separately, keyed NPS preflight run **36628434444** passed all five parks with `gate_passed:true`; it used the same current collector semantics and performed no public writes.
+The earlier regression run #130 passed all 563 automated tests. The later `main` run #132 passed 568, as recorded above. Separately, keyed NPS preflight run **36628434444** passed all five parks with `gate_passed:true`; it used the same collector semantics and performed no public writes.
 
 Verification artifact `pilot-verification`, ID **11064403957**, contains the production site build, screenshots and lockfile—not API credentials, live raw payloads, private archives, or published alert data. CI-reported ZIP SHA-256: `36548eafd4330bec7afb8898a1ef32d2db37ab43585de3f21e53faf701cab1ae`.
 
@@ -399,4 +400,4 @@ The keyed NPS alert API compatibility gate is now validated. The batch command m
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility. Current verified implementation/docs: **563 tests** at `1ed3731`, run #130. PR #1 remains draft and unmerged.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility; 563 before five-park batch staging. Current integrated implementation: **568 tests** at `3fe0e878`, Verify pilot #132. PR #1 is merged; the site release gates remain blocked or not checked.

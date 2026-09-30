@@ -109,7 +109,7 @@ Advertising/analytics remain disabled.
 
 ## Current state
 
-No Pages release workflow was dispatched while this feature was developed.
+No Pages release workflow was dispatched while this feature was developed or when the pilot code was integrated into `main` at `3fe0e878b9b33b457497bff5e761dd33cb962b06`. Verify pilot #132 passed on that `main` push.
 
 Therefore:
 
@@ -117,6 +117,6 @@ Therefore:
 - no rollback has been exercised;
 - hosting/rollback readiness is `not_checked`, not `pass`;
 - indexing remains blocked; and
-- the PR remains draft/unmerged.
+- PR #1 is merged, but code integration did not perform a Pages release.
 
 A real deployment should occur only after the earlier data/trust gates are deliberately cleared and the root-hosting/base-path requirement is resolved.
