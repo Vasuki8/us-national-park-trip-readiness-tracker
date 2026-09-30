@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (Toronto time), after completing and verifying the source-rights inventory repair**.
+Updated: **September 30, 2026 (Toronto time), after completing and verifying live Pages release/rollback checks**.
 
 **Private entry capture now offers an offline setup check before the explicit live run. Release readiness binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, with separate pilot/indexed/advertising targets. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
@@ -8,6 +8,34 @@ Updated: **September 30, 2026 (Toronto time), after completing and verifying the
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Continuation branch: `fix/protect-pages-private-data`, based on `main` at `25495bdf28d2ab31ddb3198acafca1ffd7d40240`. PR #1 was automatically marked merged after the earlier pilot fast-forward update. No Pages release workflow was dispatched.
+
+## Completed: verify the actual hosted Pages release and rollback
+
+The next development priority is making the five-park pilot live. The existing manual Pages workflow previously stopped after GitHub accepted a deployment. It now checks the actual returned URL against the exact selected verified artifact, for both deploy and rollback, and retains a separate success/failure report. Operator contract: `docs/PAGES_RELEASE.md`; implementation: `scripts/verify-pages-live.mjs`.
+
+Every public regular file except the host configuration `_headers` is compared by SHA-256, including HTML at real directory URLs, scripts/styles, images, robots and the public build manifest. The manifest must match the requested commit and hosting base before network requests. Non-200 responses, redirects, stale/mismatched content, transport errors, unsafe URLs, symlinks and oversized artifacts/responses refuse verification. Three attempts allow brief hosting propagation; ten-second requests run within a two-minute network budget. The report includes commit/snapshot/base, mode, counts and observed home-page headers; absent headers remain null. Matching the verified bytes preserves its existing noindex metadata, but no project robots or custom `_headers` policy is inferred as a domain-wide HTTP control.
+
+Verify pilot now retains the dependency-free verifier outside both static outputs. Pages still uploads only the selected static directory, installs no product dependencies, checks out no source and performs no rebuild or collection. Node setup occurs before deployment. A failed live check fails the job and retains `pages-live-verification.json`; it does not automatically reverse a completed deployment. An artifact predating the retained verifier fails layout validation before upload, so prepare at least two eligible post-change default-branch artifacts for an older-version rollback. PR-only runs remain ineligible; retention remains seven days.
+
+Eight new Node test cases exercise root/project URLs, all file classes, deploy/rollback identity mismatches, HTTP errors/redirects/encoding, propagation retry, invalid URL/manifest inputs, symlinks, size bounds and redacted transport failures. Two new workflow contracts cover URL/artifact wiring, failure reporting and the verifier/public-upload boundary. The tests were observed failing before the new verifier/integration existed. All eight focused cases and **398 local Python tests** passed; independent review found no Critical/Important issues and independently passed eight Node cases plus 19 workflow tests. Network cases use synthetic responses and do not establish a real hosted-site check. The local full npm command still hit the known sandbox subprocess/I/O failures in `build-preview`, `entry-review-store`, `entry-source-extraction` and `preview-io`; full CI passed all Node tests below.
+
+Implementation commit `fb600c53b4705ae6e4cf192017e5448e7003922a`, tree `653e4a165d47dfbecda66843e933fb8220b5d82d`, passed [Verify pilot #149](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36735262681), job `109955241867`:
+
+- **158 Node, 398 Python, 40 generated-site and 78 Chromium tests: 674 total.**
+- Astro check: 25 files, zero errors/warnings/hints; root/project builds: 14 HTML pages each.
+- Root accessibility screenshot retention passed.
+- Artifact `pilot-verification`: `11105954073`, digest `sha256:093b4e1d1f218d23110f03cdc05f38b7068d8f18d80121c7ea6bf89b331d776a`, expires October 7, 2026.
+
+This handoff update follows completed implementation, independent review and successful full CI. Work remains proposed in [draft PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2). No Pages workflow was dispatched and no real URL, rollback or source approval was verified. Public guidance/alerts remain unchanged; the pilot report remains **1 pass, 1 blocked, 3 not checked**, and indexing/ads remain disabled. A live-verification report alone does not promote any readiness gate.
+
+### Next work toward launch
+
+1. Complete the real owner-controlled capture, human context review and current-head backup/separate-copy session in `docs/DURABLE_COLLECTION_SESSION.md`. Durable destinations and a local NPS key have not been supplied here; the successful Actions API probe is not public-data publication.
+2. Finish a deliberate reviewed public-data promotion path using the existing private archive/history projection, with a reviewable candidate and exact paired snapshots/history. The current projection and private preview do not authorize or perform publication. Keep private captures, ledger, packets, archives and backups outside the repository and hosted site. Preserve the existing collection/review/backup tools rather than rebuilding them.
+3. Integrate reviewed launch code into the default branch, obtain successful default-branch push builds and retain two eligible artifacts. Configure GitHub Pages to use GitHub Actions and confirm the actual root/project URL. The expected free project URL is `https://vasuki8.github.io/us-national-park-trip-readiness-tracker/`, not a verified live URL.
+4. Once the earlier data/trust gates are deliberately cleared, dispatch the existing manual release with the exact eligible commit/run and confirmation. Inspect the retained live report and browser behavior at that URL. Deliberately roll back to the older eligible artifact, verify it, restore the intended release and retain the reports before claiming hosting/rollback evidence. Review external evidence separately; the read-only readiness CLI still does not auto-accept a deployment receipt.
+
+The preceding source-rights handoff commit `2bfcde4c1595c0fcdb369da5fb614d3a724a44e2` passed [Verify pilot #148](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36730398865), job `109938146513`: **664 tests**, zero Astro diagnostics and both 14-page builds. Artifact `11105186391`, digest `sha256:19ebaffee91e738a543eafa3b85760a7f782a062bfb17b5fefdd2d660ef132bc`, retained that prior verified state.
 
 ## Completed: validate guidance before source-rights coverage
 
