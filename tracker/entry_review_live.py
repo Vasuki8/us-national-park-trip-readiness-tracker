@@ -36,9 +36,13 @@ def _preflight_output(store: EntryReviewStore, output_dir: Path) -> Path:
     root = check_path(store.root)
     require(output != root and output not in root.parents and root not in output.parents,
             'overlapping_live_review_paths')
-    private_stat(output.parent, directory=True)
-    if output.exists():
-        private_stat(output, directory=True)
+    try:
+        private_stat(root.parent, directory=True)
+        private_stat(output.parent, directory=True)
+        if output.exists():
+            private_stat(output, directory=True)
+    except OSError:
+        raise ReviewStoreError('private_capture_destination_unavailable') from None
     return output
 
 
@@ -67,6 +71,36 @@ def _current_inputs(state: dict) -> tuple[list, list, dict]:
     # legacy baseline input so a live append cannot manufacture fresh holds.
     baselines = [] if state['baselines'] else copy.deepcopy(latest['request']['baselines'])
     return copy.deepcopy(state['records']), baselines, copy.deepcopy(first['request']['seed_register'])
+
+
+def _capture_setup(store: EntryReviewStore, packet_output_dir: Path, expected_revision):
+    revision(expected_revision)
+    output = _preflight_output(store, packet_output_dir)
+    state = store.read()
+    require(state['revision'] == expected_revision, 'stale_review_revision')
+    records, baselines, seed = _current_inputs(state)
+    return output, state, records, baselines, seed
+
+
+def check_capture_setup(store: EntryReviewStore, packet_output_dir: Path, *, expected_revision) -> dict:
+    """Read-only path/head/input check, independent of live capture or approval."""
+    _, state, records, _, _ = _capture_setup(store, packet_output_dir, expected_revision)
+    return {
+        'schema_version': 1,
+        'mode': 'private_entry_capture_preflight',
+        'setup_validated': True,
+        'ledger_revision': state['revision'],
+        'recorded_batches': sum(1 for event in state['events'] if event['kind'] == 'observation'),
+        'pending_proposals': len(state['register']['proposals']),
+        'guidance_records': len(records),
+        'required_sources': len(PROFILES),
+        'network_performed': False,
+        'writes_performed': False,
+        'ledger_committed': False,
+        'approval_performed': False,
+        'publication_performed': False,
+        'public_data_written': False,
+    }
 
 
 def _validate_pair(code: str, capture: dict, receipt: dict, now: datetime) -> dict:
@@ -108,11 +142,7 @@ def run_live_capture(store: EntryReviewStore, packet_output_dir: Path, *,
     Packet failures never roll the committed ledger back.
     """
     require(live is True, 'live_review_opt_in_required')
-    revision(expected_revision)
-    output = _preflight_output(store, packet_output_dir)
-    before = store.read()
-    require(before['revision'] == expected_revision, 'stale_review_revision')
-    records, baselines, seed = _current_inputs(before)
+    output, _, records, baselines, seed = _capture_setup(store, packet_output_dir, expected_revision)
 
     pairs = [capture_source(code, live=True) for code in PROFILES]
     current_now = datetime.now(timezone.utc) if now is None else now
@@ -197,15 +227,22 @@ def run_live_capture(store: EntryReviewStore, packet_output_dir: Path, *,
 
 def main(argv: list[str] | None = None) -> int:
     try:
-        parser = _Parser(description='Persist five fixed NPS entry captures for private editorial review.')
-        parser.add_argument('--live', action='store_true')
+        parser = _Parser(description='Check private capture setup or persist five fixed NPS entry captures.')
+        mode = parser.add_mutually_exclusive_group()
+        mode.add_argument('--live', action='store_true')
+        mode.add_argument('--check-only', action='store_true')
         parser.add_argument('--store', required=True, type=Path)
         parser.add_argument('--packet-output-dir', required=True, type=Path)
         parser.add_argument('--expected-revision', required=True)
         args = parser.parse_args(argv)
-        if not args.live:
+        if not args.live and not args.check_only:
             raise ReviewStoreError('live_review_opt_in_required')
         expected = None if args.expected_revision == 'empty' else args.expected_revision
+        if args.check_only:
+            report = check_capture_setup(EntryReviewStore(args.store), args.packet_output_dir,
+                                         expected_revision=expected)
+            sys.stdout.write(json.dumps(report, sort_keys=True, separators=(',', ':'))+'\n')
+            return 0
         report = run_live_capture(
             EntryReviewStore(args.store),
             args.packet_output_dir,

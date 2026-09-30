@@ -1,8 +1,8 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), after reviewed/public guidance and reconciliation provenance binding**.
+Updated: **September 30, 2026 (UTC), after offline private capture setup checks**.
 
-**Release readiness now binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, in addition to separate pilot/indexed/advertising targets and conservative activation guards. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
+**Private entry capture now offers an offline setup check before the explicit live run. Release readiness binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, with separate pilot/indexed/advertising targets. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Branch: `main`. PR #1 was automatically marked merged after the pilot fast-forward update. No Pages release workflow was dispatched.
@@ -16,6 +16,20 @@ The eventual product remains AdSense-first, light-theme and free of paid-data de
 The public build remains 14 HTML pages plus `build.json`, with park/state search, five park pages, date-aware entry guidance, source evidence, checklists, notice history and seven official planning links per park. Yosemite and Rocky Mountain have dated rules; Yellowstone, Zion and Grand Canyon retain undated source observations. Public alert snapshots remain `never_checked`; public histories and the public entry-review register remain empty.
 
 Existing alert collection/archive/staging, candidate previews, visitor history, accessibility repairs, source-change gate, HTML extraction, live entry-page compatibility diagnostic and private review ledger remain in place. Do not rebuild them.
+
+## New: offline private capture setup check
+
+`tracker.entry_review_live --check-only` validates the existing private destination boundaries, replays an existing ledger, checks the expected empty/current head and loads the current guidance inputs. It creates no directories, makes no requests and writes no ledger, packet or public files. The schema-1 metadata report uses `mode: private_entry_capture_preflight` and `setup_validated: true`, with ledger revision/batch/pending-proposal counts, guidance-record count and five required sources. All side-effect flags are false; no source contents or private paths are printed. Exit `0` means setup checked, not guidance approved. Safe refusals exit `2` without a success report.
+
+Live and offline checks share one setup path. Both private parent directories must already exist and be owner-only. The live command previously discovered a missing ledger parent only after requests, and could initialize under an insecure parent. It now refuses both cases before network. `--check-only` and `--live` are mutually exclusive; omitting both still refuses. Existing capture/packet and live exit-code semantics remain intact.
+
+Seven new methods cover empty destinations without creation, real synthetic ledger replay with unchanged SQLite/packet bytes, unsafe destinations, stale/malformed heads, unreadable initial input, mode conflicts and live ledger-parent refusal before requests. The initial RED run produced **14 failing cases**; all **16 focused live-capture tests** now pass. The tests use synthetic captures; no real private storage or source review milestone was cleared.
+
+This is a point-in-time path/head/input-availability check. It does not certify storage durability, backup, source truth, editorial approval, provider compatibility or later writes. Live capture repeats setup validation and the write transaction rechecks the head. The operator contract and example are in `docs/PERSISTENT_ENTRY_CAPTURE.md` and `README.md`.
+
+Independent review found no Critical/Important issues and reran all 16 focused tests successfully. Local verification passed **376 Python, 150 Node and 40 generated-site tests**, zero Astro diagnostics and root/project 14-page builds. Node/site checks used working unrestricted local subprocess I/O. The final GitHub run provides browser checks. The actual pilot remains blocked with required counts **1 pass, 1 blocked, 3 not checked**; indexed/advertising counts remain **1/2/3** and **1/3/3**. This development increment does not perform the owner-controlled real capture, review, backup, alert publication or deployment.
+
+The preceding reviewed-guidance increment on `main`, commit `d378081bc089d9d3d51884219b6c08df5f962ec7`, passed Verify pilot #141, run `36668506696`, job `109738265677`: **369 Python, 150 Node, 40 generated-site and 78 browser tests (637 total)**, zero Astro diagnostics, both 14-page builds and root screenshot retention. Artifact `pilot-verification` is `11077293008`, digest `sha256:b6b3771e35323997834256aa4f699828097aa3192fc1513ea4ad1125ab00dad3`.
 
 ## New: bind public guidance to reviewed private records
 
@@ -453,6 +467,8 @@ No scheduler, real deployment, indexing, advertising, tracking, account system, 
 ## Next coherent task
 
 The code-side private storage gates now include capture, ledger replay, reviewer packets, reconciliation, backup/restore, a five-park alert staging command, and a manual verified-artifact hosting/rollback path. The next trust milestone remains an **owner-controlled real five-source entry-page capture and human review session**, together with a real five-park alert staging run on durable private POSIX/WSL storage. The keyed NPS alert preflight has already succeeded; do not treat it as public collection.
+
+Run `entry_review_live --check-only` on the chosen private paths with the expected empty/current ledger head before the real capture. Both private parents must already exist with owner-only permissions. A successful offline setup report does not perform or approve that capture.
 
 Before reviewing or reconciling real guidance, create a content-addressed ledger backup with `entry_review_backup backup`, run `verify`, and keep a second verified copy on owner-controlled storage separate from the working ledger. Then inspect the generated packets and use `reconcile` only for guidance a human actually approves.
 

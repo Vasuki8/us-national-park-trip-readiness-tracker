@@ -10,9 +10,27 @@ It is intentionally not a scheduled collector and not a publication pipeline.
 
 Run this only with owner-controlled private POSIX storage (Linux/macOS or an appropriate WSL/Linux environment). The existing ledger has not been certified for native Windows filesystems or network filesystems.
 
-Create/choose a private parent directory outside the repository. The packet parent must be owner-only; the ledger itself creates its own `0700` directory and `0600` SQLite file.
+Create/choose private parent directories outside the repository for the ledger and packets. Both parents must already exist and be owner-only. The ledger itself creates its own `0700` directory and `0600` SQLite file. A missing or insecure ledger parent now refuses before requests, just as an unsafe packet destination does.
 
 Do **not** use public repository paths, GitHub Actions artifacts, public CI workspaces, synced public folders or temporary hosted files as the durable editorial ledger.
+
+## Offline setup check
+
+Before the first live run, check your chosen paths and expected empty ledger head:
+
+```sh
+uv run --frozen python -m tracker.entry_review_live \
+  --check-only \
+  --store /absolute/private/entry-review \
+  --packet-output-dir /absolute/private/review-packets \
+  --expected-revision empty
+```
+
+For an existing ledger, use the exact current revision from `entry_review_cli status`. The check replays that ledger, validates its expected head, verifies the same destination boundaries used by live capture, and loads the current input inventory. It does not create directories, write SQLite or packet files, make requests, or approve guidance. `--check-only` and `--live` are mutually exclusive; omitting both still refuses.
+
+Exit `0` reports `mode: private_entry_capture_preflight` and `setup_validated: true`, with the ledger head, recorded-batch and ledger pending-proposal counts, guidance-record count and five required sources. All network/write/commit/approval/publication flags are false. Private paths and source contents are not printed. Exit `2` is a safe setup refusal with no success report.
+
+This is a point-in-time path/head/input-availability check. It does not establish durable storage, off-host backup, provider compatibility, complete editorial validation, source approval, or the success of a later write. Live capture rechecks setup and the ledger transaction still checks the expected head again. A setup result is not release readiness.
 
 ## First run
 
@@ -24,7 +42,7 @@ uv run --frozen python -m tracker.entry_review_live \
   --expected-revision empty
 ```
 
-Before any network request the command verifies explicit live opt-in, the expected empty/current ledger head and the private packet destination.
+Before any network request the command verifies explicit live opt-in, the expected empty/current ledger head, both private parent directories and the packet destination.
 
 ## Later runs
 
@@ -90,6 +108,8 @@ A failed/context-less source gets `packet_status: context_unavailable`. A source
 Use the returned `source_event_revision` and packet IDs for review. The packet itself remains read-only; see `docs/REVIEWER_PACKET.md`.
 
 ## Exit codes
+
+The following codes describe `--live`. The offline `--check-only` meanings are described above.
 
 ### 0 — review batch ready
 

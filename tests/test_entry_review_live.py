@@ -52,6 +52,107 @@ class LiveEntryReviewTests(unittest.TestCase):
         with patch('tracker.entry_review_live.capture_source',side_effect=capture_all(failed_code,checked)):
             return run_live_capture(self.store,self.packets,expected_revision=expected,live=True,now=now)
 
+    def check_setup(self, *, expected='empty', store=None, packets=None, flags=('--check-only',)):
+        out,err=io.StringIO(),io.StringIO()
+        args=[*flags,'--store',str(store or self.store.root),
+              '--packet-output-dir',str(packets or self.packets),'--expected-revision',expected]
+        with patch('tracker.entry_review_live.capture_source',side_effect=AssertionError('unexpected network')), \
+             redirect_stdout(out),redirect_stderr(err):
+            code=main(args)
+        return code,out.getvalue(),err.getvalue()
+
+    def test_offline_setup_accepts_empty_destinations_without_creating_them(self):
+        public=[ROOT/'data'/name for name in ('rules.json','entry-notes.json','entry-review.json')]
+        before=[p.read_bytes() for p in public]
+        code,out,err=self.check_setup()
+        self.assertEqual(code,0,err)
+        report=json.loads(out)
+        self.assertEqual(report['mode'],'private_entry_capture_preflight')
+        self.assertTrue(report['setup_validated'])
+        self.assertIsNone(report['ledger_revision'])
+        self.assertEqual(report['recorded_batches'],0)
+        self.assertEqual(report['guidance_records'],6)
+        self.assertEqual(report['required_sources'],5)
+        for field in ('network_performed','writes_performed','ledger_committed',
+                      'approval_performed','publication_performed','public_data_written'):
+            self.assertFalse(report[field])
+        self.assertNotIn('review_ready',report)
+        self.assertNotIn(str(self.base),out+err)
+        self.assertFalse(self.store.root.exists()); self.assertFalse(self.packets.exists())
+        self.assertEqual(before,[p.read_bytes() for p in public])
+
+    def test_offline_setup_replays_existing_ledger_without_changing_private_files(self):
+        first=self.run_live()
+        files=[p for p in self.base.rglob('*') if p.is_file()]
+        before={p:p.read_bytes() for p in files}
+        code,out,err=self.check_setup(expected=first['ledger_revision'])
+        self.assertEqual(code,0,err)
+        report=json.loads(out)
+        self.assertEqual(report['ledger_revision'],first['ledger_revision'])
+        self.assertEqual(report['recorded_batches'],1)
+        self.assertEqual(report['pending_proposals'],6)
+        self.assertFalse(report['network_performed']); self.assertFalse(report['writes_performed'])
+        self.assertNotIn('Synthetic retained live-capture context',out)
+        self.assertNotIn(str(self.base),out+err)
+        self.assertEqual(before,{p:p.read_bytes() for p in self.base.rglob('*') if p.is_file()})
+
+    def test_offline_setup_refuses_unsafe_destinations_without_creation(self):
+        insecure=self.base/'insecure'; insecure.mkdir(mode=0o755)
+        linked=self.base/'linked'; linked.symlink_to(self.base,target_is_directory=True)
+        cases=[
+            (insecure/'review',self.packets,'insecure_private_permissions'),
+            (self.base/'missing'/'review',self.packets,'private_capture_destination_unavailable'),
+            (self.store.root,insecure/'packets','insecure_private_permissions'),
+            (self.store.root,self.store.root/'packets','overlapping_live_review_paths'),
+            (linked/'review',self.packets,'symlink_private_path'),
+            (ROOT/'unsafe-test-ledger',self.packets,'protected_repository_path'),
+        ]
+        for store,packets,reason in cases:
+            with self.subTest(reason=reason):
+                code,out,err=self.check_setup(store=store,packets=packets)
+                self.assertEqual(code,2); self.assertEqual(out,'')
+                self.assertEqual(err,reason+'\n')
+                self.assertNotIn(str(self.base),err)
+                self.assertFalse(store.exists()); self.assertFalse(packets.exists())
+
+    def test_offline_setup_refuses_stale_or_malformed_expected_head(self):
+        first=self.run_live(); before=self.store.path.read_bytes()
+        for expected,reason in [('empty','stale_review_revision'),
+                                ('0'*64,'stale_review_revision'),
+                                ('/private/sentinel/head','invalid_expected_revision')]:
+            with self.subTest(expected=expected):
+                code,out,err=self.check_setup(expected=expected)
+                self.assertEqual(code,2); self.assertEqual(out,'')
+                self.assertEqual(err,reason+'\n')
+                self.assertEqual(before,self.store.path.read_bytes())
+        self.assertEqual(self.store.read()['revision'],first['ledger_revision'])
+
+    def test_offline_setup_refuses_unreadable_initial_inventory(self):
+        with patch('tracker.entry_review_live.RECORDS_FILE',self.base/'missing-private-inventory'):
+            code,out,err=self.check_setup()
+        self.assertEqual(code,2); self.assertEqual(out,'')
+        self.assertEqual(err,'invalid_live_review_inventory\n')
+        self.assertFalse(self.store.root.exists()); self.assertFalse(self.packets.exists())
+
+    def test_offline_and_live_modes_are_mutually_exclusive(self):
+        code,out,err=self.check_setup(flags=('--check-only','--live'))
+        self.assertEqual(code,2); self.assertEqual(out,'')
+        self.assertEqual(err,'invalid_live_review_arguments\n')
+        self.assertFalse(self.store.root.exists()); self.assertFalse(self.packets.exists())
+
+    def test_live_capture_refuses_missing_or_insecure_ledger_parent_before_requests(self):
+        insecure=self.base/'insecure'; insecure.mkdir(mode=0o755)
+        for parent in (self.base/'missing',insecure):
+            with self.subTest(parent=parent):
+                out,err=io.StringIO(),io.StringIO()
+                with patch('tracker.entry_review_live.capture_source',side_effect=capture_all()) as capture, \
+                     redirect_stdout(out),redirect_stderr(err):
+                    code=main(['--live','--store',str(parent/'review'),
+                              '--packet-output-dir',str(self.packets),'--expected-revision','empty'])
+                self.assertEqual(code,2); self.assertEqual(out.getvalue(),'')
+                capture.assert_not_called()
+                self.assertFalse((parent/'review').exists())
+
     def test_live_opt_in_and_expected_revision_are_checked_before_network(self):
         with patch('tracker.entry_review_live.capture_source') as capture:
             with self.assertRaises(ReviewStoreError):

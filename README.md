@@ -52,6 +52,14 @@ The successful keyed GitHub preflight is run `36628434444`: all five parks passe
 
 ## Durable private collection
 
+The entry-page capture command can check private storage setup offline before a live run:
+
+```sh
+uv run --frozen python -m tracker.entry_review_live --check-only --store /absolute/private/entry-review --packet-output-dir /absolute/private/review-packets --expected-revision empty
+```
+
+Both private parent directories must already exist with owner-only permissions. Use the exact current ledger revision for later checks. This command makes no requests or writes and does not approve source guidance. See `docs/PERSISTENT_ENTRY_CAPTURE.md` for the subsequent explicit live-capture/review path.
+
 After reviewing a successful preflight, collect into owner-controlled durable private POSIX/WSL storage outside the repository:
 
 ```sh

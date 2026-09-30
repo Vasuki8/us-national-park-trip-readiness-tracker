@@ -30,6 +30,8 @@ The read-only readiness report defaults to the approved ad-free, unindexed pilot
 
 Durable review also requires the public guidance inventory to match the private ledger's complete records and their source-specific approval hashes. Each current v2 baseline needs a matching reconciliation that selected that source's holds; carrying imported baselines forward does not prove those sources were reconciled. The report uses the existing canonical digest, compares records by stable ID, and emits only match counts/booleans. A private reconciliation alone does not update or approve different public JSON.
 
+The private entry capture command has an offline `--check-only` mode for path/head/input-availability checks. It shares setup validation with `--live`, including existing owner-only ledger and packet parents, and emits metadata without requests or writes. A successful setup check is not source approval or release readiness. See `docs/PERSISTENT_ENTRY_CAPTURE.md`.
+
 The editing environment cannot download npm dependencies. The one-time feature-branch lock generator ran without lifecycle scripts; a separate job without source checkout committed only the generated lockfile. It checked the exact repository, branch and unchanged head. Its workflow is removed once the lockfile exists. Normal builds use npm ci; there is no permanent write-enabled dependency bootstrap.
 
 ## Review notes
