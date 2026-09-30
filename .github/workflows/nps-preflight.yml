@@ -14,7 +14,10 @@ concurrency:
   cancel-in-progress: false
 jobs:
   preflight:
-    if: github.repository == 'Vasuki8/us-national-park-trip-readiness-tracker' && github.ref == 'refs/heads/feat/pilot-foundation'
+    if: >-
+      github.repository == 'Vasuki8/us-national-park-trip-readiness-tracker' &&
+      (github.ref == 'refs/heads/feat/pilot-foundation' ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

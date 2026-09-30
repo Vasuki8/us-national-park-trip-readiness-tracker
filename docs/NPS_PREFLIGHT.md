@@ -2,7 +2,9 @@
 
 Run `uv run --frozen python -m tracker.preflight` with `NPS_API_KEY` supplied privately, or use the dedicated GitHub workflow. Do not put the key in command arguments, URLs, files committed to Git, or chat.
 
-The workflow uses a repository Actions secret named `NPS_API_KEY`. It runs on `feat/pilot-foundation` when the preflight workflow, `tracker/preflight.py`, or `tracker/alerts.py` changes; this is a validation trigger, not a recurring schedule. It has read-only repository permissions, no persisted checkout credentials, and no deployment step. A manual-dispatch trigger is also defined, but GitHub's Run workflow control generally requires the workflow on the default branch.
+The workflow uses a repository Actions secret named `NPS_API_KEY`. It supports manual runs on `main` and retains the existing `feat/pilot-foundation` push trigger for changes to the preflight workflow, `tracker/preflight.py`, or `tracker/alerts.py`. This is a validation trigger, not a recurring schedule. It has read-only repository permissions, no persisted checkout credentials, and no deployment step.
+
+After this workflow change is merged into `main`, open GitHub **Actions → Read-only NPS preflight → Run workflow**, select `main`, and run it. A successful run checks API compatibility for all five pilot parks; it does not collect durable evidence, update public alert snapshots, or deploy the website. The repository Actions secret is used by GitHub Actions and is not automatically available in a local or cloud development shell.
 
 The diagnostic checks only the five pilot parks, with at most two requested pages per park. The existing transport bounds each page to three HTTP attempts. Provider redirects remain disabled. The report contains status, counts, attempted-at timestamps and page counts, never API keys, exception text, notice bodies or raw payloads. No site data or snapshots are written. This intentionally does not retain a real-response fixture yet.
 
