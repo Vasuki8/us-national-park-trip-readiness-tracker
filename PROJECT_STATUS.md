@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), during project Pages development**.
+Updated: **September 30, 2026 (UTC), after project Pages verification**.
 
 **The private alert staging command now supports both a sequential five-park collection run and an offline five-park status report. The entry-review ledger's backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
@@ -25,7 +25,9 @@ CI verifies `dist/` and `dist-pages/` separately and retains both in `pilot-veri
 
 This removes the custom-domain requirement from the code-side hosting path. It does not create a live website, verify rollback, clear private review/collection gates, or enable indexing/ads. See `docs/PAGES_RELEASE.md`.
 
-Local verification passed 150 Node tests, 339 Python tests, both 20-test generated-site checks, Astro check with zero diagnostics, and two 14-page builds. Project HTTP checks passed locally, but three Chromium interaction tests could not launch because the browser download failed. Exact-head GitHub CI remains the browser verification gate for this increment.
+Code commit `5751fc47218bc5c7f0062a706f38ad8b01be9ae1` passed Verify pilot #136, run `36657308469`, job `109704313944`: **150 Node, 339 Python, 40 generated-site checks (20 per output), and 78 Chromium tests (74 root + 4 project), 607 total**. Astro check returned zero diagnostics; each output built 14 pages. Artifact `pilot-verification` is `11072873775`. Browser behavior is now verified in GitHub CI; local Chromium download remained unavailable.
+
+A follow-up separates the project suite's output into `test-results/pages` so its Playwright cleanup preserves the root suite's screenshots. A local synthetic evidence marker failed preservation before that setting and passed afterward, with the real project HTTP test executed both times. CI now requires all three root mobile/200% text screenshots to remain after the project run and before artifact upload. This is a verification-artifact repair; the generated site and release gates are unchanged.
 
 Independent review found no Critical/Important issues. It separately audited 279 links/assets across all 14 pages per output, including fragment targets, with no missing files, escaped base paths or missing fragments; external destinations matched. One minor test-coverage gap is deferred: the static regex scan skips query/fragment-bearing and relative URLs. Current generated destinations passed the broader independent audit.
 

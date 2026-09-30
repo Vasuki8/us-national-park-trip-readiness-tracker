@@ -66,7 +66,7 @@ The normal GitHub project Pages URL for this repository uses:
 
 `/us-national-park-trip-readiness-tracker/`
 
-CI checks every generated page, internal destination and bundled asset under both paths. Four project-path Chromium checks cover navigation/search, entry/checklist interaction, footer/fragment navigation, all 14 pages and metadata. Both builds preserve noindex and the same public-data snapshot ID.
+CI checks every generated page, internal destination and bundled asset under both paths. Four project-path Chromium checks cover navigation/search, entry/checklist interaction, footer/fragment navigation, all 14 pages and metadata. Both builds preserve noindex and the same public-data snapshot ID. Project browser results use `test-results/pages` to preserve the root suite's visual evidence; CI checks that the three root mobile/200% text screenshots survive before artifact upload.
 
 The release workflow reads `actions/configure-pages@v5`'s `base_path`, normalizes the trailing slash, and selects `dist` for root hosting or `dist-pages` for project hosting. A missing output, mismatched manifest path or mismatched commit fails before upload. It does not rewrite or rebuild an artifact.
 
@@ -127,6 +127,8 @@ Advertising/analytics remain disabled.
 ## Current state
 
 No Pages release workflow was dispatched while this feature was developed or when the pilot code was integrated into `main` at `3fe0e878b9b33b457497bff5e761dd33cb962b06`. Verify pilot #132 passed on that `main` push.
+
+Project-path code commit `5751fc47218bc5c7f0062a706f38ad8b01be9ae1` subsequently passed Verify pilot #136, run `36657308469`, including all four project Chromium checks and both generated-output suites. No deployment was dispatched by that development increment.
 
 Therefore:
 
