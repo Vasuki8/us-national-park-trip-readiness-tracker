@@ -7,6 +7,7 @@ from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 from unittest.mock import patch
 from staging_fixtures import T0, feed, raw
+from tracker.history_model import HistoryError
 from tracker.stage import main
 from tracker.staging import StagingCollector, PILOT_CODES
 
@@ -26,6 +27,64 @@ class StageCliTests(unittest.TestCase):
         with patch.dict(os.environ, {'NPS_API_KEY': key}), redirect_stdout(out), redirect_stderr(err):
             code = main(['collect', '--park', 'all', '--staging-dir', str(self.root), *extra])
         return code, json.loads(out.getvalue()), err.getvalue()
+
+    def status_all(self):
+        out, err = io.StringIO(), io.StringIO()
+        with patch.dict(os.environ, {'NPS_API_KEY': ''}), redirect_stdout(out), redirect_stderr(err):
+            code = main(['status', '--park', 'all', '--staging-dir', str(self.root)])
+        return code, json.loads(out.getvalue()), err.getvalue()
+
+    def test_five_park_status_is_offline_and_does_not_create_storage(self):
+        with patch('tracker.stage.request_page', side_effect=AssertionError('must not fetch')):
+            code, report, err = self.status_all()
+        self.assertEqual(code, 0); self.assertEqual(err, '')
+        self.assertEqual(report['operation'], 'status_all')
+        self.assertEqual([item['park_code'] for item in report['parks']], list(PILOT_CODES))
+        self.assertTrue(all(item['stage_state'] == 'idle' and item['observation_count'] == 0
+                            for item in report['parks']))
+        self.assertFalse(report['publication_performed']); self.assertFalse(report['site_data_written'])
+        self.assertFalse(self.root.exists())
+
+    def test_five_park_status_retains_mixed_archived_and_pending_states(self):
+        stage = StagingCollector(self.root)
+        stage.collect('yose', T0, lambda start: feed([raw(code='yose')]))
+        with patch.object(stage.archive, 'append', side_effect=OSError('interrupted')):
+            with self.assertRaises(OSError):
+                stage.collect('zion', T0, lambda start: feed([raw(code='zion')]))
+        with patch('tracker.stage.request_page', side_effect=AssertionError('must not fetch')):
+            code, report, err = self.status_all()
+        self.assertEqual(code, 0); self.assertEqual(err, '')
+        parks = {item['park_code']: item for item in report['parks']}
+        self.assertEqual(parks['yose']['observation_count'], 1)
+        self.assertEqual(parks['yose']['collection_status'], 'success')
+        self.assertEqual(parks['zion']['stage_state'], 'pending')
+        self.assertEqual(parks['zion']['pending_collection_status'], 'success')
+        self.assertEqual(stage.status('zion')['stage_state'], 'pending')
+
+    def test_five_park_status_sanitizes_storage_failure_without_partial_report(self):
+        with patch('tracker.stage.StagingCollector.status', side_effect=OSError('secret private path')):
+            code, report, err = self.status_all()
+        self.assertEqual(code, 2); self.assertEqual(err, '')
+        self.assertEqual(report['operation'], 'refused')
+        self.assertEqual(report['error_code'], 'staging_operation_failed')
+        self.assertNotIn('parks', report)
+        self.assertNotIn('secret private path', json.dumps(report) + err)
+
+    def test_five_park_status_uses_generic_refusal_for_later_known_archive_error(self):
+        original = StagingCollector.status
+        seen = []
+        def fail_second(stage, park):
+            seen.append(park)
+            if park == 'romo':
+                raise HistoryError('archive_hash_mismatch')
+            return original(stage, park)
+        with patch('tracker.stage.StagingCollector.status', autospec=True, side_effect=fail_second):
+            code, report, err = self.status_all()
+        self.assertEqual(seen, ['yose', 'romo'])
+        self.assertEqual(code, 2); self.assertEqual(err, '')
+        self.assertEqual(report['operation'], 'refused')
+        self.assertEqual(report['error_code'], 'staging_operation_failed')
+        self.assertNotIn('parks', report)
 
     def test_five_park_collect_archives_each_and_reports_private_results(self):
         calls = []

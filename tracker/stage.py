@@ -65,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest='command', required=True)
     for name in ('collect', 'recover', 'status'):
         command = commands.add_parser(name)
-        command.add_argument('--park', choices=(*PILOT_CODES, 'all') if name == 'collect' else PILOT_CODES, required=True)
+        command.add_argument('--park', choices=PILOT_CODES if name == 'recover' else (*PILOT_CODES, 'all'), required=True)
         command.add_argument('--staging-dir', type=Path, required=True)
         if name == 'collect':
             command.add_argument('--live', action='store_true', help='Explicitly allow private NPS API requests')
@@ -82,10 +82,18 @@ def main(argv: list[str] | None = None) -> int:
             result = stage.collect(args.park, utc_now(), _fetch_for(args.park, key))
         else:
             stage = StagingCollector(args.staging_dir)
-            result = stage.recover(args.park) if args.command == 'recover' else stage.status(args.park)
+            if args.command == 'status' and args.park == 'all':
+                result = {'schema_version': 1, 'scope': 'private_staging_only',
+                          'operation': 'status_all',
+                          'parks': [stage.status(code) for code in PILOT_CODES],
+                          'publication_performed': False, 'site_data_written': False}
+            else:
+                result = stage.recover(args.park) if args.command == 'recover' else stage.status(args.park)
     except Exception as error:
         # Never print arbitrary provider text, OS paths, raw responses or credentials.
-        code = str(error) if isinstance(error, HistoryError) and str(error) in SAFE_ERRORS else 'staging_operation_failed'
+        aggregate_status = args.command == 'status' and args.park == 'all'
+        code = (str(error) if not aggregate_status and isinstance(error, HistoryError)
+                and str(error) in SAFE_ERRORS else 'staging_operation_failed')
         print(json.dumps({'schema_version': 1, 'operation': 'refused', 'error_code': code,
                           'publication_performed': False, 'site_data_written': False}))
         return 2

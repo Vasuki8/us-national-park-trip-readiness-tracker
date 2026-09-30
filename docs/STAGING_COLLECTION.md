@@ -8,12 +8,13 @@ Use Python 3.12+ and the project's frozen uv environment. Choose owner-controlle
 
 ```sh
 uv run --frozen python -m tracker.stage status --park yose --staging-dir state/staging
+uv run --frozen python -m tracker.stage status --park all --staging-dir /absolute/private/alert-staging
 uv run --frozen python -m tracker.stage collect --live --park yose --staging-dir state/staging
 uv run --frozen python -m tracker.stage recover --park yose --staging-dir state/staging
 uv run --frozen python -m tracker.stage collect --live --park all --staging-dir /absolute/private/alert-staging
 ```
 
-`collect` alone is not enough: `--live` and a valid private `NPS_API_KEY` environment variable are both required. Do not put keys in command arguments, URLs, code, issues or chat. Status and recovery are offline and need no key. Codes: `yose`, `romo`, `yell`, `zion`, `grca`. `collect --park all` handles those five sequentially through the same private collector and archive; `status` and `recover` still take one park at a time. The example absolute destination must be replaced with an owner-controlled local path outside the repository. There is no new GitHub Actions collection workflow or schedule.
+`collect` alone is not enough: `--live` and a valid private `NPS_API_KEY` environment variable are both required. Do not put keys in command arguments, URLs, code, issues or chat. Status and recovery are offline and need no key. Codes: `yose`, `romo`, `yell`, `zion`, `grca`. `collect --park all` handles those five sequentially through the same private collector and archive. `status --park all` reads all five existing summaries without a key or network request; `recover` still takes one park at a time. The example absolute destination must be replaced with an owner-controlled local path outside the repository. There is no new GitHub Actions collection workflow or schedule.
 
 The five-park command checks every park's archive, pending receipt, writer locks and collection clock before making its first request. This reduces avoidable partial batches; another writer or a provider/storage failure can still interrupt the sequential run. Its JSON `checks` list contains only completed archive summaries. Exit `0` means all five checks were successfully archived, **not** that the alerts were reviewed, published, or exhaustive. Exit `1` means all five attempts were archived but at least one provider check failed or was quarantined. Exit `2` means a precheck or execution failed; an `interrupted` report can contain earlier committed parks. Inspect each park with `status`, recover any pending receipt offline, and then decide whether another live collection is appropriate. Never assume that retrying the whole batch is atomic or resumes the original attempt.
 
@@ -36,6 +37,8 @@ A crash during network access or before the receipt becomes durable does not lea
 ## Operator status and exit codes
 
 Status has `stage_state` of `idle`, `pending`, `committed_needs_cleanup` or `conflict`; it separately reports staging/archive writer locks, accepted collection status, last checked/successful times and pending candidate status/time. Reports contain counts, hashes and fixed operational labels, not provider notice text or raw exception messages. An idle state does not mean fresh data or a safe trip. Status is an observation of local files, not a publication gate or a cross-process transaction snapshot.
+
+The `status --park all` envelope has `operation: status_all` and a `parks` array in pilot order. It returns exit `0` only after reading all five summaries; a local error returns exit `2` with a safe refusal and no partial array. It creates no staging directory when none exists, and its summaries are still observations of local state rather than a batch transaction or permission to publish.
 
 Exit `0`: status, no receipt to recover, or successful source candidate archived/recovered. Exit `1`: a failed/quarantined collection attempt was successfully archived/recovered. Exit `2`: configuration, local state, conflict, storage, or unexpected execution failure; inspect private state before retrying. Machine output always keeps `publication_performed` and `site_data_written` false. It never says an unsuccessful source check succeeded just because it was archived.
 

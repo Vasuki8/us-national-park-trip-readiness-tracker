@@ -2,7 +2,7 @@
 
 Updated: **September 29, 2026 (America/Toronto), after main integration**.
 
-**The private alert staging command now supports a sequential five-park operator run. The entry-review ledger's backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
+**The private alert staging command now supports both a sequential five-park collection run and an offline five-park status report. The entry-review ledger's backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Branch: `main`, commit `3fe0e878b9b33b457497bff5e761dd33cb962b06`. PR #1 was automatically marked merged after the fast-forward update. No Pages release workflow was dispatched.
@@ -24,6 +24,8 @@ Existing alert collection/archive/staging, candidate previews, visitor history, 
 The report contains safe private archive summaries in pilot order. Exit `0` means all five attempts were archived successfully, exit `1` means all five were archived with at least one failed/quarantined check, and exit `2` means a precheck or later execution failed. An interrupted run can have earlier committed parks; the `checks` list reports only those completed commits. Inspect per-park `status` and use offline `recover` for pending receipts before deciding on a new live attempt. The batch is not atomic and does not publish, schedule, review or back up data. See `docs/STAGING_COLLECTION.md`.
 
 Five focused synthetic tests cover successful five-park archival, preflight refusal before network, one provider failure with the remaining parks retained, interrupted partial progress and non-advancing clock refusal. Local verification: **328 Python tests, 148 Node tests, 18 generated-site tests**, Astro check with zero diagnostics, and a 14-page production build. The browser suite could not start its configured history-site web server locally (`astro preview` exited before becoming ready); browser verification requires the GitHub CI environment. No live batch was attempted and the public snapshots remain `never_checked`.
+
+The follow-up `status --park all` reads the five existing per-park summaries without a key, network request, archive write or staging-directory creation. The JSON report preserves pilot order and the existing safe per-park fields; a local read failure returns a generic refusal without a misleading partial report. Four new CLI tests cover empty storage, mixed archived/pending state, error redaction and a later known archive-integrity error. Local verification: **332 Python, 148 Node and 18 generated-site tests**, Astro check with zero diagnostics, and a 14-page build. Browser verification belongs to the GitHub CI run for this increment. This is an operator inspection command, not a verified private capture or publication gate.
 
 ## New: explicit private reconciliation
 
@@ -400,4 +402,4 @@ The keyed NPS alert API compatibility gate is now validated. The batch command m
 
 ## Verification lineage
 
-Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility; 563 before five-park batch staging. Current integrated implementation: **568 tests** at `3fe0e878`, Verify pilot #132. PR #1 is merged; the site release gates remain blocked or not checked.
+Prior communicated totals: 79 foundation; 109 source coverage; 167 private history; 206 staging; 246 visitor history; 293 previews; 309 planning links; 347 accessibility; 380 selected-source gate; 416 extraction; 460 ledger/identity; 488 live entry compatibility; 563 before five-park batch staging. The prior `main` integration passed **568 tests** at `3fe0e878`, Verify pilot #132. The offline five-park status increment has four additional Python tests and awaits its `main` browser run. PR #1 is merged; the site release gates remain blocked or not checked.
