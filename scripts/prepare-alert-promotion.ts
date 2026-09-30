@@ -86,6 +86,11 @@ function buildPatch(input: unknown, current: PublicFile[], archive?: string) {
       }
       const newer = next.observations.filter(o => o.sequence > old.total_observations);
       requireValue(next.total_changes === old.total_changes + newer.reduce((sum, o) => sum + o.change_count, 0));
+      // Failed/quarantined observations cannot alter the last successful clock,
+      // even when that success has fallen outside both bounded projections.
+      const lastNewSuccess = newer.find(o => o.collection_status === 'success');
+      requireValue(view.snapshot.last_successful_fetch_at
+        === (lastNewSuccess?.checked_at ?? snapshots[i].last_successful_fetch_at));
       if (snapshots[i].last_successful_fetch_at !== null) {
         const state = new Map<string, RecordState>(snapshots[i].records.map((r: any) => [r.id, recordState(r)]));
         for (const observation of newer.toReversed()) {

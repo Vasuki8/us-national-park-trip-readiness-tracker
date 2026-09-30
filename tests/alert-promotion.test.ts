@@ -252,6 +252,39 @@ function archivedScenario(dir: string, scenario: string) {
   return {project, archive: join(dir, 'archive'), bundle: join(dir, 'bundle.json'), output: join(dir, 'candidate.patch')};
 }
 
+test('bounded degraded windows retain the success clock even when every successful observation is omitted', () => temporary(dir => {
+  const {project, bundle, output} = archivedScenario(dir, 'hidden-success');
+  const original = readFileSync(bundle), value = JSON.parse(original.toString('utf8'));
+  assert.equal(value.views[0].history.observations.some((o: any) => o.collection_status === 'success'), false);
+  assert.equal(run(bundle, output, project).status, 0);
+  const retained = readFileSync(output);
+  for (const clock of ['2026-09-28T10:00:00Z', '2026-09-28T12:00:00Z', null]) {
+    value.views[0].snapshot.last_successful_fetch_at = clock;
+    value.views[0].history.snapshot_hash = historyDigest(value.views[0].snapshot);
+    const {bundle_id, ...body} = value; value.bundle_id = historyDigest(body);
+    writeFileSync(bundle, canonicalPreview(value));
+    const altered = join(dir, 'altered.patch');
+    const result = run(bundle, altered, project);
+    assert.equal(result.status, 2, `changed success clock ${clock}`);
+    assert.equal(result.stdout, '');
+    assert.equal(readdirSync(dir).includes('altered.patch'), false);
+    assert.deepEqual(readFileSync(output), retained);
+  }
+}));
+
+test('bounded degraded windows cannot invent a first successful fetch', () => temporary(dir => {
+  const {project, bundle, output} = archivedScenario(dir, 'no-success');
+  const value = JSON.parse(readFileSync(bundle, 'utf8'));
+  assert.equal(value.views[0].snapshot.last_successful_fetch_at, null);
+  assert.equal(run(bundle, output, project).status, 0);
+  value.views[0].snapshot.last_successful_fetch_at = '2026-09-28T11:00:00Z';
+  value.views[0].history.snapshot_hash = historyDigest(value.views[0].snapshot);
+  const {bundle_id, ...body} = value; value.bundle_id = historyDigest(body);
+  writeFileSync(bundle, canonicalPreview(value));
+  assert.equal(run(bundle, join(dir, 'altered.patch'), project).status, 2);
+  assert.equal(readdirSync(dir).includes('altered.patch'), false);
+}));
+
 test('a verified archive supplies a published checkpoint outside the visible preview window', () => temporary(dir => {
   const {project, archive, bundle, output} = archivedScenario(dir, 'window');
   assert.equal(run(bundle, output, project).status, 2);
