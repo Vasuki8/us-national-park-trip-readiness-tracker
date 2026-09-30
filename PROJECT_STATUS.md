@@ -2,7 +2,7 @@
 
 Updated: **September 29, 2026 (America/Toronto)**.
 
-**Private content-addressed backup/verify/restore is now implemented and CI-verified for the entry-review ledger, in addition to the persistent live capture → ledger → reviewer-packet path. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
+**The private alert staging command now supports a sequential five-park operator run. The entry-review ledger's backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Branch: `feat/pilot-foundation`. Draft PR #1 remains unmerged.  
@@ -15,6 +15,14 @@ The eventual product remains AdSense-first, light-theme and free of paid-data de
 The public build remains 14 HTML pages plus `build.json`, with park/state search, five park pages, date-aware entry guidance, source evidence, checklists, notice history and seven official planning links per park. Yosemite and Rocky Mountain have dated rules; Yellowstone, Zion and Grand Canyon retain undated source observations. Public alert snapshots remain `never_checked`; public histories and the public entry-review register remain empty.
 
 Existing alert collection/archive/staging, candidate previews, visitor history, accessibility repairs, source-change gate, HTML extraction, live entry-page compatibility diagnostic and private review ledger remain in place. Do not rebuild them.
+
+## New: five-park private alert staging run
+
+`uv run --frozen python -m tracker.stage collect --live --park all --staging-dir /absolute/private/alert-staging` now checks the existing archive/pending state for all five pilot parks before making a provider request, then collects them sequentially through the unchanged `StagingCollector` receipt and archive path. A pre-existing pending receipt, writer lock or non-advancing clock blocks the batch before network access. A race after precheck can still interrupt the run.
+
+The report contains safe private archive summaries in pilot order. Exit `0` means all five attempts were archived successfully, exit `1` means all five were archived with at least one failed/quarantined check, and exit `2` means a precheck or later execution failed. An interrupted run can have earlier committed parks; the `checks` list reports only those completed commits. Inspect per-park `status` and use offline `recover` for pending receipts before deciding on a new live attempt. The batch is not atomic and does not publish, schedule, review or back up data. See `docs/STAGING_COLLECTION.md`.
+
+Five focused synthetic tests cover successful five-park archival, preflight refusal before network, one provider failure with the remaining parks retained, interrupted partial progress and non-advancing clock refusal. Local verification: **328 Python tests, 148 Node tests, 18 generated-site tests**, Astro check with zero diagnostics, and a 14-page production build. The browser suite could not start its configured history-site web server locally (`astro preview` exited before becoming ready); browser verification requires the GitHub CI environment. No live batch was attempted and the public snapshots remain `never_checked`.
 
 ## New: explicit private reconciliation
 
@@ -381,13 +389,13 @@ No scheduler, real deployment, indexing, advertising, tracking, account system, 
 
 ## Next coherent task
 
-The code-side private storage gates now include capture, ledger replay, reviewer packets, reconciliation, backup/restore, and a manual verified-artifact hosting/rollback path. The next trust milestone remains an **owner-controlled real five-source capture and human review session** on durable private POSIX/WSL storage, plus successful keyed NPS alert preflight.
+The code-side private storage gates now include capture, ledger replay, reviewer packets, reconciliation, backup/restore, a five-park alert staging command, and a manual verified-artifact hosting/rollback path. The next trust milestone remains an **owner-controlled real five-source entry-page capture and human review session**, together with a real five-park alert staging run on durable private POSIX/WSL storage. The keyed NPS alert preflight has already succeeded; do not treat it as public collection.
 
 Before reviewing or reconciling real guidance, create a content-addressed ledger backup with `entry_review_backup backup`, run `verify`, and keep a second verified copy on owner-controlled storage separate from the working ledger. Then inspect the generated packets and use `reconcile` only for guidance a human actually approves.
 
 That real session cannot be performed in this development environment because the current tools do not provide the user's durable private POSIX/WSL filesystem or backup destination. Do not substitute GitHub Actions artifacts, repository files or public hosted storage for the editorial ledger/backup.
 
-The keyed NPS alert API compatibility gate is now validated. The next alert step is durable private staging/archive collection and review before public snapshot/history publication.
+The keyed NPS alert API compatibility gate is now validated. The batch command makes durable private staging/archive collection easier to operate, but it still needs owner-controlled storage, a real run, backup and review before public snapshot/history publication.
 
 ## Verification lineage
 

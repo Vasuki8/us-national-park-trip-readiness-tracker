@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 from staging_fixtures import T0, feed, raw
 from tracker.stage import main
+from tracker.staging import StagingCollector, PILOT_CODES
 
 class StageCliTests(unittest.TestCase):
     def setUp(self):
@@ -19,6 +20,72 @@ class StageCliTests(unittest.TestCase):
         with patch.dict(os.environ, {'NPS_API_KEY': key}), redirect_stdout(out), redirect_stderr(err):
             code = main([command, '--park', 'yose', '--staging-dir', str(self.root), *extra])
         return code, out.getvalue(), err.getvalue()
+
+    def invoke_all(self, *extra, key='synthetic-private-key'):
+        out, err = io.StringIO(), io.StringIO()
+        with patch.dict(os.environ, {'NPS_API_KEY': key}), redirect_stdout(out), redirect_stderr(err):
+            code = main(['collect', '--park', 'all', '--staging-dir', str(self.root), *extra])
+        return code, json.loads(out.getvalue()), err.getvalue()
+
+    def test_five_park_collect_archives_each_and_reports_private_results(self):
+        calls = []
+        def fetch(code, start, key):
+            calls.append(code)
+            return feed([raw(code=code)])
+        with patch('tracker.stage.utc_now', return_value=T0), patch('tracker.stage.request_page', side_effect=fetch):
+            code, report, err = self.invoke_all('--live')
+        self.assertEqual(code, 0); self.assertEqual(calls, list(PILOT_CODES))
+        self.assertEqual(report['status'], 'archived')
+        self.assertEqual([item['park_code'] for item in report['checks']], list(PILOT_CODES))
+        self.assertTrue(all(item['collection_status'] == 'success' for item in report['checks']))
+        self.assertFalse(report['publication_performed']); self.assertFalse(report['site_data_written'])
+        self.assertEqual(err, '')
+        for park in PILOT_CODES:
+            self.assertEqual(StagingCollector(self.root).archive.read(park)[-1]['snapshot']['park_code'], park)
+
+    def test_five_park_collect_refuses_pending_receipt_before_any_request(self):
+        stage = StagingCollector(self.root)
+        with patch.object(stage.archive, 'append', side_effect=OSError('interruption')):
+            with self.assertRaises(OSError):
+                stage.collect('zion', T0, lambda start: feed([raw(code='zion')]))
+        with patch('tracker.stage.request_page', side_effect=AssertionError('must not fetch')):
+            code, report, err = self.invoke_all('--live')
+        self.assertEqual(code, 2); self.assertEqual(report['error_code'], 'pending_recovery_required')
+        self.assertEqual(report['checks'], []); self.assertEqual(err, '')
+        self.assertEqual(stage.status('yose')['observation_count'], 0)
+
+    def test_five_park_collect_keeps_partial_provider_failure_visible(self):
+        def fetch(code, start, key):
+            if code == 'yell': raise TimeoutError('synthetic-private-key')
+            return feed([raw(code=code)])
+        with patch('tracker.stage.utc_now', return_value=T0), patch('tracker.stage.request_page', side_effect=fetch):
+            code, report, err = self.invoke_all('--live')
+        self.assertEqual(code, 1); self.assertEqual(report['status'], 'needs_review')
+        self.assertEqual([item['park_code'] for item in report['checks']], list(PILOT_CODES))
+        self.assertEqual(report['checks'][2]['collection_status'], 'failed')
+        self.assertEqual(StagingCollector(self.root).archive.read('yell')[-1]['snapshot']['records'], [])
+        self.assertNotIn('synthetic-private-key', json.dumps(report) + err)
+
+    def test_five_park_collect_reports_committed_progress_after_interruption(self):
+        def fetch(code, start, key):
+            if code == 'romo': raise RuntimeError('synthetic-private-key')
+            return feed([raw(code=code)])
+        with patch('tracker.stage.utc_now', return_value=T0), patch('tracker.stage.request_page', side_effect=fetch):
+            code, report, err = self.invoke_all('--live')
+        self.assertEqual(code, 2); self.assertEqual(report['status'], 'interrupted')
+        self.assertEqual(report['error_code'], 'staging_operation_failed')
+        self.assertEqual([item['park_code'] for item in report['checks']], ['yose'])
+        self.assertEqual(len(StagingCollector(self.root).archive.read('yose')), 1)
+        self.assertEqual(len(StagingCollector(self.root).archive.read('romo')), 0)
+        self.assertNotIn('synthetic-private-key', json.dumps(report) + err)
+
+    def test_five_park_collect_prechecks_all_existing_clocks_before_network(self):
+        StagingCollector(self.root).collect('grca', T0, lambda start: feed([raw(code='grca')]))
+        with patch('tracker.stage.utc_now', return_value=T0), patch('tracker.stage.request_page', side_effect=AssertionError('must not fetch')):
+            code, report, err = self.invoke_all('--live')
+        self.assertEqual(code, 2); self.assertEqual(report['error_code'], 'collection_clock_not_advanced')
+        self.assertEqual(report['checks'], []); self.assertEqual(err, '')
+        self.assertEqual(StagingCollector(self.root).status('yose')['observation_count'], 0)
 
     def test_missing_key_blocks_without_requests_or_directory_writes(self):
         with patch('tracker.stage.request_page', side_effect=AssertionError('must not request')):

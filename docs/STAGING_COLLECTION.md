@@ -10,11 +10,14 @@ Use Python 3.12+ and the project's frozen uv environment. Choose owner-controlle
 uv run --frozen python -m tracker.stage status --park yose --staging-dir state/staging
 uv run --frozen python -m tracker.stage collect --live --park yose --staging-dir state/staging
 uv run --frozen python -m tracker.stage recover --park yose --staging-dir state/staging
+uv run --frozen python -m tracker.stage collect --live --park all --staging-dir /absolute/private/alert-staging
 ```
 
-`collect` alone is not enough: `--live` and a valid private `NPS_API_KEY` environment variable are both required. Do not put keys in command arguments, URLs, code, issues or chat. Status and recovery are offline and need no key. Codes: `yose`, `romo`, `yell`, `zion`, `grca`. Each invocation handles one park; run sequentially. There is no new GitHub Actions collection workflow or schedule.
+`collect` alone is not enough: `--live` and a valid private `NPS_API_KEY` environment variable are both required. Do not put keys in command arguments, URLs, code, issues or chat. Status and recovery are offline and need no key. Codes: `yose`, `romo`, `yell`, `zion`, `grca`. `collect --park all` handles those five sequentially through the same private collector and archive; `status` and `recover` still take one park at a time. The example absolute destination must be replaced with an owner-controlled local path outside the repository. There is no new GitHub Actions collection workflow or schedule.
 
-These are operating instructions, not evidence that real NPS transport/schema compatibility was tested. The separate read-only preflight remains the live compatibility gate. No live requests were made while implementing or testing this increment.
+The five-park command checks every park's archive, pending receipt, writer locks and collection clock before making its first request. This reduces avoidable partial batches; another writer or a provider/storage failure can still interrupt the sequential run. Its JSON `checks` list contains only completed archive summaries. Exit `0` means all five checks were successfully archived, **not** that the alerts were reviewed, published, or exhaustive. Exit `1` means all five attempts were archived but at least one provider check failed or was quarantined. Exit `2` means a precheck or execution failed; an `interrupted` report can contain earlier committed parks. Inspect each park with `status`, recover any pending receipt offline, and then decide whether another live collection is appropriate. Never assume that retrying the whole batch is atomic or resumes the original attempt.
+
+The separate keyed read-only preflight validated the five current provider responses, as recorded in `docs/NPS_PREFLIGHT.md`. The new durable batch command has only been exercised with synthetic transport in tests; no real private archive was created while implementing this increment.
 
 ## Transaction and recovery
 
