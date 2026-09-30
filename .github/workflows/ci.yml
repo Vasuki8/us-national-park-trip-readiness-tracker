@@ -50,4 +50,5 @@ jobs:
             dist-pages/
             test-results/
             package-lock.json
+            scripts/verify-pages-live.mjs
           retention-days: 7

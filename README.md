@@ -36,7 +36,7 @@ npm run test:browser:pages
 
 `npm run preview` serves the root build. `npm run preview:pages` serves the GitHub project build at `/us-national-park-trip-readiness-tracker/` on port 4324. Use a POSIX/WSL shell for the full command list. No API key is required to build the committed development snapshot. The Astro build validates undated source notes separately from the dated-rule and alert schema checks.
 
-GitHub Pages release/rollback remains manual and uses an already verified artifact matching the configured hosting path. The website is not live. See `docs/PAGES_RELEASE.md` for the deployment contract and `docs/RELEASE_READINESS.md` for the remaining gates.
+GitHub Pages release/rollback remains manual and uses an already verified artifact matching the configured hosting path. After deployment, it checks the actual hosted pages/assets against that artifact and retains a separate live-verification report, including failures. The website is not live. See `docs/PAGES_RELEASE.md` for deployment, live checks and rollback preparation, and `docs/RELEASE_READINESS.md` for the remaining gates.
 
 The read-only readiness report defaults to an ad-free, unindexed pilot. Use `--target indexed` or `--target advertising` to include the corresponding later-release gates. Source review, public alert data, backup, source rights and hosting/rollback remain required for every target. Detected ads or changed pilot indexing controls still require review.
 

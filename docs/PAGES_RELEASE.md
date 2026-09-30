@@ -54,6 +54,7 @@ Before upload, the workflow requires:
 
 - `_verified/dist/index.html`;
 - `_verified/dist/build.json`; and
+- `_verified/scripts/verify-pages-live.mjs`; and
 - no symlinks anywhere under `_verified`.
 
 The selected output also requires its own `index.html` and readable object `build.json`. Its `code_commit` must equal the requested `target_sha`. Only the selected static directory is passed to `actions/upload-pages-artifact@v3`; screenshots, lockfiles and the other build are excluded.
@@ -109,6 +110,29 @@ To roll back, dispatch the same workflow with:
 The workflow deploys that older run's verified static artifact through the same checks.
 
 Current `pilot-verification` artifacts have a **7-day retention**. Therefore this rollback mechanism only covers verified runs whose artifacts still exist. Extending retention is a separate cost/storage decision.
+
+## Verify the actual hosted release
+
+After GitHub accepts a deploy or rollback, the workflow runs the dependency-free Node 24 verifier retained in that same successful default-branch artifact. It uses the deployment action's returned URL, the selected static directory and the exact requested commit. The verifier is outside both static builds and is never uploaded to Pages. Source checkout, dependency installation, rebuilding and source collection remain unnecessary.
+
+The verifier checks every regular file in the selected public build, including all HTML pages, bundled scripts/styles, images, `robots.txt` and `build.json`. It requests `index.html` files at their real directory navigation URLs. Each HTTP response must be 200 and match the artifact's SHA-256 digest exactly. Manifest commit, snapshot identity and hosting base must match before requests. Stale pages, missing assets, redirects, provider failures and mismatched content fail the release job. HTTPS URLs must be canonical and contain no credentials, query, fragment or nonstandard port.
+
+There are at most three complete attempts, separated by five seconds, to allow short Pages propagation delays. Requests have a ten-second timeout within a two-minute overall network budget. Artifact limits are 128 files, 4 MiB per file and 64 MiB total; symlinks and nonregular files are refused. Provider bodies and exception text are never printed. A failure does **not** undo the deployment: inspect the report and deliberately roll back using an eligible earlier artifact when needed.
+
+`pages-live-verification.json` records success/failure, safe reason, checked URL, mode, exact commit/snapshot/base, completed file/page counts, attempts and check time. The separate `pages-live-verification` artifact retains this report for seven days even when a live check fails. Selected home-page response headers are observations, including null when absent; they are not inferred from `_headers`. `_headers` is the one configuration file excluded from byte comparison. Matching pages preserve the noindex metadata already required by Verify pilot; the project-path robots file still does not establish domain-root crawler policy.
+
+For a read-only recheck after downloading and extracting the successful verification artifact:
+
+```sh
+node scripts/verify-pages-live.mjs \
+  --directory dist-pages \
+  --url https://vasuki8.github.io/us-national-park-trip-readiness-tracker/ \
+  --commit EXACT_VERIFIED_40_CHARACTER_SHA --mode deploy
+```
+
+Use `dist` and the actual domain-root URL for root hosting, or `--mode rollback` when verifying the rollback target. Exit 0 means the hosted bytes matched this verified artifact at check time; exit 1 means they did not establish a match. An earlier artifact without the retained verifier now fails layout validation **before upload**. Prepare at least two eligible post-change default-branch artifacts before claiming an older-version rollback path is available.
+
+A successful deploy report alone is not a rollback drill, a browser interaction check, source approval or a cleared release-readiness gate. Before marking hosting/rollback reviewed, retain reports for the initial release, a deliberate older-version rollback and restoration of the intended release, plus browser checks at the actual URL. `tracker.release_readiness` continues to report hosting as `not_checked` until external evidence is separately reviewed; this increment does not add an automatic report-to-gate promotion.
 
 ## Indexing and ads
 
