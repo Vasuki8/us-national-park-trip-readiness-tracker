@@ -20,6 +20,13 @@ def project_history(store: HistoryStore, code: str, *, limit: int = 20) -> dict:
     park_code(code)
     require(type(limit) is int and 1 <= limit <= MAX_VISIBLE_OBSERVATIONS, 'invalid_projection_limit')
     entries = store.read(code)
+    return _project_entries(entries, code, limit=limit)
+
+
+def _project_entries(entries: list[dict], code: str, *, limit: int = 20) -> dict:
+    """Project a prefix of an already replay-verified chain; never use as verification."""
+    park_code(code)
+    require(type(limit) is int and 1 <= limit <= MAX_VISIBLE_OBSERVATIONS, 'invalid_projection_limit')
     current = entries[-1]['snapshot'] if entries else initial_snapshot(code)
     observations = []
     for index in range(len(entries) - 1, max(-1, len(entries) - limit - 1), -1):

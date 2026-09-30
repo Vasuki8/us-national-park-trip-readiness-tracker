@@ -142,7 +142,7 @@ uv run --frozen python -m tracker.release_readiness --format json \
   --backup "$trip_second/$trip_backup_id"
 ```
 
-Exit `1` means release gates remain blocked, not that the report failed. Public guidance must separately match the reviewed private inventory; public alerts must separately be reviewed and published; hosting/rollback evidence is still required. This session does not publish data, deploy the website or activate indexing or ads.
+Exit `1` means release gates remain blocked, not that the report failed. Public guidance must separately match the reviewed private inventory; public alerts must separately be reviewed and published; hosting/rollback evidence is still required. The existing preview bundle can feed the offline [alert-data patch preparation and operator review path](ALERT_DATA_PROMOTION.md). Preparation writes no public data. This session does not publish data, deploy the website or activate indexing or ads.
 
 ## Development rehearsal
 

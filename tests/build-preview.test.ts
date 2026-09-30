@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync, mkdirSync, cpSync, copyFileSync, statSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { historyDigest } from '../scripts/validate-history.ts';
-import { canonicalPreview } from '../scripts/preview-bundle.ts';
+import { canonicalPreview, readPreviewBundle } from '../scripts/preview-bundle.ts';
 import { buildPreview, previewEnvironment } from '../scripts/build-preview.ts';
 const json=(path:string)=>JSON.parse(readFileSync(new URL(path,import.meta.url),'utf8'));
 function input(dir:string){
@@ -51,4 +52,23 @@ test('a zero exit code cannot bless missing or mismatched output',()=>temp(dir=>
     assert.throws(()=>buildPreview(path,(_c,_a,opts)=>{workspace=opts.env!.PARK_PREVIEW_WORKSPACE!;return {status:0,signal:null};}));
     assert.equal(existsSync(join(workspace,'ready.json')),false);
   }finally{if(workspace)rmSync(workspace,{recursive:true,force:true});}
+}));
+
+test('real synthetic exporter keeps its input outside the checkout with private permissions',()=>temp(dir=>{
+  const source=resolve(import.meta.dirname,'..'),project=join(dir,'project');
+  mkdirSync(join(project,'tests'),{recursive:true});
+  cpSync(join(source,'tracker'),join(project,'tracker'),{recursive:true});
+  for(const file of ['build_preview_fixture.py','history_fixtures.py'])copyFileSync(join(source,'tests',file),join(project,'tests',file));
+  const result=spawnSync('python',['tests/build_preview_fixture.py',dir],{cwd:project,encoding:'utf8',timeout:30000});
+  assert.equal(result.status,0,result.stderr);
+  const path=JSON.parse(result.stdout).bundle_file;
+  assert.equal(dirname(path),join(dir,'bundles'));
+  assert.equal(statSync(dirname(path)).mode&0o077,0);
+  assert.equal(statSync(path).mode&0o077,0);
+  assert.equal(statSync(path).nlink,1);
+  const bundle=readPreviewBundle(path);
+  assert.equal(bundle.data_kind,'synthetic');
+  assert.equal(bundle.views.length,5);
+  assert.equal(bundle.views[0].snapshot.records[0].title,'Preview-only synthetic notice');
+  assert.equal(bundle.publication_performed,false);
 }));
