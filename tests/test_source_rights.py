@@ -304,6 +304,14 @@ class SourceRightsTests(unittest.TestCase):
             with self.subTest(attrs=attrs):
                 self.assert_notice_blocked(root,layout,original.replace(NOTICE,'<span '+attrs+'>'+NOTICE+'</span>'))
 
+    def test_terminal_plaintext_cannot_turn_following_footer_into_notice_evidence(self):
+        root,layout=self.private_repository(); original=layout.read_text()
+        for element in ('<plaintext hidden></plaintext>', '<plaintext></plaintext>',
+                        '<plaintext hidden />'):
+            with self.subTest(element=element):
+                self.assert_notice_blocked(root,layout,original.replace(
+                    '    <footer', element+'\n    <footer', 1))
+
     def test_duplicate_document_elements_cannot_prove_public_notice(self):
         root,layout=self.private_repository(); original=layout.read_text()
         for source in (

@@ -59,6 +59,10 @@ class _FooterNotice(HTMLParser):
     def handle_starttag(self, tag, attrs):
         path = [name for name, _ in self.stack]
         names = [name for name, _ in attrs]
+        # Browsers consume everything after plaintext, including closing tags.
+        # HTMLParser handling varies by version and treats /> as self-closing.
+        if tag == 'plaintext':
+            self.uncertain = True
         if not _complete_tag_expressions(self.get_starttag_text()):
             self.uncertain = True
         if tag in self.document_elements:
