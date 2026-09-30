@@ -1,4 +1,5 @@
 """Source-rights evidence for the exact public NPS guidance text scope."""
+import copy
 import json
 import re
 import shutil
@@ -35,6 +36,99 @@ class SourceRightsTests(unittest.TestCase):
 
     def manifest(self):
         return json.loads(MANIFEST.read_text())
+
+    def write_guidance(self, root, rules, notes, manifest):
+        for name,value in (('rules.json',rules),('entry-notes.json',notes),('source-rights.json',manifest)):
+            (root/'data'/name).write_text(json.dumps(value))
+
+    def assert_inventory_blocked(self, root):
+        gate=_rights(root)
+        self.assertEqual(gate['status'],'blocked')
+        self.assertEqual(gate['reason'],'public_guidance_inventory_invalid')
+        self.assertEqual(gate['evidence']['covered_guidance_records'],0)
+
+    def test_empty_guidance_and_empty_manifest_cannot_pass_rights_gate(self):
+        root,_=self.private_repository(); manifest=self.manifest()
+        manifest['records']=[]
+        self.write_guidance(root,[],[],manifest)
+        self.assert_inventory_blocked(root)
+
+    def test_duplicate_guidance_ids_cannot_be_collapsed_into_rights_coverage(self):
+        root,_=self.private_repository()
+        original_rules=json.loads((root/'data/rules.json').read_text())
+        original_notes=json.loads((root/'data/entry-notes.json').read_text())
+        for kind in ('identical','revised','across_files','different_source'):
+            with self.subTest(kind=kind):
+                rules=copy.deepcopy(original_rules); notes=copy.deepcopy(original_notes)
+                manifest=self.manifest(); extra=copy.deepcopy(rules[0])
+                if kind=='revised': extra['summary']='Conflicting duplicate guidance.'
+                if kind=='different_source':
+                    extra['park_code']=notes[0]['park_code']
+                    extra['evidence']['url']=notes[0]['evidence']['url']
+                    entry=copy.deepcopy(next(r for r in manifest['records'] if r['guidance_id']==extra['id']))
+                    entry['source_url']=extra['evidence']['url']; manifest['records'].append(entry)
+                (notes if kind=='across_files' else rules).append(extra)
+                self.write_guidance(root,rules,notes,manifest)
+                self.assert_inventory_blocked(root)
+
+    def test_guidance_must_bind_valid_ids_and_parks_to_fixed_official_sources(self):
+        root,_=self.private_repository()
+        original_rules=json.loads((root/'data/rules.json').read_text())
+        notes=json.loads((root/'data/entry-notes.json').read_text())
+        for field,value in (
+            ('source','https://example.com/unreviewed-source'),
+            ('source',notes[0]['evidence']['url']),
+            ('park','unknown'),('park',notes[0]['park_code']),
+            ('id',''),('id',None),('id','Invalid ID'),
+        ):
+            with self.subTest(field=field,value=value):
+                rules=copy.deepcopy(original_rules); manifest=self.manifest()
+                identifier=rules[0]['id']
+                if field=='source': rules[0]['evidence']['url']=value
+                elif field=='park': rules[0]['park_code']=value
+                else: rules[0]['id']=value
+                for row in manifest['records']:
+                    if row['guidance_id']==identifier:
+                        row['guidance_id']=rules[0]['id']; row['source_url']=rules[0]['evidence']['url']
+                self.write_guidance(root,rules,notes,manifest)
+                self.assert_inventory_blocked(root)
+
+    def test_missing_pilot_source_cannot_pass_a_reduced_rights_manifest(self):
+        root,_=self.private_repository(); original=self.records()
+        for code in ('yose','romo','yell','zion','grca'):
+            with self.subTest(park=code):
+                removed={row['id'] for row in original if row['park_code']==code}
+                rules=[row for row in json.loads((ROOT/'data/rules.json').read_text()) if row['id'] not in removed]
+                notes=[row for row in json.loads((ROOT/'data/entry-notes.json').read_text()) if row['id'] not in removed]
+                manifest=self.manifest()
+                manifest['records']=[row for row in manifest['records'] if row['guidance_id'] not in removed]
+                self.write_guidance(root,rules,notes,manifest)
+                self.assert_inventory_blocked(root)
+
+    def test_invalid_rights_inventory_blocks_all_targets_without_mutating_inputs(self):
+        root,_=self.private_repository(); manifest=self.manifest(); manifest['records']=[]
+        self.write_guidance(root,[],[],manifest)
+        before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+        for target in ('pilot','indexed','advertising'):
+            with self.subTest(target=target):
+                report=evaluate_readiness(root,release_target=target)
+                gate=next(g for g in report['gates'] if g['id']=='source_rights')
+                self.assertEqual(gate['status'],'blocked')
+                self.assertTrue(gate['required']); self.assertTrue(gate['blocking'])
+                self.assertFalse(report['release_ready'])
+                self.assertFalse(report['network_performed']); self.assertFalse(report['writes_performed'])
+        self.assertEqual(before,{p:p.read_bytes() for p in root.rglob('*') if p.is_file()})
+
+    def test_rights_inventory_accepts_record_and_manifest_reordering(self):
+        root,_=self.private_repository()
+        rules=json.loads((root/'data/rules.json').read_text())
+        notes=json.loads((root/'data/entry-notes.json').read_text()); manifest=self.manifest()
+        self.write_guidance(root,list(reversed(rules)),list(reversed(notes)),
+                            {**manifest,'records':list(reversed(manifest['records']))})
+        gate=_rights(root)
+        self.assertEqual(gate['status'],'pass')
+        self.assertEqual(gate['evidence']['guidance_records_total'],6)
+        self.assertEqual(gate['evidence']['covered_guidance_records'],6)
 
     def test_manifest_covers_every_public_guidance_record_exactly_once(self):
         manifest=self.manifest(); records=self.records()

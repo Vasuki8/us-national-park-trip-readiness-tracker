@@ -246,6 +246,9 @@ def _rights(root: Path) -> dict:
         'commercial_notice_present': False,
         'nps_marks_or_media_detected': False,
     }
+    inventory = _guidance_inventory(records)
+    if inventory is None or not all(inventory[1].values()):
+        return _gate('source_rights','blocked','public_guidance_inventory_invalid', base)
     if complete != len(records):
         return _gate('source_rights','blocked','guidance_rights_metadata_incomplete', base)
 

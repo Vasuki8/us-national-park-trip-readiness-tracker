@@ -139,6 +139,7 @@ The report requires both the record-level `rights_basis` / `rights_reviewed_at` 
 
 The gate passes only when:
 
+- the public guidance inventory is nonempty, has unique valid IDs and binds each record to its park's fixed official entry source, covering all five pilot sources;
 - all six current public guidance records have rights metadata;
 - the manifest exactly matches all six guidance IDs and official source URLs;
 - every use remains `nps_government_text` limited to a short text excerpt plus original summary;
@@ -147,6 +148,8 @@ The gate passes only when:
 - no public media asset or NPS-hosted/mark media use is detected in the current application.
 
 The manifest is grounded in the official NPS disclaimer and Arrowhead-use guidance. This pass applies only to the current six public text uses. It is not blanket clearance for NPS media, marks, third-party material, private raw captures, or future content.
+
+Inventory validation precedes manifest coverage. Empty inventories, duplicate/conflicting IDs, invalid park/source bindings or a missing pilot source return `public_guidance_inventory_invalid`, even if the rights manifest was reduced or edited to match. A matching manifest cannot establish that its inputs are a valid pilot inventory. Record and manifest ordering remain immaterial; report schema and evidence fields are unchanged.
 
 The commercial notice must be recognizable literal text in one unconditional `<footer>` directly under the layout's HTML body. The source check excludes frontmatter, comments, attributes, scripts, styles, templates and other non-notice contexts. Explicit hiding, inline styles, dynamic/replacement attributes on notice ancestors, Astro conditionals, components and malformed/duplicate footers cannot establish this evidence. Ordinary inline formatting, HTML entities and whitespace are accepted. A missing or unrecognized notice blocks every release target with `commercial_government_work_notice_missing`; report schema and evidence fields are unchanged.
 
