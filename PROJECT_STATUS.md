@@ -1,8 +1,8 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (UTC), after release-target verification**.
+Updated: **September 30, 2026 (UTC), after reviewed/public guidance and reconciliation provenance binding**.
 
-**Release readiness now has separate pilot, indexed and advertising targets, with conservative indexing/ad activation guards. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
+**Release readiness now binds public guidance to the reviewed private inventory, source-specific approval hashes and per-source reconciliation provenance, in addition to separate pilot/indexed/advertising targets and conservative activation guards. Private five-park staging, ledger backup/verify/restore and live capture → reviewer-packet paths remain available. No real durable NPS capture, real ledger backup, or real context approval was performed in this development environment. Public guidance and alert data remain unchanged.**
 
 Repository: `Vasuki8/us-national-park-trip-readiness-tracker`.  
 Branch: `main`. PR #1 was automatically marked merged after the pilot fast-forward update. No Pages release workflow was dispatched.
@@ -16,6 +16,22 @@ The eventual product remains AdSense-first, light-theme and free of paid-data de
 The public build remains 14 HTML pages plus `build.json`, with park/state search, five park pages, date-aware entry guidance, source evidence, checklists, notice history and seven official planning links per park. Yosemite and Rocky Mountain have dated rules; Yellowstone, Zion and Grand Canyon retain undated source observations. Public alert snapshots remain `never_checked`; public histories and the public entry-review register remain empty.
 
 Existing alert collection/archive/staging, candidate previews, visitor history, accessibility repairs, source-change gate, HTML extraction, live entry-page compatibility diagnostic and private review ledger remain in place. Do not rebuild them.
+
+## New: bind public guidance to reviewed private records
+
+The durable-review gate previously passed with all five v2 source baselines and zero holds even when public guidance differed from the private reviewed records. It now requires a nonempty, unambiguous inventory; exactly one reviewed baseline per source with exact hashes of that source's private guidance; public/private full-record equality by stable ID; and reconciliation provenance for every current baseline. Summary, dates, exceptions, evidence, review and rights fields are all bound. Record and object-key order do not change identity.
+
+Nine new methods cover changed private guidance, empty/missing/duplicate/extra inventories, absent/wrong/extra approval hashes, duplicate baselines, harmless ordering, safe report output, complete baseline provenance and real synthetic ledger → reconciliation → replay → CLI paths. Initial regressions reproduced **15 failing cases** against the old gate; an additional ordering test could not read the then-absent match evidence. All 29 focused readiness methods pass. The six-record, five-source integration fixture approves only synthetic context, retains approval provenance after a later matching observation, checks both matching and independently edited public JSON, and verifies the report leaves the public files and SQLite ledger unchanged. It is not a real human NPS review.
+
+Independent review also reproduced an inherited provenance gap: four imported v2 baselines could be carried through one source's explicit reconciliation, producing five current v2 baselines and zero holds without reconciling the other four sources. A real synthetic seeded-ledger CLI regression reproduced that pass before the correction. The report now counts only exact current baselines created for sources selected from the preceding event's active register; carry-forward alone cannot satisfy the per-source gate. Full context/hash/timestamp mismatches also block. Seed/import behavior itself is unchanged. Approval provenance is within the replay-verified ledger, not an authentication of the reviewer or an independent check of their assertions.
+
+The report adds only counts and nullable match booleans to the existing schema-2 gate, including `reconciled_v2_sources` separately from the metadata count `approved_v2_sources`. Private records, IDs, paths, context and hashes are not printed. The CLI still replays/verifies the ledger and verifies a supplied backup; direct Python callers must supply already verified evidence. The report never copies private guidance to public data. See `docs/RELEASE_READINESS.md`.
+
+This closes a release-evidence mismatch; it does not clear the real private capture/review, backup, public alert-data or hosting gates. No public data or website activation changed.
+
+Independent follow-up review found no Critical/Important issues and independently reran all 29 focused readiness tests successfully. Local verification passed **369 Python, 150 Node and 40 generated-site tests**, zero Astro diagnostics, and root/project 14-page builds. The Node and generated-site suites used working unrestricted local subprocess I/O; the final GitHub run supplies browser verification. Actual required counts remain pilot **1/1/3**, indexed **1/2/3**, advertising **1/3/3** (pass/blocked/not checked). All targets remain blocked.
+
+The preceding local-link code commit `766f0c008e47c78db8b211106518325c6994ad64` passed Verify pilot #140, run `36665312536`, job `109728613056`: **150 Node, 360 Python, 40 generated-site and 78 browser tests (628 total)**, zero Astro diagnostics, both 14-page builds and retained root screenshots. Artifact `pilot-verification` is `11075238370`, digest `sha256:53d26c763dfab7a1588b5fa7f9253b3a8566a850a00fea04421e014426405e9f`.
 
 ## New: complete local static-link coverage
 

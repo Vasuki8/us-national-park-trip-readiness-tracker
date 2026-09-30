@@ -28,6 +28,8 @@ The checker is offline and requires `python3`, already provided by CI. External 
 
 The read-only readiness report defaults to the approved ad-free, unindexed pilot. Its JSON schema is version 2, with explicit required gates and separate `indexed`/`advertising` targets. Every target requires durable review, public alert data, backup, source rights, and hosting/rollback evidence. Changed indexing safeguards or detected ads cannot be bypassed by selecting `pilot`. See `docs/RELEASE_READINESS.md`.
 
+Durable review also requires the public guidance inventory to match the private ledger's complete records and their source-specific approval hashes. Each current v2 baseline needs a matching reconciliation that selected that source's holds; carrying imported baselines forward does not prove those sources were reconciled. The report uses the existing canonical digest, compares records by stable ID, and emits only match counts/booleans. A private reconciliation alone does not update or approve different public JSON.
+
 The editing environment cannot download npm dependencies. The one-time feature-branch lock generator ran without lifecycle scripts; a separate job without source checkout committed only the generated lockfile. It checked the exact repository, branch and unchanged head. Its workflow is removed once the lockfile exists. Normal builds use npm ci; there is no permanent write-enabled dependency bootstrap.
 
 ## Review notes

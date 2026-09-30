@@ -1,14 +1,20 @@
 """Read-only pilot release-readiness reporting contracts."""
+import copy
+import hashlib
 import io
 import json
 import tempfile
 import unittest
 from contextlib import ExitStack, contextmanager, redirect_stdout, redirect_stderr
+from datetime import datetime, timezone
+from html import escape
 from pathlib import Path
 from unittest.mock import patch
 
 from tracker.release_readiness import evaluate_readiness, main, _gate
 from tracker.entry_review_io import ReviewStoreError
+from tracker.entry_sources import PROFILES, digest
+from tracker.entry_review_store import EntryReviewStore
 
 ROOT=Path(__file__).resolve().parents[1]
 ALL_URLS={
@@ -19,11 +25,18 @@ ALL_URLS={
  'https://www.nps.gov/grca/planyourvisit/grand-canyon-national-park-public-health-update.htm',
 }
 
-def private_state(*, approved=False, pending=False, revision='a'*64):
+def public_records():
+    return json.loads((ROOT/'data/rules.json').read_text()) + json.loads((ROOT/'data/entry-notes.json').read_text())
+
+
+def private_state(*, approved=False, pending=False, revision='a'*64, records=None):
+    # Synthetic report input; the CLI integration separately exercises replay.
+    records = public_records() if records is None else copy.deepcopy(records)
     baselines=[]
     if approved:
         baselines=[
-          {'schema_version':2,'source_url':url,'profile_id':'synthetic','guidance_hashes':{},
+          {'schema_version':2,'source_url':url,'profile_id':'synthetic',
+           'guidance_hashes':{r['id']:digest(r) for r in records if r['evidence']['url']==url},
            'checked_at':'2026-09-29T12:00:00Z','reviewed_at':'2026-09-29T13:00:00Z',
            'context':{},'context_hash':'b'*64}
           for url in sorted(ALL_URLS)
@@ -33,10 +46,18 @@ def private_state(*, approved=False, pending=False, revision='a'*64):
       'source_url':next(iter(ALL_URLS)),'checked_at':'2026-09-29T14:00:00Z',
       'reason':'check_failed','state':'pending','before_excerpt':'x','after_excerpt':None
     }]
+    events=[{'kind':'observation','register':{'proposals':[
+        {'id':str(number),'source_url':url} for number,url in enumerate(sorted(ALL_URLS))]}}]
+    if approved:
+        for number,baseline in enumerate(baselines):
+            events.append({'kind':'reconciliation',
+                'request':{'proposal_ids':[str(number)],'reviewed_at':baseline['reviewed_at']},
+                'baselines':copy.deepcopy(baselines),
+                'register':{'proposals':copy.deepcopy(events[-1]['register']['proposals'][1:])}})
     return {
       'revision':revision,
-      'events':[{'kind':'observation'}],
-      'records':[{'id':'synthetic'}],
+      'events':events,
+      'records':records,
       'register':{'schema_version':1,'proposals':proposals},
       'baselines':baselines,
     }
@@ -44,7 +65,7 @@ def private_state(*, approved=False, pending=False, revision='a'*64):
 def backup_manifest(revision='a'*64):
     return {
       'schema_version':1,'purpose':'private_entry_review_backup','backup_id':'e'*64,
-      'ledger_revision':revision,'event_count':1,'guidance_records':1,'pending_proposals':0,
+      'ledger_revision':revision,'event_count':6,'guidance_records':6,'pending_proposals':0,
       'database_file':'review.sqlite3','database_bytes':100,'database_sha256':'f'*64,
       'network_performed':False,'approval_performed':False,'publication_performed':False,
     }
@@ -260,6 +281,200 @@ class ReleaseReadinessTests(unittest.TestCase):
         ]:
             with self.subTest(state=state):
                 self.assertEqual(self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')['status'],'blocked')
+
+    def test_changed_private_guidance_cannot_approve_the_old_public_inventory(self):
+        for field, value in [('summary','Private revised summary.'),
+                             ('reviewed_at','2026-09-29T13:00:00Z'),
+                             ('effective_to','2026-10-01'),
+                             ('exception_note','Private revised exception.'),
+                             ('rights_basis','Private revised rights review.')]:
+            records=public_records(); records[0][field]=value
+            state=private_state(approved=True,records=records)
+            with self.subTest(field=field):
+                gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+                self.assertEqual(gate['status'],'blocked')
+                self.assertEqual(gate['reason'],'public_guidance_differs_from_reviewed_ledger')
+                self.assertFalse(gate['evidence']['public_guidance_matches_ledger'])
+
+    def test_reviewed_context_hashes_must_cover_the_exact_private_guidance(self):
+        mutations=[
+            lambda hashes: hashes.clear(),
+            lambda hashes: hashes.update({next(iter(hashes)):'0'*64}),
+            lambda hashes: hashes.update({'synthetic-extra':'0'*64}),
+        ]
+        for mutate in mutations:
+            state=private_state(approved=True)
+            # Rocky Mountain has two guidance records on one reviewed source.
+            baseline=next(b for b in state['baselines'] if '/romo/' in b['source_url'])
+            mutate(baseline['guidance_hashes'])
+            with self.subTest(hashes=baseline['guidance_hashes']):
+                gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+                self.assertEqual(gate['status'],'blocked')
+                self.assertEqual(gate['reason'],'reviewed_context_guidance_mismatch')
+                self.assertFalse(gate['evidence']['reviewed_guidance_matches_baselines'])
+
+    def test_empty_missing_duplicate_or_extra_private_inventory_never_passes(self):
+        rows=public_records()
+        variants=[[],rows[:-1],rows+[copy.deepcopy(rows[0])],
+                  rows+[{**copy.deepcopy(rows[0]),'id':'synthetic-extra'}]]
+        for records in variants:
+            with self.subTest(count=len(records)):
+                gate=self.gate(evaluate_readiness(ROOT,private_state=private_state(approved=True,records=records)),
+                               'durable_source_review')
+                self.assertEqual(gate['status'],'blocked')
+        state=private_state(approved=True); del state['records']
+        gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+        self.assertEqual(gate['status'],'blocked')
+
+    def test_duplicate_approved_source_baseline_cannot_hide_ambiguous_binding(self):
+        state=private_state(approved=True)
+        state['baselines'].append(copy.deepcopy(state['baselines'][0]))
+        gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+        self.assertEqual(gate['status'],'blocked')
+
+    def test_current_baseline_must_match_its_reconciliation_in_full(self):
+        for field,value in [('checked_at','2026-09-29T11:00:00Z'),
+                             ('reviewed_at','2026-09-29T13:01:00Z'),
+                             ('context_hash','0'*64),('context',{'text':'Synthetic different context.'})]:
+            with self.subTest(field=field):
+                state=private_state(approved=True)
+                state['baselines'][0][field]=value
+                gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+                self.assertEqual(gate['status'],'blocked')
+                self.assertEqual(gate['reason'],'context_approval_provenance_incomplete')
+                self.assertEqual(gate['evidence']['reconciled_v2_sources'],4)
+
+    def test_inventory_and_object_key_order_do_not_change_record_identity(self):
+        rows=[dict(reversed(list(r.items()))) for r in reversed(public_records())]
+        gate=self.gate(evaluate_readiness(ROOT,private_state=private_state(approved=True,records=rows)),
+                       'durable_source_review')
+        self.assertEqual(gate['status'],'pass')
+        self.assertTrue(gate['evidence']['public_guidance_matches_ledger'])
+        self.assertTrue(gate['evidence']['reviewed_guidance_matches_baselines'])
+        self.assertEqual(gate['evidence']['public_guidance_records'],6)
+        self.assertEqual(gate['evidence']['private_guidance_records'],6)
+
+    def test_guidance_match_report_never_echoes_private_records_or_hashes(self):
+        rows=public_records(); secret='/private/sentinel/changed-guidance'
+        rows[0]['summary']=secret
+        state=private_state(approved=True,records=rows)
+        before=[(ROOT/path).read_bytes() for path in ('data/rules.json','data/entry-notes.json')]
+        report=evaluate_readiness(ROOT,private_state=state)
+        serialized=json.dumps(report)
+        self.assertNotIn(secret,serialized)
+        self.assertNotIn(digest(rows[0]),serialized)
+        self.assertFalse(report['writes_performed'])
+        self.assertEqual(before,[(ROOT/path).read_bytes() for path in ('data/rules.json','data/entry-notes.json')])
+        self.assertEqual(self.gate(report,'durable_source_review')['status'],'blocked')
+
+    def replayed_synthetic_fixture(self, directory):
+        directory=Path(directory); root=directory/'public-fixture'
+        self.copy_indexing_controls(root)
+        for name in ['source-rights.json']+[f'alerts/{code}.json' for code in PROFILES]:
+            target=root/'data'/name; target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes((ROOT/'data'/name).read_bytes())
+        records=public_records()
+        for row in records:
+            row['summary']='Synthetic test guidance for '+row['id']+'.'
+            row['evidence']['excerpt']='Synthetic source excerpt for '+row['id']+'.'
+            row['evidence']['content_hash']=hashlib.sha256(row['evidence']['excerpt'].encode()).hexdigest()
+        captures=[]
+        for code,profile in PROFILES.items():
+            text=''.join('<p>'+escape(r['evidence']['excerpt'])+'</p>' for r in records if r['park_code']==code)
+            captures.append({'source_url':profile['url'],'final_url':profile['url'],
+                'checked_at':'2026-09-29T12:00:00Z','status':'success','content_type':'text/html',
+                'html':'<html><body><h1>'+escape(profile['heading'])+'</h1>'+text+'</body></html>'})
+        store=EntryReviewStore(directory/'private-ledger')
+        first=store.record({'records':records,'captures':captures,'baselines':[],
+                            'seed_register':{'schema_version':1,'proposals':[]}},
+                           expected_revision=None,now=datetime(2026,9,29,12,1,tzinfo=timezone.utc))
+        for number,profile in enumerate(PROFILES.values()):
+            state=store.read(); rows=copy.deepcopy(state['records'])
+            for row in rows:
+                if row['evidence']['url']==profile['url']:
+                    row['reviewed_at']=row['evidence']['reviewed_at']='2026-09-29T13:00:00Z'
+            proposals=[p['id'] for p in state['register']['proposals'] if p['source_url']==profile['url']]
+            store.reconcile({'source_event_revision':first['revision'],'proposal_ids':proposals,
+                             'reviewer':'synthetic-test-reviewer','rationale':'Synthetic fixture approval only.',
+                             'reviewed_at':'2026-09-29T13:00:00Z','records':rows},
+                            expected_revision=state['revision'],
+                            now=datetime(2026,9,29,13,30,number,tzinfo=timezone.utc))
+        state=store.read()
+        self.assertEqual(len(state['baselines']),5)
+        self.assertEqual(state['register']['proposals'],[])
+        rules=[r for r in state['records'] if 'requirement' in r]
+        notes=[r for r in state['records'] if 'subject_type' in r]
+        (root/'data/rules.json').write_text(json.dumps(rules))
+        (root/'data/entry-notes.json').write_text(json.dumps(notes))
+        return root,store,captures
+
+    def test_cli_compares_replayed_synthetic_ledger_with_public_inventory_without_writes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root,store,captures=self.replayed_synthetic_fixture(folder)
+            state=store.read()
+            for capture in captures:
+                capture['checked_at']='2026-09-29T14:00:00Z'
+            store.record({'records':state['records'],'captures':captures,'baselines':[],
+                'seed_register':{'schema_version':1,'proposals':[]}},
+                expected_revision=state['revision'],now=datetime(2026,9,29,14,1,tzinfo=timezone.utc))
+            self.assertEqual(store.read()['register']['proposals'],[])
+            rules=json.loads((root/"data/rules.json").read_text())
+            for mismatched in (False,True):
+                if mismatched:
+                    rules[0]['summary']='Synthetic unreviewed public edit.'
+                    (root/'data/rules.json').write_text(json.dumps(rules))
+                paths=[root/'data/rules.json',root/'data/entry-notes.json',store.root/'review.sqlite3']
+                before=[p.read_bytes() for p in paths]
+                out,err=io.StringIO(),io.StringIO()
+                with patch('tracker.release_readiness.REPO_ROOT',root), redirect_stdout(out),redirect_stderr(err):
+                    code=main(['--format','json','--store',str(store.root)])
+                self.assertEqual(code,1); self.assertEqual(err.getvalue(),'')
+                report=json.loads(out.getvalue()); gate=self.gate(report,'durable_source_review')
+                self.assertEqual(gate['status'],'blocked' if mismatched else 'pass')
+                self.assertEqual(gate['evidence']['public_guidance_matches_ledger'],not mismatched)
+                if not mismatched:
+                    self.assertEqual(gate['evidence']['reconciled_v2_sources'],5)
+                self.assertNotIn(str(store.root),out.getvalue())
+                self.assertEqual(before,[p.read_bytes() for p in paths])
+                self.assertFalse(report['release_ready'])
+
+    def test_cli_requires_each_source_baseline_to_originate_in_reconciliation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root,original,captures=self.replayed_synthetic_fixture(folder)
+            approved=original.read()
+            yose_url=PROFILES['yose']['url']
+            for capture in captures:
+                capture['checked_at']='2026-09-29T14:00:00Z'
+            seeded=EntryReviewStore(Path(folder)/'seeded-ledger')
+            first=seeded.record({'records':approved['records'],'captures':captures,
+                'baselines':[b for b in approved['baselines'] if b['source_url']!=yose_url],
+                'seed_register':{'schema_version':1,'proposals':[]}},
+                expected_revision=None,now=datetime(2026,9,29,14,1,tzinfo=timezone.utc))
+            state=seeded.read(); rows=copy.deepcopy(state['records'])
+            self.assertEqual({p['source_url'] for p in state['register']['proposals']},{yose_url})
+            for row in rows:
+                if row['evidence']['url']==yose_url:
+                    row['reviewed_at']=row['evidence']['reviewed_at']='2026-09-29T15:00:00Z'
+            seeded.reconcile({'source_event_revision':first['revision'],
+                'proposal_ids':[p['id'] for p in state['register']['proposals']],
+                'reviewer':'synthetic-test-reviewer','rationale':'Synthetic fixture approval only.',
+                'reviewed_at':'2026-09-29T15:00:00Z','records':rows},
+                expected_revision=state['revision'],now=datetime(2026,9,29,15,30,tzinfo=timezone.utc))
+            state=seeded.read()
+            self.assertEqual(len(state['baselines']),5)
+            self.assertEqual(state['register']['proposals'],[])
+            for filename,key in [('rules.json','requirement'),('entry-notes.json','subject_type')]:
+                (root/'data'/filename).write_text(json.dumps([r for r in state['records'] if key in r]))
+            out,err=io.StringIO(),io.StringIO()
+            with patch('tracker.release_readiness.REPO_ROOT',root), redirect_stdout(out),redirect_stderr(err):
+                code=main(['--format','json','--store',str(seeded.root)])
+            self.assertEqual(code,1); self.assertEqual(err.getvalue(),'')
+            gate=self.gate(json.loads(out.getvalue()),'durable_source_review')
+            self.assertEqual(gate['status'],'blocked')
+            self.assertEqual(gate['reason'],'context_approval_provenance_incomplete')
+            self.assertEqual(gate['evidence']['approved_v2_sources'],5)
+            self.assertEqual(gate['evidence']['reconciled_v2_sources'],1)
+            self.assertTrue(gate['evidence']['public_guidance_matches_ledger'])
 
     def test_backup_pass_requires_verified_manifest_for_exact_current_head(self):
         state=private_state(approved=True)

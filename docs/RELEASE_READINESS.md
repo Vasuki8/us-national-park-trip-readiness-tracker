@@ -98,10 +98,22 @@ Without a private ledger: `not_checked`.
 
 With a verified private ledger, this gate passes only when:
 
-- all five fixed source URLs have schema-v2 context baselines created by explicit reconciliation; and
-- the current proposal register is empty.
+- all five fixed source URLs have exactly one schema-v2 context baseline created by explicit reconciliation;
+- the current proposal register is empty;
+- each baseline's guidance hashes exactly cover its current private records, including both Rocky Mountain records; and
+- the complete current public `rules.json` / `entry-notes.json` inventory matches that reviewed private inventory by stable ID and full-record hash.
 
 Legacy schema-v1 baselines do not satisfy this release gate.
+
+Each current v2 baseline must match a baseline created for that source by a reconciliation event in the verified ledger. The event must select that source's active proposals from the preceding register, and its baseline must match the current context, hashes and timestamps in full. Imported v2 baselines carried through another source's reconciliation do not establish approval provenance. Later matching observations preserve an unchanged baseline's provenance. Missing provenance returns `context_approval_provenance_incomplete`.
+
+A reviewed private revision cannot approve an older or independently edited public record. Summary, exceptions, effective dates, evidence, review timestamps and rights fields are all part of record identity. Record ordering and JSON object-key ordering are immaterial; missing, extra, duplicate or empty inventories fail closed. This compares guidance only and does not export private evidence or modify public data.
+
+Schema 2 adds count/boolean evidence to this gate: `public_guidance_records`, `private_guidance_records`, `public_guidance_matches_ledger`, `reviewed_guidance_matches_baselines` and `reconciled_v2_sources`. The existing `approved_v2_sources` counts sources with v2 baseline metadata; `reconciled_v2_sources` counts current baselines with source-specific event provenance. A `null` means that comparison was not reached, for example because the ledger was not supplied, still has holds, lacks complete reviewed baselines, or failed an earlier inventory/binding check. No record contents, private paths, record IDs or hashes are emitted.
+
+The Python `evaluate_readiness` API expects an already replay-verified private state and verified backup manifest; a caller-provided dictionary is not itself proof of an approval. The CLI obtains those inputs through `EntryReviewStore.read()` and `verify_backup()`.
+
+This establishes approval provenance within the ledger; it does not authenticate the operator's identity or independently verify the truth of their review metadata.
 
 ### NPS alert API
 

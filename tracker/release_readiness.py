@@ -14,7 +14,8 @@ from pathlib import Path
 from .entry_review_backup import verify_backup
 from .entry_review_io import REPO_ROOT, ReviewStoreError
 from .entry_review_store import EntryReviewStore
-from .entry_sources import PROFILES
+from .entry_sources import PROFILES, digest
+from .entry_html import SourceExtractionError
 from .indexing_controls import pilot_meta_noindex, pilot_robots_disallow_all, pilot_header_noindex
 
 GATE_ORDER = (
@@ -64,41 +65,128 @@ def _read_json(path: Path):
         raise ReviewStoreError('release_readiness_repository_unreadable') from None
 
 
-def _durable_review(private_state: dict | None) -> dict:
+def _guidance_inventory(records):
+    """Bind complete records by stable ID; list/object-key order is immaterial."""
+    if type(records) is not list or not records:
+        return None
+    by_id = {}
+    by_source = {profile['url']: {} for profile in PROFILES.values()}
+    for record in records:
+        if type(record) is not dict:
+            return None
+        identifier = record.get('id')
+        evidence = record.get('evidence')
+        code = record.get('park_code')
+        if (not isinstance(identifier, str) or not re.fullmatch('[a-z0-9-]+', identifier)
+                or identifier in by_id or not isinstance(code, str) or code not in PROFILES
+                or type(evidence) is not dict or evidence.get('url') != PROFILES[code]['url']):
+            return None
+        try:
+            record_hash = digest(record)
+        except SourceExtractionError:
+            return None
+        by_id[identifier] = record_hash
+        by_source[evidence['url']][identifier] = record_hash
+    return by_id, by_source
+
+
+def _reconciled_sources(events: list, baselines: list) -> set:
+    """Count current baselines created, rather than carried, by verified events."""
+    current = {baseline['source_url']: digest(baseline) for baseline in baselines}
+    reconciled = set()
+    previous_proposals = []
+    for event in events:
+        if event.get('kind') == 'reconciliation':
+            request = event.get('request', {})
+            selected_ids = request.get('proposal_ids', [])
+            selected_sources = {proposal['source_url'] for proposal in previous_proposals
+                                if proposal.get('id') in selected_ids}
+            for baseline in event.get('baselines', []):
+                url = baseline.get('source_url')
+                if (url in selected_sources and url in current
+                        and baseline.get('reviewed_at') == request.get('reviewed_at')
+                        and digest(baseline) == current[url]):
+                    reconciled.add(url)
+        previous_proposals = event.get('register', {}).get('proposals', [])
+    return reconciled
+
+
+def _durable_review(root: Path, private_state: dict | None) -> dict:
+    evidence = {
+        'approved_v2_sources': None,
+        'required_sources': len(PROFILES),
+        'pending_proposals': None,
+        'public_guidance_records': None,
+        'private_guidance_records': None,
+        'public_guidance_matches_ledger': None,
+        'reviewed_guidance_matches_baselines': None,
+        'reconciled_v2_sources': None,
+    }
     if private_state is None:
         return _gate('durable_source_review','not_checked',
-                     'private_ledger_not_supplied', {
-                         'approved_v2_sources': None,
-                         'required_sources': len(PROFILES),
-                         'pending_proposals': None,
-                     })
+                     'private_ledger_not_supplied', evidence)
     try:
         revision = private_state.get('revision')
         events = private_state.get('events')
         register = private_state.get('register')
         baselines = private_state.get('baselines')
         if not isinstance(revision,str) or not re.fullmatch('[a-f0-9]{64}', revision):
-            return _gate('durable_source_review','blocked','private_ledger_has_no_verified_head', {
-                'approved_v2_sources': 0,'required_sources':len(PROFILES),'pending_proposals':None})
+            evidence['approved_v2_sources'] = 0
+            return _gate('durable_source_review','blocked','private_ledger_has_no_verified_head', evidence)
         if not isinstance(events,list) or not events:
-            return _gate('durable_source_review','blocked','no_durable_source_observation', {
-                'approved_v2_sources': 0,'required_sources':len(PROFILES),'pending_proposals':None})
-        proposals = register.get('proposals',[]) if isinstance(register,dict) else []
+            evidence['approved_v2_sources'] = 0
+            return _gate('durable_source_review','blocked','no_durable_source_observation', evidence)
+        proposals = register.get('proposals') if isinstance(register,dict) else None
         required = {profile['url'] for profile in PROFILES.values()}
+        reviewed_baselines = [
+            baseline for baseline in baselines if isinstance(baseline,dict)
+            and type(baseline.get('schema_version')) is int and baseline['schema_version'] == 2
+        ] if isinstance(baselines,list) else []
         approved = {
             baseline.get('source_url')
-            for baseline in baselines if isinstance(baseline,dict)
-            and baseline.get('schema_version') == 2
-            and baseline.get('source_url') in required
-        } if isinstance(baselines,list) else set()
+            for baseline in reviewed_baselines
+            if baseline.get('source_url') in required
+        }
         pending = len(proposals) if isinstance(proposals,list) else None
-        status = 'pass' if approved == required and pending == 0 else 'blocked'
-        reason = 'all_sources_have_explicit_reviewed_context' if status == 'pass' else 'durable_review_incomplete'
-        return _gate('durable_source_review',status,reason, {
-            'approved_v2_sources': len(approved),
-            'required_sources': len(required),
-            'pending_proposals': pending,
-        })
+        evidence.update(approved_v2_sources=len(approved), pending_proposals=pending)
+        if approved != required or pending != 0:
+            return _gate('durable_source_review','blocked','durable_review_incomplete', evidence)
+        records = private_state.get('records')
+        private_inventory = _guidance_inventory(records)
+        evidence['private_guidance_records'] = len(records) if isinstance(records,list) else None
+        if private_inventory is None:
+            return _gate('durable_source_review','blocked','private_guidance_inventory_invalid', evidence)
+        bindings_match = len(reviewed_baselines) == len(required) and all(
+            type(baseline.get('guidance_hashes')) is dict
+            and baseline['source_url'] in required
+            and private_inventory[1][baseline['source_url']]
+            and baseline['guidance_hashes'] == private_inventory[1][baseline['source_url']]
+            for baseline in reviewed_baselines
+        )
+        evidence['reviewed_guidance_matches_baselines'] = bool(bindings_match)
+        if not bindings_match:
+            return _gate('durable_source_review','blocked','reviewed_context_guidance_mismatch', evidence)
+        rules = _read_json(root/'data'/'rules.json')
+        notes = _read_json(root/'data'/'entry-notes.json')
+        public = rules + notes if type(rules) is list and type(notes) is list else None
+        public_inventory = _guidance_inventory(public)
+        evidence['public_guidance_records'] = len(public) if isinstance(public,list) else None
+        if public_inventory is None:
+            return _gate('durable_source_review','blocked','public_guidance_inventory_invalid', evidence)
+        matches = public_inventory[0] == private_inventory[0]
+        evidence['public_guidance_matches_ledger'] = matches
+        if not matches:
+            return _gate('durable_source_review','blocked',
+                         'public_guidance_differs_from_reviewed_ledger', evidence)
+        reconciled = _reconciled_sources(events, reviewed_baselines)
+        evidence['reconciled_v2_sources'] = len(reconciled)
+        if reconciled != required:
+            return _gate('durable_source_review','blocked',
+                         'context_approval_provenance_incomplete', evidence)
+        return _gate('durable_source_review','pass',
+                     'all_sources_have_explicit_reviewed_context', evidence)
+    except ReviewStoreError:
+        raise
     except Exception:
         raise ReviewStoreError('invalid_release_readiness_private_state') from None
 
@@ -338,7 +426,7 @@ def evaluate_readiness(root: Path = REPO_ROOT, *, private_state: dict | None = N
         raise ReviewStoreError('invalid_release_readiness_arguments')
     root = Path(root)
     gates = [
-        _durable_review(private_state),
+        _durable_review(root, private_state),
         _alerts(root),
         _backup(private_state, backup_manifest),
         _rights(root),
