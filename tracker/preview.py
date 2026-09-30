@@ -15,7 +15,7 @@ MAX_BUNDLE_BYTES = 10 * 1024 * 1024
 MAX_OUTPUT_BYTES = 64 * 1024 * 1024
 MAX_OUTPUT_ENTRIES = 128
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROTECTED = ('data','public','src','dist','tracker','tests','docs','.git','.github','scripts','preview','node_modules')
+PROTECTED = ('data','public','src','dist','dist-pages','tracker','tests','docs','.git','.github','scripts','preview','node_modules')
 
 
 def make_bundle(store: HistoryStore, *, data_kind: str = 'unreviewed_source') -> dict:

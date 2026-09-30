@@ -1,6 +1,6 @@
 # Private candidate preview bundles
 
-This is an offline inspection path, not a publisher. It reads verified committed archive observations, freezes current snapshots together with their histories, and builds a separately labeled candidate page. It never substitutes candidate data into the normal Astro build or overwrites `data/`, `public/` or the production `dist/`.
+This is an offline inspection path, not a publisher. It reads verified committed archive observations, freezes current snapshots together with their histories, and builds a separately labeled candidate page. It never substitutes candidate data into the normal Astro build or overwrites `data/`, `public/`, the production `dist/` or `dist-pages/`.
 
 ## Prepare a candidate
 
@@ -16,7 +16,7 @@ Every bundle contains the fixed five-park inventory. Each snapshot and its histo
 
 The output file is canonical UTF-8 JSON named by the SHA-256 of its envelope excluding `bundle_id`. It has purpose `private_preview`, publication false and data kind `unreviewed_source`. The synthetic data kind is for explicit test construction, not source approval. Existing equal candidates are reused without rewriting; different bytes at that filename cause refusal. Files are installed atomically and never overwritten. Maximum bundle size is 10 MiB; the output directory is bounded to 128 entries and 64 MiB, including temporary reservations. No automatic deletion occurs.
 
-The output directory must be separate from the archive, not inside protected source/website/Git paths, and contain no symlinks or subdirectories. The preparation writer lock is never stolen. After an abrupt process exit, inspect the directory, verify no writer is running and preserve any completed bundle before manually recovering the abandoned lock. An orphan temporary file is not a candidate. A completed filename still has to pass the strict loader; a filename alone is not evidence of validity.
+The output directory must be separate from the archive, not inside protected source/website/Git paths (including `dist/`, `dist-pages/` and their descendants), and contain no symlinks or subdirectories. Destination checks happen before output creation or bundle writes. The preparation writer lock is never stolen. After an abrupt process exit, inspect the directory, verify no writer is running and preserve any completed bundle before manually recovering the abandoned lock. An orphan temporary file is not a candidate. A completed filename still has to pass the strict loader; a filename alone is not evidence of validity.
 
 ## Build the isolated preview
 

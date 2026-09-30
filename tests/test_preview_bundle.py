@@ -96,6 +96,27 @@ class PreviewBundleTests(unittest.TestCase):
         with self.assertRaises(HistoryError): prepare_bundle(self.archive, alias/'bundles')
         self.assertEqual(list(real.iterdir()), [])
 
+    def test_private_bundle_refuses_pages_output_without_writes(self):
+        self.store.append(snapshot())
+        archive_before = {p:p.read_bytes() for p in self.archive.rglob('*') if p.is_file()}
+        for nested in (False, True):
+            with self.subTest(nested=nested):
+                project = self.root/f'project-{nested}'
+                project.mkdir()
+                output = project/'dist-pages'
+                if nested:
+                    output.mkdir()
+                    (output/'index.html').write_text('retained public page')
+                destination = output/'private-bundles' if nested else output
+                before = {p:p.read_bytes() for p in project.rglob('*') if p.is_file()}
+                with patch('tracker.preview.PROJECT_ROOT', project), \
+                     self.assertRaisesRegex(HistoryError, 'unsafe_preview_destination'):
+                    prepare_bundle(self.archive, destination)
+                self.assertEqual(before, {p:p.read_bytes() for p in project.rglob('*') if p.is_file()})
+                self.assertFalse(destination.exists())
+                self.assertEqual(archive_before, {p:p.read_bytes() for p in self.archive.rglob('*') if p.is_file()})
+
+
     def test_bounds_do_not_delete_existing_files(self):
         self.output.mkdir(); retained = self.output/'keep'; retained.write_text('keep')
         with patch('tracker.preview.MAX_OUTPUT_BYTES', 1):

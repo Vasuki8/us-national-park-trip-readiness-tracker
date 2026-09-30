@@ -1,6 +1,6 @@
 # Private staging collection
 
-This command connects the existing collector to the existing evidence archive. It does not modify `data/`, `public/`, `src/` or `dist/`; it does not build, deploy, schedule or publish. A successful private archive write is not successful collection, public redistribution approval or proof of complete park conditions.
+This command connects the existing collector to the existing evidence archive. It does not modify `data/`, `public/`, `src/`, `dist/` or `dist-pages/`; it does not build, deploy, schedule or publish. A successful private archive write is not successful collection, public redistribution approval or proof of complete park conditions.
 
 ## Commands
 
@@ -48,7 +48,7 @@ Staging and archive locks are never stolen or removed automatically. After abnor
 
 Pending state is limited to 32 regular files and 60 MiB, with 10 MiB per receipt/object. A write reserves space for both temporary and final names before creation. Orphan temporary files are bounded and ignored as uncommitted state, not automatically pruned. The existing archive's disk, history-count and reconstruction limits still apply. A full/damaged archive leaves a durable receipt pending rather than promoting candidate data to the website.
 
-Roots inside source/site/Git directories, traversal paths, symlinks and non-regular pending files are refused. This is trusted local-filesystem tooling, not protection against a hostile process with the same filesystem permissions. Hashes detect accidental corruption, not an attacker rewriting both content and hashes. Existing directory permissions and off-host backup remain the operator's responsibility.
+Roots inside source/site/Git directories, including both `dist/` and `dist-pages/` and their descendants, traversal paths, symlinks and non-regular pending files are refused. Destination checks happen before collection requests or staging writes. This is trusted local-filesystem tooling, not protection against a hostile process with the same filesystem permissions. Hashes detect accidental corruption, not an attacker rewriting both content and hashes. Existing directory permissions and off-host backup remain the operator's responsibility.
 
 Python documents `os.replace` atomic renaming and `os.fsync`; same-directory writes and the existing archive primitive are used here: https://docs.python.org/3.12/library/os.html#os.replace and https://docs.python.org/3.12/library/os.html#os.fsync . Process-interruption tests are not hardware power-loss, Windows durability or network-filesystem guarantees.
 

@@ -152,6 +152,42 @@ class StageCliTests(unittest.TestCase):
         self.assertEqual(code, 2); self.assertEqual(json.loads(out)['error_code'], 'nps_key_not_configured')
         self.assertFalse(self.root.exists()); self.assertEqual(err, '')
 
+    def test_collect_refuses_pages_output_before_requests_or_writes(self):
+        for park in ('yose', 'all'):
+            for nested in (False, True):
+                with self.subTest(park=park, nested=nested):
+                    project = Path(self.temp.name)/f'project-{park}-{nested}'
+                    project.mkdir()
+                    output = project/'dist-pages'
+                    if nested:
+                        output.mkdir()
+                        (output/'index.html').write_text('retained public page')
+                    destination = output/'private-stage' if nested else output
+                    before = {p:p.read_bytes() for p in project.rglob('*') if p.is_file()}
+                    out, err = io.StringIO(), io.StringIO()
+                    requests = []
+                    def fetch(code, start, key):
+                        requests.append(code)
+                        return feed([raw(code=code)])
+                    with patch('tracker.staging.PROJECT_ROOT', project), \
+                         patch('tracker.stage.utc_now', return_value=T0), \
+                         patch('tracker.stage.request_page', side_effect=fetch), \
+                         patch.dict(os.environ, {'NPS_API_KEY': 'synthetic-private-key'}), \
+                         redirect_stdout(out), redirect_stderr(err):
+                        code = main(['collect', '--live', '--park', park,
+                                     '--staging-dir', str(destination)])
+                    self.assertEqual(code, 2)
+                    report = json.loads(out.getvalue())
+                    self.assertEqual(report['error_code'], 'unsafe_staging_destination')
+                    self.assertFalse(report['publication_performed'])
+                    self.assertFalse(report['site_data_written'])
+                    self.assertEqual(requests, [])
+                    self.assertEqual(before, {p:p.read_bytes() for p in project.rglob('*') if p.is_file()})
+                    self.assertFalse(destination.exists())
+                    self.assertNotIn(str(project), out.getvalue()+err.getvalue())
+                    self.assertNotIn('synthetic-private-key', out.getvalue()+err.getvalue())
+
+
     def test_live_confirmation_required_even_with_key(self):
         with patch('tracker.stage.request_page', side_effect=AssertionError('must not request')):
             code, out, err = self.invoke('collect', key='synthetic-private-key')

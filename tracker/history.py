@@ -11,7 +11,7 @@ LABELS = {'added': 'Notice added to the checked feed', 'edited': 'Notice text ch
           'removed': 'Notice no longer present in the checked feed'}
 MAX_CHANGES_PER_OBSERVATION = 100
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROTECTED_DIRS = ('data', 'public', 'src', 'dist', 'tracker', 'tests', 'docs', '.git', '.github')
+PROTECTED_DIRS = ('data', 'public', 'src', 'dist', 'dist-pages', 'tracker', 'tests', 'docs', '.git', '.github')
 
 def make_report(store: HistoryStore, code: str, limit: int) -> dict:
     require(type(limit) is int and 1 <= limit <= 100, 'invalid_report_limit')
