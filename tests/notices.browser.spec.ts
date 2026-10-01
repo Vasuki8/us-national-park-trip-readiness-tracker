@@ -208,7 +208,11 @@ test('printing includes every retained notice without changing the screen filter
     const article = root.locator('[data-retained-notice]').filter({ has: page.getByRole('heading', { name: record.title, exact: true }) });
     await expect(article).toBeVisible();
     if (record.url) {
-      const source = article.getByRole('link', { name: 'More information link supplied by NPS', exact: true });
+      // Print-generated destinations also contribute to accessible link names.
+      const source = article.locator('a:not([data-correction-link])');
+      await expect(source).toHaveCount(1);
+      await expect(source).toBeVisible();
+      await expect(source).toHaveText('More information link supplied by NPS');
       await expect(source).toHaveAttribute('href', record.url);
       expect(await source.evaluate(element => getComputedStyle(element, '::after').content)).toContain(record.url);
     }
