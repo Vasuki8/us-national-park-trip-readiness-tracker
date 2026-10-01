@@ -35,7 +35,7 @@ test('printed park pages keep official destinations, link reviews and source clo
     for (const link of await page.locator('#main a[href^="https://"]').all()) {
       expect(await link.evaluate(el => getComputedStyle(el, '::after').content)).toContain(await link.getAttribute('href'));
     }
-    expect(await page.locator('a[href="#official-checks"]').evaluate(el => getComputedStyle(el, '::after').content)).toBe('none');
+    expect(await page.locator('.checklist-panel a[href="#official-checks"]').evaluate(el => getComputedStyle(el, '::after').content)).toBe('none');
     const snapshot = publicParkSnapshots.find(item => item.park_code === park.code)!;
     await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at ?? 'Never');
     await expect(page.locator('#alert-status')).toContainText(snapshot.source_updated_at ?? 'Not supplied');

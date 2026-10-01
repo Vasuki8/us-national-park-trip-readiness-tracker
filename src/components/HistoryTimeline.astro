@@ -11,7 +11,7 @@ const observationTitle = (item: HistoryObservation) => item.collection_status ==
   : item.change_count ? `${item.change_count} notice ${item.change_count === 1 ? 'change' : 'changes'} observed`
   : 'No notice differences in this comparison';
 ---
-<section class="panel history-panel" id={`history-${history.park_code}`} data-history data-history-metadata={JSON.stringify(metadata)} aria-labelledby={headingId}>
+<section class="panel history-panel" id={`history-${history.park_code}`} tabindex="-1" data-history data-history-metadata={JSON.stringify(metadata)} aria-labelledby={headingId}>
   <header class="section-heading"><div><p class="eyebrow">What we observed</p><h2 id={headingId}>{title}</h2></div><span class="tag">Checked feed only</span></header>
   <div class="history-status" role="status" aria-live="polite"><strong data-history-status>{status.title}</strong><p data-history-detail>{status.detail}</p></div>
   <p class="small muted">Last successful feed check: {snapshot.last_successful_fetch_at ? <time datetime={snapshot.last_successful_fetch_at}>{snapshot.last_successful_fetch_at}</time> : 'Never'}. These are our observation times, not NPS update times or the start of a restriction.</p>

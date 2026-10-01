@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { guidanceScenarioTime, publicRules, publicParks, publicParkSnapshots } from './pilot-clock.ts';
+import { guidanceScenarioTime, PUBLIC_PILOT_STALE_TIME, publicRules, publicParks, publicParkSnapshots } from './pilot-clock.ts';
 import { describeHistory } from '../src/lib/history.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
 
@@ -258,4 +258,98 @@ test('project-path notice filters reveal an exact native fragment without changi
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#${encodeURIComponent(anchor)}`);
   await expect(page.locator('[data-retained-notice]').filter({ has: page.getByRole('heading', { name: target.title, exact: true }) })).toBeVisible();
+});
+
+test('project-path section jumps focus native targets and preserve choices and exact source destinations', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_STALE_TIME));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const emptySnapshot = publicParkSnapshots.find(snapshot => snapshot.records.length === 0)!;
+  const emptyPark = publicParks.find(park => park.code === emptySnapshot.park_code)!;
+  await page.goto(`${base}parks/${emptyPark.slug}/`);
+  const emptyNav = page.getByRole('navigation', { name: 'On this page', exact: true });
+  await expect(emptyNav.getByRole('link', { name: 'Retained notices', exact: true })).toHaveCount(0);
+  await expect(page.locator('#retained-notices')).toHaveCount(0);
+  const emptyEntry = emptyNav.getByRole('link', { name: 'Entry guidance check', exact: true });
+  await expect(emptyEntry).toHaveAttribute('href', '#trip-context');
+  await emptyEntry.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(`http://127.0.0.1:4324${base}parks/${emptyPark.slug}/#trip-context`);
+  await expect(page.locator('#trip-context')).toBeFocused();
+  await expect(page.locator('#trip-context')).toBeInViewport();
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Visit date', { exact: true })).toBeFocused();
+
+  const snapshot = publicParkSnapshots.find(snapshot => snapshot.records.length > 0
+    && publicRules.some(rule => rule.park_code === snapshot.park_code))!;
+  const park = publicParks.find(park => park.code === snapshot.park_code)!;
+  const rule = publicRules.find(rule => rule.park_code === park.code)!;
+  const notice = snapshot.records[0];
+  const route = `${base}parks/${park.slug}/`;
+  await page.goto(route);
+  await page.getByLabel('Visit date', { exact: true }).fill(rule.effective_from);
+  await page.getByLabel('Arrival time').fill('08:00');
+  const area = await page.locator('#trip-area option').evaluateAll((elements, areas) =>
+    elements.map(element => element.getAttribute('value') ?? '')
+      .find(value => value !== '' && (areas.includes('*') || areas.includes(value))) ?? '', rule.areas);
+  expect(area, 'The stored rule must cover a selectable park area').not.toBe('');
+  await page.getByLabel('Planned area', { exact: true }).selectOption(area);
+  await page.locator('#special-case').check();
+  await page.getByRole('button', { name: 'Check entry guidance', exact: true }).click();
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'stale');
+  await page.locator('[data-check]').first().check();
+  await page.getByLabel('Search retained notices', { exact: true }).fill(notice.title);
+  await page.getByLabel('Notice category', { exact: true }).selectOption(notice.category);
+  const normalize = (value: string) => value.trim().replace(/\s+/g, ' ').toLowerCase();
+  const shown = snapshot.records.filter(record => record.category === notice.category
+    && normalize(`${record.title} ${record.description}`).includes(normalize(notice.title)))
+    .map(record => `alert-${park.code}-${record.id}`);
+  await expect.poll(() => page.locator('[data-retained-notice]:visible').evaluateAll(elements => elements.map(element => element.id))).toEqual(shown);
+  const decision = await page.locator('#entry-decision').innerText();
+  const progress = await page.locator('#checklist-progress').innerText();
+  const snapshotText = await page.locator('#alert-status').getAttribute('data-snapshot');
+  const historyText = await page.locator('[data-history]').getAttribute('data-history-metadata');
+  const clocks = await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => element.getAttribute('datetime')));
+  const nav = page.getByRole('navigation', { name: 'On this page', exact: true });
+  for (const [name, id] of [
+    ['Retained notices', 'retained-notices'],
+    ['Entry guidance check', 'trip-context'],
+    ['Notice history', `history-${park.code}`],
+    ['Official planning checks', 'official-checks'],
+  ]) {
+    const link = nav.getByRole('link', { name, exact: true });
+    await expect(link).toHaveAttribute('href', `#${id}`);
+    await link.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#${id}`);
+    await expect(page.locator(`[id="${id}"]`)).toBeFocused();
+    await expect(page.locator(`[id="${id}"]`)).toBeInViewport();
+  }
+  await expect(page.locator('#retained-notices')).toHaveAttribute('aria-labelledby', 'retained-notices-title');
+  const sourceAnchor = `entry-rule-${rule.id}`;
+  const evidence = page.locator('#decision-evidence');
+  await expect(evidence).toHaveAttribute('href', `#${encodeURIComponent(sourceAnchor)}`);
+  await evidence.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#${encodeURIComponent(sourceAnchor)}`);
+  const source = page.locator(`[id="${sourceAnchor}"]`);
+  await expect(source.locator('h3')).toBeInViewport();
+  await expect(source.locator('a:not([data-correction-link])')).toHaveAttribute('href', rule.evidence.url);
+  await expect(source.locator('[data-correction-link]')).toHaveAttribute('href', `${base}corrections/?source=${encodeURIComponent(`rule:${park.code}:${rule.id}`)}`);
+  const retained = page.locator(`[id="alert-${park.code}-${notice.id}"]`);
+  await expect(retained.locator('[data-correction-link]')).toHaveAttribute('href', `${base}corrections/?source=${encodeURIComponent(`alert:${park.code}:${notice.id}`)}`);
+  if (notice.url) await expect(retained.locator('a:not([data-correction-link])')).toHaveAttribute('href', notice.url);
+  await expect(page.locator('#trip-date')).toHaveValue(rule.effective_from);
+  await expect(page.locator('#trip-time')).toHaveValue('08:00');
+  await expect(page.locator('#trip-area')).toHaveValue(area);
+  await expect(page.locator('#special-case')).toBeChecked();
+  await expect(page.locator('[data-check]:checked')).toHaveCount(1);
+  await expect(page.locator('#checklist-progress')).toHaveText(progress);
+  await expect(page.locator('#entry-decision')).toHaveText(decision, { useInnerText: true });
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'stale');
+  await expect(page.getByLabel('Search retained notices', { exact: true })).toHaveValue(notice.title);
+  await expect(page.getByLabel('Notice category', { exact: true })).toHaveValue(notice.category);
+  await expect.poll(() => page.locator('[data-retained-notice]:visible').evaluateAll(elements => elements.map(element => element.id))).toEqual(shown);
+  await expect(page.locator('#alert-status')).toHaveAttribute('data-snapshot', snapshotText!);
+  await expect(page.locator('[data-history]')).toHaveAttribute('data-history-metadata', historyText!);
+  expect(await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => element.getAttribute('datetime')))).toEqual(clocks);
 });

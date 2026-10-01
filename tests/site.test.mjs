@@ -60,6 +60,46 @@ test('all park pages retain the exact public checked-feed snapshot and official 
 
 test('informational pages describe the hosted manual pilot honestly', () => assertLivePilotCopy(output));
 
+test('park section navigation contains native destinations only for sections present in each park', () => {
+  for (const park of parks) {
+    const snapshot = snapshots.find((item) => item.park_code === park.code);
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const menus = [...html.matchAll(/<nav\b[^>]*\bdata-park-page-nav\b[^>]*>[\s\S]*?<\/nav>/g)];
+    assert.equal(menus.length, 1, `${park.code}: a native local navigation menu exists`);
+    const menu = menus[0][0];
+    assert.match(menu, /aria-label="On this page"/);
+    assert.match(menu, /<ul\b/);
+    const links = [...menu.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)];
+    const expected = ['#alert-status', ...(snapshot.records.length ? ['#retained-notices'] : []), '#trip-context', '#checklist-title', '#guidance-title', `#history-${park.code}`, '#official-checks'];
+    assert.deepEqual(links.map((link) => decodeHtml(link[1].match(/\bhref="([^"]*)"/)[1])), expected);
+    for (const link of links) {
+      assert.ok(link[2].replace(/<[^>]+>/g, '').trim().length > 0, 'native links have visible names');
+      assert.doesNotMatch(link[1], /\b(?:hidden|disabled|aria-current|onclick)\b/);
+    }
+    assert.deepEqual(embeddedJson(html, 'data-snapshot'), snapshot);
+  }
+});
+
+test('park section destinations are unique and focusable without hiding their evidence', () => {
+  for (const park of parks) {
+    const snapshot = snapshots.find((item) => item.park_code === park.code);
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const targets = ['alert-status', ...(snapshot.records.length ? ['retained-notices'] : []), 'trip-context', 'checklist-title', 'guidance-title', `history-${park.code}`, 'official-checks'];
+    const tags = [...html.matchAll(/<(?:section|h2)\b[^>]*>/g)].map(([tag]) => tag);
+    for (const id of targets) {
+      const matches = tags.filter((tag) => tag.match(/\bid="([^"]*)"/)?.[1] === id);
+      assert.equal(matches.length, 1, `${park.code}: exact destination ${id}`);
+      assert.match(matches[0], /tabindex="-1"/, `${id}: native fragment can receive keyboard focus`);
+      assert.doesNotMatch(matches[0], /\bhidden(?:[\s=>]|$)/);
+      const label = matches[0].match(/\baria-labelledby="([^"]*)"/)?.[1];
+      if (label) assert.equal(tags.filter((tag) => tag.match(/\bid="([^"]*)"/)?.[1] === label).length, 1, `${id}: associated section heading exists`);
+    }
+    if (snapshot.records.length) {
+      assert.match(tags.find((tag) => tag.includes('id="retained-notices"')), /aria-labelledby="retained-notices-title"/);
+    } else assert.doesNotMatch(html, /\bid="retained-notices"/);
+  }
+});
+
 test('retained-notice filters use the complete public inventory and exact provider categories', () => {
   const normalize = (text) => text.toLowerCase().replace(/\s+/g, ' ').trim();
   for (const park of parks) {

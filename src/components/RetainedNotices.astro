@@ -6,8 +6,8 @@ const { parkCode, notices } = Astro.props;
 const categories = [...new Set(notices.map((notice) => notice.category))].sort();
 const searchableText = (notice: Notice) => `${notice.title} ${notice.description}`.toLowerCase().replace(/\s+/g, ' ').trim();
 ---
-<section class="panel retained-notices" data-retained-notices>
-  <h2>Notices retained from the checked feed</h2>
+<section class="panel retained-notices" id="retained-notices" tabindex="-1" aria-labelledby="retained-notices-title" data-retained-notices>
+  <h2 id="retained-notices-title">Notices retained from the checked feed</h2>
   <p>Area scope is not classified. These notices are not filtered to your travel date; applicability remains unconfirmed.</p>
   <p id="notice-filter-summary" class="small muted">{notices.length} {notices.length === 1 ? 'notice' : 'notices'} retained from the checked feed.</p>
   <div class="notice-controls" data-notice-controls hidden>
