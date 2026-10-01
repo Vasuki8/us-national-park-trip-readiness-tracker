@@ -45,6 +45,30 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(normal['error_code'], 'response_requires_review')
         self.assertEqual(diagnostic['error_code'], 'park_code_mismatch')
 
+    def test_encoded_sensitive_query_and_fragment_quarantine_without_retaining_candidate(self):
+        urls = ['https://example.org/info/?%74oken=SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/?api%5fkey=SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/?hint=%53ECRET-SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/#to%6ben=SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/#api%5Fkey=SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/#hint=%53ECRET-SYNTHETIC-NOT-RETAINED']
+        old = self.previous()
+        rejected_body = 'Synthetic rejected body never retained.'
+        for url in urls:
+            for diagnostic in (False, True):
+                with self.subTest(url=url, diagnostic=diagnostic):
+                    result = collect('yose', old, NOW,
+                                     lambda start: page([record(url=url, description=rejected_body)]),
+                                     diagnostic=diagnostic)
+                    self.assertEqual(result['collection_status'], 'quarantined')
+                    self.assertEqual(result['coverage_status'], 'incomplete')
+                    self.assertEqual(result['error_code'], 'source_query_sensitive' if diagnostic else 'response_requires_review')
+                    self.assertEqual(result['last_checked_at'], NOW)
+                    self.assertEqual(result['last_successful_fetch_at'], OLD)
+                    self.assertEqual(result['records'], old['records'])
+                    self.assertNotIn(url, json.dumps(result))
+                    self.assertNotIn(rejected_body, json.dumps(result))
+
     def test_optional_url_and_official_nps_subdomains_are_accepted(self):
         empty_url = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='')]), diagnostic=True)
         short_link = collect('yose', initial_snapshot('yose'), NOW, lambda start: page([record(url='https://go.nps.gov/short-link')]), diagnostic=True)
@@ -60,7 +84,9 @@ class CollectorTests(unittest.TestCase):
                 'https://www.nps.gov/yose/', 'https://www.nps.gov/yose/?view=full',
                 'https://www.nps.gov/yose/#details', 'https://www.nps.gov/yose/?view=full#details',
                 'https://www.nps.gov/yose/%63onditions/', 'https://www.nps.gov/subjects/developer/',
-                'https://go.nps.gov/short-link/', 'https://inciweb.wildfire.gov/incident/example/']
+                'https://go.nps.gov/short-link/', 'https://inciweb.wildfire.gov/incident/example/',
+                'https://example.org/info/?%76iew=full#details',
+                'https://example.org/info/?view=%66ull#%64etails']
         for url in urls:
             with self.subTest(url=url):
                 supplied = record(url=url)

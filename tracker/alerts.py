@@ -86,7 +86,7 @@ def _record(raw: dict, park_code: str, now: str, previous: dict) -> dict:
             raise InvalidFeed('source_credentials_present')
         if url.port not in (None, 443):
             raise InvalidFeed('source_port_invalid')
-        if re.search(r'api.?key|token|secret', url.query + url.fragment, re.IGNORECASE):
+        if re.search(r'api.?key|token|secret', unquote(url.query + url.fragment), re.IGNORECASE):
             raise InvalidFeed('source_query_sensitive')
         path = unquote(url.path)
         comparison_path = path.removesuffix('/') if path != '/' else path

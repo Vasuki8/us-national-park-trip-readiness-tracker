@@ -1,12 +1,20 @@
 # Project status and handoff
 
-Updated: **October 1, 2026 (Toronto time), after provider directory-URL validation repair**.
+Updated: **October 1, 2026 (Toronto time), after encoded-sensitive URL preflight repair**.
 
 ## Current development handoff
 
 Continue on **`codex/manual-refresh-verification`** in [PR #5](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/5), based on integrated main `151e942ec047f746d1288592b6a2bf12d261f0c9`.
 
-The current increment repairs Python collection/archive validation of safe provider directory URLs ending in one slash, matching the existing TypeScript contract. Validation only adjusts the decoded-path comparison; accepted URL bytes and normalized-record hashes are retained. Decoded leading `//`, repeated separators, traversal and backslashes remain refused. `parkCode` remains authoritative, and nullable, shared NPS and safe external links retain their existing contracts.
+The current increment fixes false read-only preflight success for percent-encoded credential-like query/fragment text. The collector now decodes that text once before its existing sensitive-pattern check, matching archive validation. Diagnostic mode reports `source_query_sensitive`; ordinary quarantine retains its generic review error, prior accepted evidence and success clock while advancing only the attempt clock. Safe encoded URL bytes and hashes remain unchanged. Staging already quarantined archive-invalid candidates safely; its fallback is unchanged.
+
+Two new Python test methods first produced **18 expected failing subcases** (12 collector, six preflight). All **87 focused tests** then passed across collector, preflight, staging and history validation. Six disposable external staging probes checked 30 JSON files: rejected URL/body markers were absent and accepted evidence/success clocks were preserved. Independent review found no actionable issues after 16 focused tests and in-memory probes of 3,180 sensitive encodings, safe/nullable URLs, partial-feed retention and sanitized five-park reports.
+
+Fresh local verification passed **217 Node + 432 Python tests = 649 tests** and diff formatting. No TypeScript or website behavior changed in this increment; the complete CI gate still covers Astro, both builds, generated-site tests, both Chromium suites and screenshot retention. Inspect the exact current-head result linked from PR #5 before integration. The preceding head `bc6806c21c0ead37e46d782c2f2d8378910f4ab8` passed [Verify pilot #176](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36820431631) with 775 tests; that result precedes this query/fragment repair.
+
+The release review found no regression in public data/clocks, hosting workflows, readiness logic, the light theme or indexing/ad safeguards. Pages still requires a successful default-branch push artifact; PR verification cannot be deployed directly. Existing alert observations remain at `2026-10-01T00:20:43.666438Z`, beyond the four-hour freshness window at review time. A code release must preserve stale labels and must not claim refreshed source evidence or newly cleared freshness/provider gates. Integration and deployment remain deliberate operator actions under `docs/PAGES_RELEASE.md`.
+
+The preceding increment repairs Python collection/archive validation of safe provider directory URLs ending in one slash, matching the existing TypeScript contract. Validation only adjusts the decoded-path comparison; accepted URL bytes and normalized-record hashes are retained. Decoded leading `//`, repeated separators, traversal and backslashes remain refused. `parkCode` remains authoritative, and nullable, shared NPS and safe external links retain their existing contracts.
 
 Six Python regressions cover accepted root/directory/query/fragment URLs, exact hashes and unchanged clocks, archive validation and staged quarantine retention. They first reproduced 22 failing subcases and then passed all 73 focused tests. Four cross-language regressions run actual synthetic collection/staging, immutable evidence and fresh archive replay through snapshot/history/preview and in-memory promotion validation. Unchanged/edited URL history and failed/quarantined attempt clocks are checked; rehashed unsafe counterparts still refuse. The exporter uses disposable external storage, blocks network access and preserves synthetic labels; the preparer refuses those labels before separately testing a simulated envelope. No real approval or publication is established.
 

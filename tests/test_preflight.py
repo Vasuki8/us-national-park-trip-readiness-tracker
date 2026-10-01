@@ -69,6 +69,32 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(report['checks'][0]['diagnostic_code'], 'park_code_mismatch')
         self.assertNotIn(KEY, json.dumps(report))
 
+    def test_encoded_sensitive_urls_require_review_without_reporting_rejected_text(self):
+        urls = ['https://example.org/info/?%74oken=SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/?api%5fkey=SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/?hint=%53ECRET-SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/#to%6ben=SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/#api%5Fkey=SYNTHETIC-NOT-RETAINED',
+                'https://example.org/info/#hint=%53ECRET-SYNTHETIC-NOT-RETAINED']
+        rejected_body = 'Synthetic rejected body never retained.'
+        for url in urls:
+            with self.subTest(url=url):
+                report = self.run_check(transport=lambda code, start, key: {
+                    'total': '1', 'start': str(start),
+                    'data': [{**record(code), 'url': url, 'description': rejected_body}]
+                })
+                self.assertFalse(report['gate_passed'])
+                self.assertEqual(report['status'], 'needs_review')
+                self.assertEqual(len(report['checks']), 5)
+                for check in report['checks']:
+                    self.assertEqual(check['collection_status'], 'quarantined')
+                    self.assertEqual(check['diagnostic_code'], 'source_query_sensitive')
+                    self.assertIsNone(check['record_count'])
+                    self.assertEqual(check['pages_requested'], 1)
+                self.assertNotIn(url, json.dumps(report))
+                self.assertNotIn(rejected_body, json.dumps(report))
+                self.assertNotIn(KEY, json.dumps(report))
+
     def test_malformed_response_remains_quarantined(self):
         report = self.run_check(transport=lambda *args: {'message': KEY})
         self.assertFalse(report['gate_passed']); self.assertEqual(report['checks'][0]['collection_status'], 'quarantined')

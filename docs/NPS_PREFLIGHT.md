@@ -48,6 +48,8 @@ The collector now treats `parkCode` as the authoritative park-scope field, store
 
 The Python collector/archive guards also accept a single terminal slash in a directory URL, matching the public TypeScript validators. The original accepted URL and normalized-record hash are retained, including safe query/fragment and encoded path text. Decoded traversal, repeated separators and backslashes remain refused. This compatibility repair is verified with synthetic evidence through staging, immutable archive replay and preview/promotion validation; it does not represent a new keyed provider run or refresh public observations.
 
+The collector checks query/fragment text after one percent-decoding pass for the existing credential-like patterns. Encoded `token`, `api_key` or `secret` text now quarantines before normalization reports success; diagnostic preflight reports `needs_review` with `source_query_sensitive` instead of a false `verified` result. The ordinary snapshot retains its generic review error and last accepted records/success clock. Safe encoded URLs retain their original text and hashes. Staging's existing archive-validation fallback already quarantined these inputs and remains unchanged. These cases use synthetic transport only; they do not establish a new provider check.
+
 That successful diagnostic was read-only. It **did not write `data/alerts/`, public history, or publication state**. At that time the public snapshots remained `never_checked`; the later deliberate owner-approved promotion described above is a separate operation.
 
 Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36628434444  
