@@ -20,7 +20,7 @@ The private collector/archive/staging path retains normalized evidence and immut
 
 ## Release boundaries
 
-Normal PR CI has read-only repository permissions and no source API key. A manual verified-artifact Pages deployment/rollback workflow exists; there is no scheduled collection. CI verifies both domain-root and free GitHub project-path builds. No production deployment has been dispatched. See `docs/PAGES_RELEASE.md`.
+Normal PR CI has read-only repository permissions and no source API key. The live pilot uses the manual verified-artifact Pages deployment/rollback workflow; there is no scheduled collection or automatic deployment. CI verifies both domain-root and free GitHub project-path builds. Initial deployment, rollback and restoration were verified at the actual project URL. See `docs/PAGES_RELEASE.md`.
 
 Both generated-site suites run the dependency-free Python helper `tests/site_links.py` from their existing Node test gate. It scans every emitted `.html` file, parses literal `href`/`src` attributes, resolves relative and root-relative destinations, ignores queries for filesystem lookup, and verifies local HTML fragment IDs or named anchors. Encoded names are decoded before checks. Local paths must stay inside the hosting base and output directory. Comments, script/text contents and inert template contents do not supply fragment targets; a `<base>` element is refused because the current builds do not use one.
 

@@ -132,7 +132,7 @@ node scripts/verify-pages-live.mjs \
 
 Use `dist` and the actual domain-root URL for root hosting, or `--mode rollback` when verifying the rollback target. Exit 0 means the hosted bytes matched this verified artifact at check time; exit 1 means they did not establish a match. An earlier artifact without the retained verifier now fails layout validation **before upload**. Prepare at least two eligible post-change default-branch artifacts before claiming an older-version rollback path is available.
 
-A successful deploy report alone is not a rollback drill, a browser interaction check, source approval or a cleared release-readiness gate. Before marking hosting/rollback reviewed, retain reports for the initial release, a deliberate older-version rollback and restoration of the intended release, plus browser checks at the actual URL. `tracker.release_readiness` continues to report hosting as `not_checked` until external evidence is separately reviewed; this increment does not add an automatic report-to-gate promotion.
+A successful deploy report alone is not a rollback drill, a browser interaction check, source approval or a cleared release-readiness gate. Before marking hosting/rollback reviewed, retain reports for the initial release, a deliberate older-version rollback and restoration of the intended release, plus browser checks at the actual URL. `tracker.release_readiness` continues to report hosting as `not_checked` because it does not ingest those external receipts, including after a separate operator review; there is no automatic report-to-gate promotion.
 
 ## Indexing and ads
 
@@ -150,16 +150,18 @@ Advertising/analytics remain disabled.
 
 ## Current state
 
-No Pages release workflow was dispatched while this feature was developed or when the pilot code was integrated into `main` at `3fe0e878b9b33b457497bff5e761dd33cb962b06`. Verify pilot #132 passed on that `main` push.
+The owner-authorized pilot is live at [ParkReadiness](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/). Pages uses `build_type: workflow` with HTTPS enforced.
 
-Project-path code commit `5751fc47218bc5c7f0062a706f38ad8b01be9ae1` subsequently passed Verify pilot #136, run `36657308469`, including all four project Chromium checks and both generated-output suites. No deployment was dispatched by that development increment.
+The intended release is commit **`303475e260c93f2207e03e08945363cc3ac85882`**, snapshot **`pilot-08efc3ad8281`**, from successful default-branch [Verify pilot #167](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36807575240). All 733 tests, both 14-page builds and screenshot retention passed. Artifact **11137734399** has digest `sha256:efd5c2ef60e6082ebb3aafaed53ee0d777ec1b4339245b3f6835e9f6128e8910` and expires **2026-10-08T02:51:50Z**.
 
-Therefore:
+The deliberate launch drill completed:
 
-- no live URL was created or changed by this milestone;
-- no rollback has been exercised;
-- hosting/rollback readiness is `not_checked`, not `pass`;
-- indexing remains blocked; and
-- PR #1 is merged, but code integration did not perform a Pages release.
+1. [Deployment #1](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36807897705): intended release verified at **2026-10-01T02:53:08.921Z**.
+2. [Rollback #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36808071466): older main commit `df1789da5d634c28ad16329e1f828a042b336a59`, snapshot `pilot-966adad97a6e`, from [Verify pilot #155](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36760287500), verified at **2026-10-01T02:55:24.910Z**.
+3. [Restoration #3](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36808199666): intended release restored and verified at **2026-10-01T02:57:09.046Z**.
 
-A real deployment should occur only after the earlier data/trust gates are deliberately cleared. No live URL or real rollback has been verified by the project-path development tests.
+Each retained live report matched **21 public files and 14 pages in one attempt**. Both release artifacts and all three report ZIP digests/layouts were separately checked and retained in owner-only private operator storage. The final actual-browser check at **2026-10-01T03:00:45.426Z** verified all 14 pages, five park baselines, 17 rendered notices, original clocks, nullable-link notes, loaded styling, search/navigation, the unsupported-year guard and checklist toggle/reset. This is external hosting/rollback evidence; the unchanged automated readiness CLI still reports hosting as `not_checked` because it does not ingest these receipts.
+
+All pages retain meta `noindex, nofollow`; indexing and advertising remain disabled. Observed `X-Robots-Tag`, Content-Security-Policy, X-Content-Type-Options and Referrer-Policy headers were null in all three reports. Do not infer those headers from `_headers`, or domain-root crawler policy from project-path `robots.txt`.
+
+The older rollback artifact expires **2026-10-07T18:43:32Z**. Refresh eligible default-branch artifacts deliberately before relying on a later rollback window. Source collection and public-data promotion remain separate manual operations; neither CI nor this release enables a recurring schedule. A later documentation-only handoff commit does not change the artifact already served at the live URL.

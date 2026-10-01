@@ -12,7 +12,11 @@ The diagnostic checks only the five pilot parks, with at most two requested page
 
 `status: verified` means all checked responses normalized successfully within the budget and is the only state that returns exit **0**. It does not establish complete conditions coverage, independently validate a park's operating state, or activate scheduled collection. `needs_review` returns exit **1**. `not_configured` and `invalid_configuration` return exit **2**. Do not publish these diagnostic responses automatically.
 
-## Latest verified keyed run
+## Current launch evidence
+
+The owner-approved public pilot now contains five successful alert baselines and 17 retained notices. A fresh private read-only preflight at **2026-10-01T02:32:53–55Z** passed all five parks with counts 1/0/5/7/4. It did not refresh the promoted observations, whose original clock remains **2026-10-01T00:20:43.666438Z**. No recurring collection was enabled. Use the existing private collection/review/backup and promotion tools for later updates; credentials and retained source captures remain outside the checkout.
+
+## First verified keyed run (historical)
 
 Run **36628434444**, job **109611267322**, collector head **5cdfee176bdb0d6fc0223962a96b00892bb46ac5**, at **2026-09-29T20:44:13–20:44:14Z** completed successfully:
 
@@ -42,7 +46,7 @@ The live responses exposed two assumptions in the original collector that were s
 
 The collector now treats `parkCode` as the authoritative park-scope field, stores a missing alert link as `null`, and accepts provider-supplied HTTPS links after safety validation. It still rejects credentials, secret-like query/fragment values, malformed/path-traversal URLs, localhost/numeric-IP targets, and NPS-lookalike hostnames. External links are labeled in the UI as **“More information link supplied by NPS”** rather than represented as NPS-owned content.
 
-The latest successful run is read-only. It **did not write `data/alerts/`, public history, or publication state**. Therefore the public snapshots still remain `never_checked`; provider compatibility is validated, but public alert collection/publication is a separate release gate.
+That successful diagnostic was read-only. It **did not write `data/alerts/`, public history, or publication state**. At that time the public snapshots remained `never_checked`; the later deliberate owner-approved promotion described above is a separate operation.
 
 Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36628434444  
 Job: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36628434444/job/109611267322
@@ -62,6 +66,6 @@ Earlier empty-key and intermediate quarantine runs remain historical diagnostics
 
 The repository Actions secret named exactly `NPS_API_KEY` is now functioning and the five-park read-only preflight has passed.
 
-The next alert-data step is **not another credential check**. It is an owner-controlled durable collection into the existing private staging/archive path, followed by review before any public snapshot/history update. Do not publish directly from the preflight and do not treat an empty successful feed as an all-clear.
+Later alert-data updates require owner-controlled durable collection into the existing private staging/archive path, followed by review before any public snapshot/history update. Do not publish directly from the preflight and do not treat an empty successful feed as an all-clear.
 
-The collector, private evidence archive, staging/recovery, isolated preview and history implementations already exist: use those paths rather than rebuilding them. Operator-controlled persistent storage is still required before scheduling or publication. Source-content approval, production hosting/publication, advertising and indexing remain separate requirements.
+The collector, private evidence archive, staging/recovery, isolated preview and history implementations already exist: reuse those paths. Persistent private storage, source approval, backup recovery and the first public pilot launch have been verified. Scheduling, advertising and indexing remain separate operator decisions.

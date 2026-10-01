@@ -1,6 +1,6 @@
 # ParkReadiness — U.S. National Park Trip Readiness Tracker
 
-An independent, light-theme planning pilot for Yosemite, Rocky Mountain, Yellowstone, Zion and Grand Canyon. This is a development foundation, **not a live conditions service or a completed public release**.
+An independent, light-theme planning pilot for Yosemite, Rocky Mountain, Yellowstone, Zion and Grand Canyon. The [public pilot is live](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/) with stored guidance and manually collected alert snapshots.
 
 ## Current pilot
 
@@ -8,9 +8,9 @@ A searchable five-park directory, static park pages, source-backed dated entry c
 
 Reviews expire after seven days; unsupported years and areas never inherit an exemption. Directory age labels update in the browser without a new build. Stored source reviews, dated rules and recent successful alert checks are counted separately.
 
-The Python NPS alerts collector has conservative pagination, retry limits, response validation, last-good retention, clock checks and atomic writes. A keyed read-only preflight has passed for all five parks. All committed alert snapshots remain `never_checked`; durable private collection, review and publication are still pending. Collection is not scheduled. Removed notices never imply a reopening.
+The Python NPS alerts collector has conservative pagination, retry limits, response validation, last-good retention, clock checks and atomic writes. All five parks have owner-approved successful baselines containing 17 retained notices. Durable private review and separate-backup recovery were verified before promotion. Collection is not scheduled; alert freshness expires after four hours. Empty feeds and removed notices never imply an all-clear or reopening.
 
-There are no ads, accounts, analytics, paid APIs, booking inventory or weather forecasts. All pages are `noindex, nofollow` and robots are disallowed until the production gates are met. The pilot is not affiliated with the National Park Service.
+There are no ads, accounts, analytics, paid APIs, booking inventory or weather forecasts. All pages retain `noindex, nofollow` and the project robots file disallows crawling until the separate indexed-release gates are met. The pilot is not affiliated with the National Park Service.
 
 ## Local development
 
@@ -48,7 +48,7 @@ npm run test:browser:pages
 
 Open this repository root in Codex. The project instructions are in `AGENTS.md`; start with: "Read AGENTS.md and PROJECT_STATUS.md, review the next development priorities, and continue development with appropriate verification." Keep any NPS key and real private evidence outside the project folder.
 
-GitHub Pages release/rollback remains manual and uses an already verified artifact matching the configured hosting path. After deployment, it checks the actual hosted pages/assets against that artifact and retains a separate live-verification report, including failures. The website is not live. See `docs/PAGES_RELEASE.md` for deployment, live checks and rollback preparation, and `docs/RELEASE_READINESS.md` for the remaining gates.
+GitHub Pages release/rollback remains manual and uses an already verified artifact matching the configured hosting path. The live pilot passed deployment, older-version rollback and restoration checks against the exact hosted pages/assets, plus actual browser interaction checks. See `docs/PAGES_RELEASE.md` for release evidence and rollback preparation, and `docs/RELEASE_READINESS.md` for how external evidence differs from the conservative automated report.
 
 The read-only readiness report defaults to an ad-free, unindexed pilot. Use `--target indexed` or `--target advertising` to include the corresponding later-release gates. Source review, public alert data, backup, source rights and hosting/rollback remain required for every target. Detected ads or changed pilot indexing controls still require review.
 
