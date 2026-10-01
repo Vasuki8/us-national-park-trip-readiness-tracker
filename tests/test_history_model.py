@@ -115,6 +115,28 @@ class ModelTests(unittest.TestCase):
         bad = snapshot(); bad['source_url'] += '&api_key=key'
         with self.assertRaises(HistoryError): validate_snapshot(bad)
 
+    def test_directory_url_validation_preserves_original_snapshot_evidence(self):
+        urls = ['https://www.nps.gov', 'https://www.nps.gov/',
+                'https://www.nps.gov?view=full#details', 'https://www.nps.gov/?view=full#details',
+                'https://www.nps.gov/yose/', 'https://www.nps.gov/yose/?view=full',
+                'https://www.nps.gov/yose/#details', 'https://www.nps.gov/yose/?view=full#details',
+                'https://www.nps.gov/yose/%63onditions/', 'https://www.nps.gov/subjects/developer/',
+                'https://go.nps.gov/short-link/', 'https://inciweb.wildfire.gov/incident/example/']
+        for url in urls:
+            with self.subTest(url=url):
+                original = snapshot([notice(url=url)])
+                self.assertEqual(validate_snapshot(original), original)
+                self.assertEqual(compare(original, next_snapshot(original)), {'comparison': 'compared', 'changes': []})
+
+    def test_unsafe_directory_paths_are_refused_by_archive_validation(self):
+        paths = ['//directory', '//directory/', '///directory/', '/yose//directory/', '/yose/directory//',
+                 '/yose/./', '/yose/../', '/yose/%2e/', '/yose/%2e%2e/',
+                 '/yose/%2fnotice/', '/%2fdirectory', '/%2fdirectory/', '/yose/directory%2f/',
+                 '/yose/directory\\notice/', '/yose/directory%5cnotice/']
+        for path in paths:
+            with self.subTest(path=path), self.assertRaisesRegex(HistoryError, '^invalid_source$'):
+                validate_snapshot(snapshot([notice(url='https://example.org' + path)]))
+
     def test_bad_calendar_and_offset_timestamps_do_not_normalize(self):
         for now in ['2026-02-30T10:00:00Z', '2026-09-28T24:00:00Z', '2026-09-28T10:00:00+00:99', '2026-09-28']:
             with self.subTest(now=now), self.assertRaises(HistoryError): validate_snapshot(snapshot([], now=now))

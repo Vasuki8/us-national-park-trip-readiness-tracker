@@ -80,7 +80,9 @@ def _source(value: object, _code: str) -> None:
             raise HistoryError('invalid_source')
         require(not ('nps.gov' in host and not (host == 'nps.gov' or host.endswith('.nps.gov'))), 'invalid_source')
         path = unquote(url.path)
-        require((not path or posixpath.normpath(path) == path) and '\\' not in path, 'invalid_source')
+        comparison_path = path.removesuffix('/') if path != '/' else path
+        require((not path or posixpath.normpath(path) == comparison_path) and '\\' not in path
+                and not path.startswith('//'), 'invalid_source')
         require(not re.search(r'api.?key|token|secret', unquote(url.query + url.fragment), re.I), 'invalid_source')
     except ValueError:
         raise HistoryError('invalid_source') from None

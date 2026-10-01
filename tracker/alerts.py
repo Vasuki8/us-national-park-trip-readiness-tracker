@@ -89,7 +89,8 @@ def _record(raw: dict, park_code: str, now: str, previous: dict) -> dict:
         if re.search(r'api.?key|token|secret', url.query + url.fragment, re.IGNORECASE):
             raise InvalidFeed('source_query_sensitive')
         path = unquote(url.path)
-        if '\\' in path or (path and posixpath.normpath(path) != path):
+        comparison_path = path.removesuffix('/') if path != '/' else path
+        if '\\' in path or path.startswith('//') or (path and posixpath.normpath(path) != comparison_path):
             raise InvalidFeed('source_path_invalid')
     semantic = {key: raw[key] for key in ('id', 'title', 'description', 'category')}
     semantic['url'] = link

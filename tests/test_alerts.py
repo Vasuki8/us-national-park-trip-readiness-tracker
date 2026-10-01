@@ -1,4 +1,6 @@
 """Synthetic provider fixtures. Tests make no network calls."""
+import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -51,6 +53,47 @@ class CollectorTests(unittest.TestCase):
         self.assertIsNone(empty_url['records'][0]['url'])
         self.assertEqual(short_link['collection_status'], 'success')
         self.assertEqual(shared_path['collection_status'], 'success')
+
+    def test_provider_directory_urls_preserve_exact_evidence_and_observation_clocks(self):
+        urls = ['https://www.nps.gov', 'https://www.nps.gov/',
+                'https://www.nps.gov?view=full#details', 'https://www.nps.gov/?view=full#details',
+                'https://www.nps.gov/yose/', 'https://www.nps.gov/yose/?view=full',
+                'https://www.nps.gov/yose/#details', 'https://www.nps.gov/yose/?view=full#details',
+                'https://www.nps.gov/yose/%63onditions/', 'https://www.nps.gov/subjects/developer/',
+                'https://go.nps.gov/short-link/', 'https://inciweb.wildfire.gov/incident/example/']
+        for url in urls:
+            with self.subTest(url=url):
+                supplied = record(url=url)
+                old = collect('yose', initial_snapshot('yose'), OLD, lambda start: page([supplied]))
+                self.assertEqual(old['collection_status'], 'success')
+                result = collect('yose', old, NOW, lambda start: page([supplied]))
+                self.assertEqual(result['collection_status'], 'success')
+                item = result['records'][0]
+                self.assertEqual(item['url'], url)
+                semantic = {key: supplied[key] for key in ('category', 'description', 'id', 'title', 'url')}
+                expected_hash = hashlib.sha256(json.dumps(semantic, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+                self.assertEqual(item['content_hash'], expected_hash)
+                self.assertEqual(item['observed_first_at'], OLD)
+                self.assertEqual(item['observed_changed_at'], OLD)
+                self.assertIsNone(item['source_updated_at'])
+                self.assertIsNone(result['source_updated_at'])
+                self.assertIsNone(result['published_at'])
+
+    def test_unsafe_directory_paths_quarantine_without_changing_last_good_evidence(self):
+        paths = ['//directory', '//directory/', '///directory/', '/yose//directory/', '/yose/directory//',
+                 '/yose/./', '/yose/../', '/yose/%2e/', '/yose/%2e%2e/',
+                 '/yose/%2fnotice/', '/%2fdirectory', '/%2fdirectory/', '/yose/directory%2f/',
+                 '/yose/directory\\notice/', '/yose/directory%5cnotice/']
+        old = self.previous()
+        for path in paths:
+            with self.subTest(path=path):
+                result = collect('yose', old, NOW,
+                                 lambda start: page([record(url='https://example.org' + path)]), diagnostic=True)
+                self.assertEqual(result['collection_status'], 'quarantined')
+                self.assertEqual(result['error_code'], 'source_path_invalid')
+                self.assertEqual(result['last_checked_at'], NOW)
+                self.assertEqual(result['last_successful_fetch_at'], OLD)
+                self.assertEqual(result['records'], old['records'])
 
     def test_missing_or_inconsistent_pages_are_quarantined(self):
         cases = [lambda start: page([], total=2), lambda start: page([record()], total=2, start=0), lambda start: {'error': 'provider error'}, lambda start: page([record()], total='bad')]

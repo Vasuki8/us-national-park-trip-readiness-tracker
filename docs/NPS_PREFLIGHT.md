@@ -46,6 +46,8 @@ The live responses exposed two assumptions in the original collector that were s
 
 The collector now treats `parkCode` as the authoritative park-scope field, stores a missing alert link as `null`, and accepts provider-supplied HTTPS links after safety validation. It still rejects credentials, secret-like query/fragment values, malformed/path-traversal URLs, localhost/numeric-IP targets, and NPS-lookalike hostnames. External links are labeled in the UI as **“More information link supplied by NPS”** rather than represented as NPS-owned content.
 
+The Python collector/archive guards also accept a single terminal slash in a directory URL, matching the public TypeScript validators. The original accepted URL and normalized-record hash are retained, including safe query/fragment and encoded path text. Decoded traversal, repeated separators and backslashes remain refused. This compatibility repair is verified with synthetic evidence through staging, immutable archive replay and preview/promotion validation; it does not represent a new keyed provider run or refresh public observations.
+
 That successful diagnostic was read-only. It **did not write `data/alerts/`, public history, or publication state**. At that time the public snapshots remained `never_checked`; the later deliberate owner-approved promotion described above is a separate operation.
 
 Run: https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36628434444  
