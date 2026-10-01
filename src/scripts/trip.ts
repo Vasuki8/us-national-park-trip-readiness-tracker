@@ -10,6 +10,7 @@ if (context) {
   const checks = [...document.querySelectorAll<HTMLInputElement>('[data-check]')];
   let evaluated = false;
   const selection = (): Trip => ({ park_code: context.dataset.park!, date: date.value, time: time.value, area: area.value, special_case: special.checked });
+  let previousSelection = JSON.stringify(selection());
   const showDecision = () => {
     const result = evaluateEntry(rules, selection(), new Date());
     const title = document.querySelector('#decision-title')!;
@@ -20,19 +21,23 @@ if (context) {
   };
   const progress = () => {
     const completed = checks.filter((check) => check.checked).length;
-    document.querySelector('#checklist-progress')!.textContent = completed === checks.length
+    const label = completed === checks.length
       ? 'Your checklist is complete. This does not verify a booking or guarantee conditions.'
       : `${completed} of ${checks.length} items reviewed by you`;
+    const target = document.querySelector('#checklist-progress')!;
+    if (target.textContent !== label) target.textContent = label;
   };
-  const reset = () => { checks.forEach((check) => { check.checked = false; }); progress(); };
+  const reset = () => { checks.forEach((check) => { check.checked = false; }); previousSelection = JSON.stringify(selection()); progress(); };
+  const syncTrip = () => { if (JSON.stringify(selection()) !== previousSelection) reset(); };
   document.querySelector<HTMLButtonElement>('#check-entry')!.disabled = false;
-  form.addEventListener('submit', (event) => { event.preventDefault(); evaluated = true; showDecision(); });
+  form.addEventListener('submit', (event) => { event.preventDefault(); syncTrip(); evaluated = true; showDecision(); });
   form.addEventListener('input', () => { reset(); if (evaluated) showDecision(); });
   form.addEventListener('change', () => { reset(); if (evaluated) showDecision(); });
   checks.forEach((check) => { check.disabled = false; check.addEventListener('change', progress); });
   document.querySelector<HTMLButtonElement>('#reset-checklist')!.disabled = false;
   document.querySelector('#reset-checklist')!.addEventListener('click', reset);
   const updateFreshness = () => {
+    syncTrip();
     document.querySelectorAll<HTMLElement>('[data-reviewed]').forEach((element) => {
       const state = freshness(element.dataset.reviewed || null, 168, new Date());
       element.textContent = state === 'fresh' ? 'Within the seven-day review window. Source changes are not automatically monitored.' : 'Needs a fresh review. Use the official source; stored guidance may have changed.';
@@ -48,4 +53,11 @@ if (context) {
   reset(); updateFreshness();
   window.setInterval(updateFreshness, 60_000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) updateFreshness(); });
+  window.addEventListener('pageshow', (event) => {
+    // Persisted form values can be restored after pageshow has fired.
+    window.setTimeout(() => {
+      if (!event.persisted) reset();
+      updateFreshness(); progress();
+    }, 0);
+  });
 }

@@ -52,6 +52,11 @@ function tripPage() {
       return [review];
     },
   });
+  const queuedTasks: (() => void)[] = [];
+  const window = Object.assign(new EventTarget(), {
+    setInterval: (callback: () => void, delay: number) => { assert.equal(delay, 60_000); minuteRefresh = callback; },
+    setTimeout: (callback: () => void, delay: number) => { assert.equal(delay, 0); queuedTasks.push(callback); },
+  });
   const source = ts.transpileModule(readFileSync(new URL('../src/scripts/trip.ts', import.meta.url), 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
   }).outputText;
@@ -59,7 +64,7 @@ function tripPage() {
     document, exports: {},
     require: (specifier: string) => { assert.equal(specifier, '../lib/readiness'); return readiness; },
     Date: class extends Date { constructor() { super(now); } },
-    window: { setInterval: (callback: () => void, delay: number) => { assert.equal(delay, 60_000); minuteRefresh = callback; } },
+    window,
   });
   return {
     element, checks, review,
@@ -68,6 +73,8 @@ function tripPage() {
     refreshMinute: () => { assert.ok(minuteRefresh); minuteRefresh(); },
     changeVisibility: (hidden: boolean) => { document.hidden = hidden; document.dispatchEvent(new Event('visibilitychange')); },
     decisionWrites: () => [element('#decision-title').textWrites.length, element('#decision-detail').textWrites.length],
+    showPage: (persisted: boolean) => window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted })),
+    flushTasks: () => queuedTasks.splice(0).forEach((callback) => callback()),
   };
 }
 
@@ -86,6 +93,101 @@ test('unchanged entry guidance does not rewrite its live-region text on minute o
   page.changeVisibility(false);
   assert.deepEqual(page.decisionWrites(), [1, 1], 'returning to the page keeps identical decision text');
   assert.equal(page.checks[0].checked, true, 'clock refreshes preserve the visitor checklist');
+});
+
+test('page return reads trip details restored after pageshow and resets the old checklist', () => {
+  const page = tripPage();
+  page.submit();
+  page.checks.forEach((check) => { check.checked = true; });
+  page.checks[0].dispatchEvent(new Event('change'));
+  assert.match(page.element('#checklist-progress').textContent, /checklist is complete/);
+  page.showPage(true);
+  page.element('#trip-date').value = '2027-06-01';
+  page.flushTasks();
+  assert.equal(page.element('#entry-decision').dataset.state, 'not-verified');
+  assert.equal(page.element('#decision-title').textContent, 'Entry requirements not verified for this date');
+  assert.equal(page.checks.some((check) => check.checked), false);
+  assert.equal(page.element('#checklist-progress').textContent, '0 of 5 items reviewed by you');
+});
+
+test('every silently changed trip field invalidates checklist completion on page return', () => {
+  for (const [selector, property, value] of [
+    ['#trip-date', 'value', '2026-09-30'],
+    ['#trip-time', 'value', '08:00'],
+    ['#trip-area', 'value', 'another-area'],
+    ['#special-case', 'checked', true],
+  ] as const) {
+    const page = tripPage();
+    page.submit();
+    page.checks[0].checked = true;
+    page.checks[0].dispatchEvent(new Event('change'));
+    page.showPage(true);
+    const field = page.element(selector);
+    if (property === 'checked') field.checked = value as boolean;
+    else field.value = value as string;
+    page.flushTasks();
+    assert.equal(page.checks[0].checked, false, selector);
+    assert.equal(page.element('#checklist-progress').textContent, '0 of 5 items reviewed by you', selector);
+    if (selector === '#special-case') assert.equal(page.element('#decision-title').textContent, 'Check the rules for your circumstances');
+  }
+});
+
+test('unchanged persisted returns preserve checks and synchronize restored progress without repeat announcements', () => {
+  const page = tripPage();
+  page.submit();
+  page.showPage(true);
+  // Checkbox restoration need not dispatch change events.
+  page.checks[0].checked = true;
+  page.checks[1].checked = true;
+  page.flushTasks();
+  assert.equal(page.checks.filter((check) => check.checked).length, 2);
+  const progress = page.element('#checklist-progress');
+  assert.equal(progress.textContent, '2 of 5 items reviewed by you');
+  const writes = progress.textWrites.length;
+  const decisionWrites = page.decisionWrites();
+  page.showPage(true); page.flushTasks();
+  assert.equal(progress.textWrites.length, writes);
+  assert.deepEqual(page.decisionWrites(), decisionWrites);
+});
+
+test('fresh page returns clear browser-restored checklist checks without evaluating an unsubmitted trip', () => {
+  const page = tripPage();
+  page.showPage(false);
+  page.element('#trip-date').value = '2027-06-01';
+  page.checks.forEach((check) => { check.checked = true; });
+  page.flushTasks();
+  assert.equal(page.checks.some((check) => check.checked), false);
+  assert.equal(page.element('#checklist-progress').textContent, '0 of 5 items reviewed by you');
+  assert.deepEqual(page.decisionWrites(), [0, 0]);
+  page.submit();
+  assert.equal(page.element('#entry-decision').dataset.state, 'not-verified');
+});
+
+test('a persisted page return refreshes expired guidance immediately and preserves an unchanged trip checklist', () => {
+  const page = tripPage();
+  page.submit();
+  page.checks[0].checked = true;
+  page.checks[0].dispatchEvent(new Event('change'));
+  page.setTime('2026-10-05T19:00:00.001Z');
+  page.showPage(true); page.flushTasks();
+  assert.equal(page.element('#entry-decision').dataset.state, 'stale');
+  assert.match(page.review.textContent, /Needs a fresh review/);
+  assert.equal(page.checks[0].checked, true);
+  assert.equal(page.element('#checklist-progress').textContent, '1 of 5 items reviewed by you');
+});
+
+test('minute and visibility refreshes invalidate checklist checks after silent trip changes', () => {
+  for (const refresh of ['minute', 'visibility'] as const) {
+    const page = tripPage();
+    page.submit();
+    page.checks[0].checked = true;
+    page.element('#trip-date').value = '2027-06-01';
+    if (refresh === 'minute') page.refreshMinute();
+    else page.changeVisibility(false);
+    assert.equal(page.element('#entry-decision').dataset.state, 'not-verified', refresh);
+    assert.equal(page.checks[0].checked, false, refresh);
+    assert.equal(page.element('#checklist-progress').textContent, '0 of 5 items reviewed by you', refresh);
+  }
 });
 
 test('seven-day expiry still updates the decision once and trip changes still reset the checklist', () => {

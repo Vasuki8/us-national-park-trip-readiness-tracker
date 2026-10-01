@@ -55,6 +55,39 @@ test('project-path entry checker and checklist remain interactive', async ({ pag
   await expect(page.locator('[data-check]:checked')).toHaveCount(0);
 });
 
+test('project-path trip return resynchronizes restored choices and checklist progress', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'romo'))));
+  await page.goto(`${base}parks/rocky-mountain/`);
+  await page.getByLabel('Visit date').fill('2026-09-30');
+  await page.getByLabel('Planned area').selectOption('bear-lake');
+  await page.getByLabel('Arrival time').fill('08:00');
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  await expect(page.locator('#decision-title')).toHaveText('Review your timed-entry reservation');
+  await page.locator('[data-check]').first().check();
+  // Model event ordering and silent restoration, not a particular browser's cache policy.
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    document.querySelector<HTMLSelectElement>('#trip-area')!.value = 'rest';
+  });
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'not-required-under-rule');
+  await expect(page.locator('#decision-title')).toHaveText('Outside this reviewed timed-entry window');
+  await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+  await expect(page.locator('#checklist-progress')).toHaveText('0 of 5 items reviewed by you');
+  await page.locator('[data-check]').first().check();
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    document.querySelectorAll<HTMLInputElement>('[data-check]')[1].checked = true;
+  });
+  await expect(page.locator('[data-check]:checked')).toHaveCount(2);
+  await expect(page.locator('#checklist-progress')).toHaveText('2 of 5 items reviewed by you');
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false }));
+    document.querySelectorAll<HTMLInputElement>('[data-check]').forEach((check) => { check.checked = true; });
+  });
+  await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+  await expect(page.locator('#checklist-progress')).toHaveText('0 of 5 items reviewed by you');
+});
+
 test('project-path content, footer and fragment links retain destinations', async ({ page }) => {
   await page.goto(`${base}changes/`);
   await expect(page.getByRole('link', { name: 'Explore the pilot parks' })).toHaveAttribute('href', `${base}parks/`);

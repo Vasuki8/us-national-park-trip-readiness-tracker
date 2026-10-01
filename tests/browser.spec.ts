@@ -62,6 +62,76 @@ test('checklist is self-reported and resets when trip details change', async ({ 
   await expect(page.locator('[data-check]:checked')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
 });
+
+test('page return invalidates checklist completion for each restored trip field', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'romo'))));
+  await page.goto('/parks/rocky-mountain/');
+  for (const restored of [
+    { selector: '#trip-date', value: '2027-06-01', state: 'not-verified', title: 'Entry requirements not verified for this date' },
+    { selector: '#trip-time', value: '18:00', state: 'review-required', title: 'Verify the exact time boundary' },
+    { selector: '#trip-area', value: 'rest', state: 'not-required-under-rule', title: 'Outside this reviewed timed-entry window' },
+    { selector: '#special-case', value: true, state: 'review-required', title: 'Check the rules for your circumstances' },
+  ]) {
+    await page.getByLabel('Visit date').fill('2026-09-30');
+    await page.getByLabel('Arrival time').fill('08:00');
+    await page.getByLabel('Planned area').selectOption('bear-lake');
+    await page.locator('#special-case').uncheck();
+    await page.getByRole('button', { name: 'Check entry guidance' }).click();
+    await expect(page.locator('#decision-title')).toHaveText('Review your timed-entry reservation');
+    await page.locator('[data-check]').first().check();
+    await expect(page.locator('#checklist-progress')).toHaveText('1 of 5 items reviewed by you');
+    // Exercise pageshow-before-restoration ordering without assuming every browser's history policy.
+    await page.evaluate(({ selector, value }) => {
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      if (typeof value === 'boolean') document.querySelector<HTMLInputElement>(selector)!.checked = value;
+      else document.querySelector<HTMLInputElement | HTMLSelectElement>(selector)!.value = value;
+    }, restored);
+    await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', restored.state);
+    await expect(page.locator('#decision-title')).toHaveText(restored.title);
+    await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+    await expect(page.locator('#checklist-progress')).toHaveText('0 of 5 items reviewed by you');
+  }
+});
+
+test('page return preserves only persisted checklist state and refreshes expired guidance', async ({ page }) => {
+  const rule = publicRules.find((item) => item.park_code === 'yose')!;
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime([rule])));
+  await page.goto('/parks/yosemite/');
+  // Silent restoration follows the synthetic event; this does not prove browser history retention.
+  await page.evaluate((date) => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    document.querySelector<HTMLInputElement>('#trip-date')!.value = date;
+    document.querySelector<HTMLInputElement>('[data-check]')!.checked = true;
+  }, rule.effective_from);
+  await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'needs-input');
+  await expect(page.locator('#decision-title')).toHaveText('Start with your visit date');
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false }));
+    document.querySelectorAll<HTMLInputElement>('[data-check]').forEach((check) => { check.checked = true; });
+  });
+  await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+  await expect(page.locator('#checklist-progress')).toHaveText('0 of 5 items reviewed by you');
+  await expect(page.locator('#decision-title')).toHaveText('Start with your visit date');
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'not-required-under-rule');
+  await page.locator('[data-check]').first().check();
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    document.querySelectorAll<HTMLInputElement>('[data-check]')[1].checked = true;
+  });
+  await expect(page.locator('[data-check]:checked')).toHaveCount(2);
+  await expect(page.locator('#checklist-progress')).toHaveText('2 of 5 items reviewed by you');
+  const expiry = Date.parse(rule.reviewed_at) + 168 * 3_600_000;
+  await page.clock.setFixedTime(new Date(expiry + 1));
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'stale');
+  await expect(page.locator('#decision-title')).toHaveText('Entry guidance needs a fresh review');
+  await expect(page.locator(`[data-reviewed="${rule.reviewed_at}"]`).first()).toContainText('Needs a fresh review');
+  await expect(page.locator('[data-check]:checked')).toHaveCount(2);
+  await expect(page.locator('#checklist-progress')).toHaveText('2 of 5 items reviewed by you');
+});
+
 test('all pilot pages fit a 360px viewport without horizontal scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   for (const path of ['/', '/parks/', '/parks/yosemite/', '/parks/rocky-mountain/', '/parks/yellowstone/', '/parks/zion/', '/parks/grand-canyon/', '/sources/']) {

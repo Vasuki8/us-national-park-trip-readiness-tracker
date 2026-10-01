@@ -1,14 +1,22 @@
 # Project status and handoff
 
-Updated: **October 1, 2026 (Toronto time), after the approved PR #5 merge and verified live update**.
+Updated: **October 1, 2026 (Toronto time), during trip-return state development**.
 
 ## Current development handoff
 
-Continue on **`main`**. The owner explicitly approved merging and deploying [PR #5](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/5); it is integrated and live at verified commit **`696f95868568198ef61f428ee53f765731879983`**. The approved PR head `43f75bd1306d3a70c5989a607c829b0759b208f9` and merge have the same tree. Exact default-branch [Verify pilot #178](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36889139145) passed **777 tests**, zero Astro diagnostics, both 14-page builds and all three retained accessibility screenshots. [Deployment #4](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36890126850) published that existing artifact and verified **21 public files and 14 pages in one attempt** at **2026-10-01T16:12:12.182Z**. Detailed artifact and rollback receipts are below.
+Continue on **`codex/trip-return-state`**, based on integrated `main` commit `c32e6c7762d0677229ddb1102f6abe24e50135bc`. Browser-restored trip controls previously left a submitted decision and completed checklist tied to old details. Queued `pageshow` reconciliation now reads the restored date, time, area and special-case controls; changed selections clear the old checklist and refresh an already submitted decision. Unchanged persisted returns preserve checks and synchronize progress; fresh loads clear browser-restored checks. Minute/visibility refreshes and submission also detect silent selection changes. Return refreshes guidance age immediately, and unsubmitted trips still require an explicit first check. Unchanged progress avoids repeated live-region writes; no storage or transmission is added.
+
+Six new actual-script regressions first reproduced six failures; all eight trip-script tests then passed. Fresh local verification passed **223 Node + 432 Python + 44 generated-site tests = 699 tests**, zero Astro diagnostics and both 14-page builds. Three browser regressions cover both hosting paths and synthetic restoration ordering. Local browser execution remains unavailable on Ubuntu 26.04; the supported CI browser suites must pass on the exact PR head before integration. Independent review found no actionable issues after the focused suite and seven supplemental actual-script probes. These checks do not establish every browser's restoration policy or screen-reader behavior.
+
+Next: inspect the exact development-head PR verification, then obtain the owner's integration/publication decision for this new update. The live release and original public source clocks remain the baseline below. No collection, data promotion, private checkpoint, merge or deployment was performed for this development increment. Indexing, advertising and recurring operations retain their separate operator decisions.
+
+### Approved PR #5 release baseline
+
+The owner explicitly approved merging and deploying [PR #5](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/5); it is integrated and live at verified commit **`696f95868568198ef61f428ee53f765731879983`**. The approved PR head `43f75bd1306d3a70c5989a607c829b0759b208f9` and merge have the same tree. Exact default-branch [Verify pilot #178](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36889139145) passed **777 tests**, zero Astro diagnostics, both 14-page builds and all three retained accessibility screenshots. [Deployment #4](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36890126850) published that existing artifact and verified **21 public files and 14 pages in one attempt** at **2026-10-01T16:12:12.182Z**. Detailed artifact and rollback receipts are below.
 
 The published update includes accurate hosted-pilot copy, restored directory filtering/counts, quieter trip/count announcements, private storage-boundary repairs and provider URL normalization fixes. Public data remains snapshot **`pilot-08efc3ad8281`**, with the original guidance and alert clocks. Alerts are stale under the four-hour rule; no source collection or data promotion was performed for this code release. Noindex, ad-free status and manual operations remain in force.
 
-Next: continue ordinary development on `main`; use the existing private collection/review/backup and paired-promotion runbooks for separately authorized source updates. Indexing, advertising and recurring operations keep their separate operator decisions. The following documentation handoff does not publish a different artifact.
+Use the existing private collection/review/backup and paired-promotion runbooks for separately authorized source updates. A development or documentation handoff does not publish a different artifact.
 
 ### PR #5 implementation evidence before integration
 
