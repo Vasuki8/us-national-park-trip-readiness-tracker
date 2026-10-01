@@ -18,6 +18,8 @@ test('printed park pages keep official destinations, link reviews and source clo
     await expect(page.locator('.breadcrumb')).toBeHidden();
     await expect(page.locator('#print-page')).toBeHidden();
     await expect(page.locator('#reset-checklist')).toBeHidden();
+    await expect(page.locator('#check-entry')).toBeHidden();
+    await expect(page.locator('.checklist-actions')).toBeHidden();
     await expect(page.locator('.planning-grid')).toHaveCSS('grid-template-columns', /^[\d.]+px$/);
 
     for (const resource of resources.filter(item => item.park_code === park.code)) {
@@ -89,11 +91,16 @@ test('without JavaScript browser-menu printing preserves static provenance and d
     const page = await context.newPage();
     await page.goto('/parks/yosemite/');
     await expect(page.locator('#print-page')).toBeDisabled();
-    await expect(page.getByText('Without JavaScript, use your browser’s print menu.')).toBeVisible();
+    // Playwright text selectors intentionally skip noscript subtrees.
+    const fallback = page.locator('.checklist-panel noscript p');
+    await expect(fallback).toBeVisible();
+    await expect(fallback).toHaveText('Without JavaScript, use your browser’s print menu.');
     await page.emulateMedia({ media: 'print' });
     await expect(page.locator('#print-snapshot')).toBeVisible();
     await expect(page.locator('#print-snapshot')).toContainText('self-reported checks do not verify bookings or conditions');
-    await expect(page.locator('#print-snapshot')).toContainText('Freshness is not recalculated without JavaScript');
+    const freshnessNotice = page.locator('#print-snapshot noscript p');
+    await expect(freshnessNotice).toBeVisible();
+    await expect(freshnessNotice).toContainText('Freshness is not recalculated without JavaScript');
     await expect(page.locator('#print-time')).toHaveText('Print time not recorded');
     await expect(page.locator('#print-time')).not.toHaveAttribute('datetime');
     await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'needs-input');
