@@ -4,7 +4,9 @@ Use this sequence for the first real five-park capture and review session. Run f
 
 ## 1. Choose the working and backup storage
 
-The owner must choose durable private Linux/macOS/WSL storage outside the repository and a separate owner-controlled backup destination. Both roots below must already exist, be owner-only (`0700`) and have no symlink ancestry. Keep the second root on storage separate from the working ledger. An ephemeral development workspace, repository, Actions artifact or public/synced folder does not meet this prerequisite.
+The owner must choose durable private Linux/macOS/WSL storage outside the website repository and a separate owner-controlled backup destination. For the filesystem-copy route, both roots below must already exist, be owner-only (`0700`) and have no symlink ancestry; keep the second root on storage separate from the working ledger. An ephemeral development workspace, the public website repository, an Actions artifact or a public/synced folder does not meet this prerequisite.
+
+The owner selected a dedicated private GitHub repository for the remote second copy on September 30, 2026. Follow [GITHUB_PRIVATE_BACKUP.md](GITHUB_PRIVATE_BACKUP.md) instead of the second-root copy below: verify the local bundle, upload only the selected checkpoint, download it freshly from GitHub, verify it and rehearse restoration. Local working/transfer/recovery paths still require owner-only WSL permissions. A setup probe or a local Git clone alone does not prove a real remote backup.
 
 Replace these example absolute paths before running any command:
 
@@ -59,6 +61,8 @@ trip_backup_id=RETURNED_BACKUP_ID
 uv run --frozen python -m tracker.entry_review_backup verify \
   --backup "$trip_private/entry-review-backups/$trip_backup_id"
 ```
+
+For the selected GitHub route, now use the upload and fresh-download recovery procedure in [GITHUB_PRIVATE_BACKUP.md](GITHUB_PRIVATE_BACKUP.md). Use the freshly downloaded, verified current-head bundle in later readiness checks. The following second-root copy remains the alternative for separately mounted private storage.
 
 Copy that entire verified bundle to the separate root, retaining its ID directory name and owner-only permissions. This copy refuses an existing destination:
 
@@ -147,3 +151,5 @@ Exit `1` means release gates remain blocked, not that the report failed. Public 
 ## Development rehearsal
 
 On September 30, 2026, this sequence was rehearsed with disposable synthetic source captures: five packets, six unresolved holds, backup and second-copy verification, and an exactly matching restored ledger. Offline all-park status created no staging files. Public data remained unchanged and readiness stayed blocked. No real network request, human approval or durable-storage proof was produced by that rehearsal.
+
+The subsequent real session captured all five entry pages and 17 alert notices, uploaded the owner-approved checkpoints to the selected private GitHub repository, and verified a fresh remote download, ledger restore and all five archive chains. Six guidance proposals still await human context review. See the current handoff at the top of `PROJECT_STATUS.md` and the real recovery receipt in [GITHUB_PRIVATE_BACKUP.md](GITHUB_PRIVATE_BACKUP.md). These real backup results do not establish source approval or publication.

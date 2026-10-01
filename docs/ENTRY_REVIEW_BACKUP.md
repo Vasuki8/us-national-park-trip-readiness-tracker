@@ -140,7 +140,7 @@ Before a real NPS editorial session, the owner should choose where the second ve
 
 The project does not currently automate that second copy, encryption, retention/rotation, cloud storage or removable-media handling.
 
-Do not use GitHub repositories, Actions artifacts or public/synced folders as the private editorial backup.
+The owner selected a separate private GitHub repository as the remote second copy on September 30, 2026. Follow [GITHUB_PRIVATE_BACKUP.md](GITHUB_PRIVATE_BACKUP.md) for the exact private-repository boundary, selected two-file bundles, fresh-download verification and restore rehearsal. This owner-selected policy supersedes the older blanket restriction against GitHub repositories. Public repositories, Actions artifacts and public/synced folders remain unsuitable. The existing local POSIX checks and current-head backup requirements remain in force.
 
 ## Threat-model boundary
 
