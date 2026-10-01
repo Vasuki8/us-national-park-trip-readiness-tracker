@@ -17,6 +17,21 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(self.store.read('yose'), [])
         self.assertFalse(self.root.exists())
 
+    def test_archive_destination_requires_absolute_storage_outside_the_whole_checkout(self):
+        project = Path(__file__).resolve().parents[1]
+        destinations = [Path('state/alert-history'), Path('../alert-history'), project,
+                        project.parent, project/'state/alert-history',
+                        project/'.superpowers/private-history', project/'unlisted-private-history',
+                        self.root/'..'/'other-history']
+        if project.anchor == '/':
+            destinations.extend([Path('/' + str(project))/'state/alert-history',
+                                 Path('/' + str(project.parent))])
+        for destination in destinations:
+            with self.subTest(destination=str(destination)):
+                with self.assertRaisesRegex(HistoryError, 'unsafe_archive_destination'):
+                    HistoryStore(destination)
+        self.assertFalse(self.root.exists())
+
     def test_round_trip_reconstructs_text_and_original_clocks(self):
         original = snapshot()
         identifier = self.store.append(original)

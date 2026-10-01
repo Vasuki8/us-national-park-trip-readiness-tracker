@@ -25,6 +25,8 @@ Once a reconciliation has created ledger-held baselines, later record events aut
 
 Use absolute private paths outside the checkout and owner-only input files.
 
+The shared editorial file guard checks canonical containment outside the checkout and its ancestors after refusing raw relative/traversal paths and symlink ancestry. Alternate Linux spellings such as doubled leading slashes cannot bypass that boundary. Ordinary external paths are canonicalized; permissions and single-link regular-file checks remain required. This check performs no migration, chmod or repair of existing storage.
+
 ```sh
 uv run --frozen python -m tracker.entry_review_cli status \
   --store /absolute/private/entry-review

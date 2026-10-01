@@ -1,13 +1,19 @@
 import { test, expect } from '@playwright/test';
 import { historyDigest } from '../scripts/validate-history.ts';
-import { PUBLIC_PILOT_FRESH_TIME, publicHistories, publicParkSnapshots, publicParks } from './pilot-clock.ts';
+import { describeHistory } from '../src/lib/history.ts';
+import { PUBLIC_PILOT_REFERENCE_TIME, publicHistories, publicParkSnapshots, publicParks } from './pilot-clock.ts';
 const fixtureBase = 'http://127.0.0.1:4322';
-test('production changes page and all parks retain paired public baselines without fixture text', async ({ page }) => {
-  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
+const publicObservations = publicHistories.flatMap((history) => history.observations);
+const expectedClocks = (snapshot: (typeof publicParkSnapshots)[number], history: (typeof publicHistories)[number]) => [
+  ...(snapshot.last_successful_fetch_at ? [snapshot.last_successful_fetch_at] : []),
+  ...history.observations.map((observation) => observation.checked_at),
+];
+test('production changes page and all parks retain paired public history without fixture text', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_REFERENCE_TIME));
   await page.goto('/changes/');
   await expect(page.locator('[data-history]')).toHaveCount(5);
-  await expect(page.getByText('Baseline recorded', { exact: true })).toHaveCount(5);
-  await expect(page.locator('[data-history-observation]')).toHaveCount(5);
+  await expect(page.getByText('Baseline recorded', { exact: true })).toHaveCount(publicObservations.filter((item) => item.comparison === 'baseline').length);
+  await expect(page.locator('[data-history-observation]')).toHaveCount(publicObservations.length);
   for (const park of publicParks) {
     const snapshot = publicParkSnapshots.find((item) => item.park_code === park.code)!;
     const history = publicHistories.find((item) => item.park_code === park.code)!;
@@ -18,23 +24,21 @@ test('production changes page and all parks retain paired public baselines witho
     };
     const overview = page.locator(`#history-${park.code}`);
     expect(JSON.parse((await overview.getAttribute('data-history-metadata'))!)).toEqual(expectedMetadata);
-    expect(await overview.locator('time').evaluateAll((items) => items.map((el) => el.getAttribute('datetime')))).toEqual([
-      snapshot.last_successful_fetch_at, ...history.observations.map((observation) => observation.checked_at),
-    ]);
-    await expect(overview.locator('[data-history-status]')).toHaveText('Recent feed check; coverage remains limited');
+    expect(await overview.locator('time').evaluateAll((items) => items.map((el) => el.getAttribute('datetime')))).toEqual(expectedClocks(snapshot, history));
+    await expect(overview.locator('[data-history-status]')).toHaveText(describeHistory(snapshot, new Date(PUBLIC_PILOT_REFERENCE_TIME)).title);
   }
   for (const park of publicParks) {
     const snapshot = publicParkSnapshots.find((item) => item.park_code === park.code)!;
     const history = publicHistories.find((item) => item.park_code === park.code)!;
     await page.goto(`/parks/${park.slug}/`);
     await expect(page.locator('[data-history]')).toHaveCount(1);
-    await expect(page.getByText('Baseline recorded', { exact: true })).toBeVisible();
+    const baselines = history.observations.filter((item) => item.comparison === 'baseline').length;
+    await expect(page.getByText('Baseline recorded', { exact: true })).toHaveCount(baselines);
     await expect(page.locator('[data-history-observation]')).toHaveCount(history.observations.length);
-    expect(await page.locator('[data-history] time').evaluateAll((items) => items.map((el) => el.getAttribute('datetime')))).toEqual([
-      snapshot.last_successful_fetch_at, ...history.observations.map((observation) => observation.checked_at),
-    ]);
-    await expect(page.locator('[data-history]')).toContainText('not evidence that its restrictions began at this time');
-    await expect(page.locator('[data-history-status]')).toHaveText('Recent feed check; coverage remains limited');
+    expect(await page.locator('[data-history] time').evaluateAll((items) => items.map((el) => el.getAttribute('datetime')))).toEqual(expectedClocks(snapshot, history));
+    if (baselines) await expect(page.locator('[data-history]')).toContainText('not evidence that its restrictions began at this time');
+    else await expect(page.locator('[data-history]')).not.toContainText('not evidence that its restrictions began at this time');
+    await expect(page.locator('[data-history-status]')).toHaveText(describeHistory(snapshot, new Date(PUBLIC_PILOT_REFERENCE_TIME)).title);
     expect(await page.content()).not.toContain('historyInjected');
   }
 });

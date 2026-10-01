@@ -4,13 +4,13 @@ This command connects the existing collector to the existing evidence archive. I
 
 ## Commands
 
-Use Python 3.12+ and the project's frozen uv environment. Choose owner-controlled local storage. Under this repository, `state/` is already ignored by Git.
+Use Python 3.12+ and the project's frozen uv environment. Choose an explicit absolute path to owner-controlled private local storage outside the entire checkout. On Windows, use the WSL Linux filesystem for real evidence. Follow `docs/DURABLE_COLLECTION_SESSION.md` for the separate owner-only operator session and backup procedure; a Git-ignored checkout directory is not a private destination.
 
 ```sh
-uv run --frozen python -m tracker.stage status --park yose --staging-dir state/staging
+uv run --frozen python -m tracker.stage status --park yose --staging-dir /absolute/private/alert-staging
 uv run --frozen python -m tracker.stage status --park all --staging-dir /absolute/private/alert-staging
-uv run --frozen python -m tracker.stage collect --live --park yose --staging-dir state/staging
-uv run --frozen python -m tracker.stage recover --park yose --staging-dir state/staging
+uv run --frozen python -m tracker.stage collect --live --park yose --staging-dir /absolute/private/alert-staging
+uv run --frozen python -m tracker.stage recover --park yose --staging-dir /absolute/private/alert-staging
 uv run --frozen python -m tracker.stage collect --live --park all --staging-dir /absolute/private/alert-staging
 ```
 
@@ -18,7 +18,7 @@ uv run --frozen python -m tracker.stage collect --live --park all --staging-dir 
 
 The five-park command checks every park's archive, pending receipt, writer locks and collection clock before making its first request. This reduces avoidable partial batches; another writer or a provider/storage failure can still interrupt the sequential run. Its JSON `checks` list contains only completed archive summaries. Exit `0` means all five checks were successfully archived, **not** that the alerts were reviewed, published, or exhaustive. Exit `1` means all five attempts were archived but at least one provider check failed or was quarantined. Exit `2` means a precheck or execution failed; an `interrupted` report can contain earlier committed parks. Inspect each park with `status`, recover any pending receipt offline, and then decide whether another live collection is appropriate. Never assume that retrying the whole batch is atomic or resumes the original attempt.
 
-The separate keyed read-only preflight validated the five current provider responses, as recorded in `docs/NPS_PREFLIGHT.md`. The new durable batch command has only been exercised with synthetic transport in tests; no real private archive was created while implementing this increment.
+The separate keyed read-only preflight and the subsequent owner-approved launch collection are recorded in the current handoff. Development regressions use synthetic transport; they do not establish a new real capture, backup, human approval or release.
 
 ## Transaction and recovery
 
@@ -48,10 +48,12 @@ Staging and archive locks are never stolen or removed automatically. After abnor
 
 Pending state is limited to 32 regular files and 60 MiB, with 10 MiB per receipt/object. A write reserves space for both temporary and final names before creation. Orphan temporary files are bounded and ignored as uncommitted state, not automatically pruned. The existing archive's disk, history-count and reconstruction limits still apply. A full/damaged archive leaves a durable receipt pending rather than promoting candidate data to the website.
 
-Roots inside source/site/Git directories, including both `dist/` and `dist-pages/` and their descendants, traversal paths, symlinks and non-regular pending files are refused. Destination checks happen before collection requests or staging writes. This is trusted local-filesystem tooling, not protection against a hostile process with the same filesystem permissions. Hashes detect accidental corruption, not an attacker rewriting both content and hashes. Existing directory permissions and off-host backup remain the operator's responsibility.
+Relative roots, every checkout descendant (including ignored `state/` and `.superpowers/` directories), the checkout and its ancestors, traversal paths, symlinks and non-regular pending files are refused. The staging and archive APIs share the destination guard; checks happen before collection requests or staging writes. This is trusted local-filesystem tooling, not protection against a hostile process with the same filesystem permissions. Hashes detect accidental corruption, not an attacker rewriting both content and hashes. Existing directory permissions and off-host backup remain the operator's responsibility.
+
+Older in-checkout staging roots are refused even for status or recovery. This repair does not move, delete, chmod or recover retained stores. Follow the existing backup/recovery runbooks and deliberately prepare an external private copy before using these commands again.
 
 Python documents `os.replace` atomic renaming and `os.fsync`; same-directory writes and the existing archive primitive are used here: https://docs.python.org/3.12/library/os.html#os.replace and https://docs.python.org/3.12/library/os.html#os.fsync . Process-interruption tests are not hardware power-loss, Windows durability or network-filesystem guarantees.
 
 ## Remaining release gates
 
-No public-history projection, actual live source fixture, automatic source-change review, scheduled persistent store, deployment or rollback was enabled. GitHub Actions ephemeral checkouts do not establish ongoing archive persistence. Resolve operator-controlled storage and validate live compatibility before scheduling. Public-history projection, source-content review and deployment gates remain separate.
+The current pilot's reviewed data and verified hosting are recorded in the handoff. Staging does not clear source-content review, backup, public promotion or deployment gates. No collection schedule or automatic deployment is enabled. GitHub Actions ephemeral checkouts do not establish ongoing archive persistence; recurring operations still require their separate operator decision.

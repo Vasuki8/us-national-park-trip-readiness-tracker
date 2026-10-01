@@ -32,6 +32,40 @@ class StagingTests(unittest.TestCase):
         self.assertFalse((self.root/'pending/yose.json').exists())
         self.assertNotIn('Synthetic', json.dumps(result)); self.assertNotIn('test.htm', json.dumps(result))
 
+    def test_directory_url_is_archived_unchanged_across_successful_checks(self):
+        url = 'https://inciweb.wildfire.gov/incident/example/?view=full#details'
+        first = self.run_check(records=[raw(url=url)])
+        self.assertEqual(first['collection_status'], 'success')
+        self.assertEqual(first['comparison'], 'baseline')
+        before = self.stage.archive.read('yose')[-1]['snapshot']
+        self.assertEqual(before['records'][0]['url'], url)
+        second = self.run_check(T1, records=[raw(url=url)])
+        self.assertEqual(second['collection_status'], 'success')
+        self.assertEqual(second['comparison'], 'compared')
+        self.assertEqual(second['change_count'], 0)
+        after = self.stage.archive.read('yose')[-1]['snapshot']
+        self.assertEqual(after['records'], before['records'])
+        self.assertEqual(after['last_successful_fetch_at'], T1)
+        self.assertIsNone(after['source_updated_at']); self.assertIsNone(after['published_at'])
+
+    def test_unsafe_directory_urls_retain_accepted_directory_evidence(self):
+        self.run_check(records=[raw(url='https://www.nps.gov/yose/conditions/')])
+        before = self.stage.archive.read('yose')[-1]['snapshot']
+        self.assertEqual(before['collection_status'], 'success')
+        for at, path in [(T1, '//rejected-directory/'), (T2, '/yose/%2e%2e/rejected-directory/'),
+                         (T3, '/yose/rejected-directory//')]:
+            with self.subTest(path=path):
+                result = self.run_check(at, records=[raw(url='https://example.org' + path)])
+                self.assertEqual(result['collection_status'], 'quarantined')
+                self.assertEqual(result['comparison'], 'not_compared')
+                self.assertEqual(result['change_count'], 0)
+                after = self.stage.archive.read('yose')[-1]['snapshot']
+                self.assertEqual(after['records'], before['records'])
+                self.assertEqual(after['last_successful_fetch_at'], T0)
+                self.assertEqual(after['last_checked_at'], at)
+        for file in self.root.rglob('*.json'):
+            self.assertNotIn('rejected-directory', file.read_text())
+
     def test_successful_empty_feed_is_baseline_not_all_clear(self):
         result = self.run_check(records=[])
         self.assertEqual(result['collection_status'], 'success')
@@ -154,6 +188,20 @@ class StagingTests(unittest.TestCase):
         project = Path(__file__).resolve().parents[1]
         for folder in ('', 'data/new-stage', 'public/new-stage', 'src/new-stage', '.git/new-stage'):
             with self.subTest(folder=folder), self.assertRaises(HistoryError): StagingCollector(project/folder)
+
+    def test_staging_destination_requires_absolute_storage_outside_the_whole_checkout(self):
+        project = Path(__file__).resolve().parents[1]
+        destinations = [Path('state/staging'), Path('../staging'), project.parent,
+                        project/'state/staging', project/'.superpowers/private-staging',
+                        project/'unlisted-private-staging', self.root/'..'/'other-stage']
+        if project.anchor == '/':
+            destinations.extend([Path('/' + str(project))/'state/staging',
+                                 Path('/' + str(project.parent))])
+        for destination in destinations:
+            with self.subTest(destination=str(destination)):
+                with self.assertRaisesRegex(HistoryError, 'unsafe_staging_destination'):
+                    StagingCollector(destination)
+        self.assertFalse(self.root.exists())
 
     def test_receipt_size_limit_refuses_oversize_without_reading_all_bytes(self):
         (self.root/'pending').mkdir(parents=True)

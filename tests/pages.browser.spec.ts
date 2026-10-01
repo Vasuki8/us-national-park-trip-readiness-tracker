@@ -1,6 +1,29 @@
 import { test, expect } from '@playwright/test';
-import { PUBLIC_PILOT_FRESH_TIME } from './pilot-clock.ts';
+import { guidanceScenarioTime, publicRules } from './pilot-clock.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
+
+test('project-path directory resynchronizes restored filters on page return', async ({ page }) => {
+  for (const route of [base, `${base}parks/`]) {
+    await page.goto(route);
+    // A browser can restore controls without dispatching input/change events.
+    await page.evaluate(() => {
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      document.querySelector<HTMLInputElement>('#park-search')!.value = 'rocky';
+      document.querySelector<HTMLSelectElement>('#state-filter')!.value = 'Colorado';
+    });
+    await expect(page.locator('[data-park-card]:visible')).toHaveCount(1);
+    await expect(page.locator('[data-park-card]:visible h3')).toContainText('Rocky Mountain');
+    await expect(page.locator('#search-count')).toHaveText('1 park shown');
+    await expect(page.locator('#empty-search')).toBeHidden();
+    await page.evaluate(() => {
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      document.querySelector<HTMLInputElement>('#park-search')!.value = '';
+      document.querySelector<HTMLSelectElement>('#state-filter')!.value = '';
+    });
+    await expect(page.locator('[data-park-card]:visible')).toHaveCount(5);
+    await expect(page.locator('#search-count')).toHaveText('5 parks shown');
+  }
+});
 
 test('project-path search and navigation load working assets', async ({ page }) => {
   const failures: string[] = [];
@@ -19,7 +42,7 @@ test('project-path search and navigation load working assets', async ({ page }) 
 });
 
 test('project-path entry checker and checklist remain interactive', async ({ page }) => {
-  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'romo' && rule.areas.includes('bear-lake')))));
   await page.goto(`${base}parks/rocky-mountain/`);
   await page.getByLabel('Visit date').fill('2026-09-30');
   await page.getByLabel('Planned area').selectOption('bear-lake');

@@ -10,9 +10,13 @@ if (search && filter) {
       card.hidden = !(card.dataset.search?.includes(query) && (!filter.value || states.includes(filter.value)));
       if (!card.hidden) count += 1;
     }
-    document.querySelector('#search-count')!.textContent = `${count} ${count === 1 ? 'park' : 'parks'} shown`;
+    const resultCount = document.querySelector('#search-count')!;
+    const label = `${count} ${count === 1 ? 'park' : 'parks'} shown`;
+    if (resultCount.textContent !== label) resultCount.textContent = label;
     document.querySelector<HTMLElement>('#empty-search')!.hidden = count !== 0;
   };
   search.addEventListener('input', update);
   filter.addEventListener('change', update);
+  window.addEventListener('pageshow', () => { window.setTimeout(update, 0); });
+  update();
 }

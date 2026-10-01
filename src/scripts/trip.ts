@@ -12,8 +12,10 @@ if (context) {
   const selection = (): Trip => ({ park_code: context.dataset.park!, date: date.value, time: time.value, area: area.value, special_case: special.checked });
   const showDecision = () => {
     const result = evaluateEntry(rules, selection(), new Date());
-    document.querySelector('#decision-title')!.textContent = result.title;
-    document.querySelector('#decision-detail')!.textContent = result.detail;
+    const title = document.querySelector('#decision-title')!;
+    const detail = document.querySelector('#decision-detail')!;
+    if (title.textContent !== result.title) title.textContent = result.title;
+    if (detail.textContent !== result.detail) detail.textContent = result.detail;
     document.querySelector<HTMLElement>('#entry-decision')!.dataset.state = result.state;
   };
   const progress = () => {

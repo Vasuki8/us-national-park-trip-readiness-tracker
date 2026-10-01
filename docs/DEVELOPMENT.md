@@ -6,17 +6,33 @@
 
 `src/lib/readiness.ts` is the pure clock-injected decision layer. `scripts/validate-data.ts` gates build-time inventory, hashes, timestamp coherence and source scope. `tracker/alerts.py` handles injectable collection, bounded transport and atomic writes. Astro pages/components render meaningful HTML, and small browser scripts handle search and page-only trip choices. Tests use synthetic provider responses, never live network requests.
 
+The park directory applies the current search and state values on initialization and after page return (`pageshow`), as well as normal input/change events. Page-return resync runs in a zero-delay timer because persisted form restoration can follow the event; see [the documented history-traversal ordering](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event). Cards, the result count and the empty state then follow restored controls without input events. Unchanged counts do not rewrite the live-region text. The application adds no storage, URL parameters or transmission of search selections.
+
 ## Clock semantics
 
 `reviewed_at` is our page review, not a publisher change time. `last_checked_at` is an attempted collection. `last_successful_fetch_at` advances only after a complete valid feed. `observed_first_at` and `observed_changed_at` are our observations, not the true start of an event. `source_updated_at` stays null without trustworthy field-specific source evidence. `built_at` is artifact creation; `published_at` stays null without separately established publication metadata. Deploying an existing verified artifact does not rewrite its manifest or source clocks.
 
 The browser recalculates freshness every minute and when the tab becomes visible. Entry review expiration is 168 hours; alert expiration is four hours. Stale guidance remains readable as historical evidence but cannot grant a current exemption. Trip dates/times are wall-clock values at the park, not UTC conversions from the browser timezone.
 
+Trip decisions replace live-region text only when the displayed title or detail changes. Minute and visibility refreshes still recalculate freshness, including the seven-day expiry transition, without repeatedly rewriting an unchanged result. Trip edits retain the existing checklist reset behavior.
+
+Production verification follows the current paired histories, including later observations and bounded views whose original baseline is no longer visible. Exact metadata, clocks, observation/baseline counts and omission disclosures remain checked. The generated-history regression builds the real component with the isolated archive fixtures and checks both valid views and corrupted output. The generated-site release suite still requires successful public snapshots; accepting degraded synthetic history rendering is not release approval.
+
+`tests/pilot-clock.ts` provides a reference after every known review and attempted/successful feed check. That clock avoids future evidence without making every source fresh. Browser coverage checks preserve each source's independent age; deliberate annual-guidance scenarios use the selected reviews' own clocks and explicit visit dates. Historical/synthetic cases keep independent fixed clocks.
+
 ## Collection limits
 
 The collector uses only a fixed NPS HTTPS endpoint. Its private key is in a request header, and redirects are disabled. It permits three attempts with bounded waits, 100 pages and 5,000 total records. Pagination counts must remain stable and IDs unique. A drop of more than half the last-good records is quarantined for review. This conservative threshold intentionally favors retaining notices over implying reopening; a later operator workflow must resolve legitimate mass removals.
 
 The private collector/archive/staging path retains normalized evidence and immutable history receipts, excluding API headers and raw HTTP responses; see `docs/STAGING_COLLECTION.md`. Detailed operator captures, checkpoint metadata and recovery receipts belong in the private handoff outside the website checkout. Public alert updates require deliberate reviewed promotion. Astro escapes notice strings and browser scripts use textContent, not untrusted innerHTML. `parkCode` determines alert scope; a provider URL can be absent, or a validated provider-supplied HTTPS destination. Nullable URLs and safe external links are covered by the tested normalization contract documented in `docs/NPS_PREFLIGHT.md`.
+
+Python collection/archive validation and the public TypeScript validators accept ordinary directory URLs ending in one slash. Validation compares decoded paths without rewriting the stored URL or its normalized-record hash; traversal, repeated separators (including leading `//`) and backslashes remain refused. `tests/notice-url-pipeline.test.ts` runs the actual synthetic staging/archive exporter through snapshot, history, preview and in-memory promotion validation, including unchanged/edited links and failed/quarantined attempts. Its disposable external archive and simulated review envelope do not establish real collection, approval or publication.
+
+The collector also percent-decodes query/fragment text once before its existing credential-like pattern check, matching archive validation. This prevents read-only preflight from reporting `verified` for encoded sensitive inputs that the archive would reject. Default quarantine snapshots preserve accepted evidence and the success clock with a generic review error, advancing only the attempted-check clock; diagnostic mode exposes only the allowlisted reason. Staging retains its existing fallback for other archive-invalid candidates. Synthetic collector/preflight regressions cover the encoded refusal, report sanitization and exact safe URL/hash preservation.
+
+The alert archive and staging APIs share a destination guard before storage operations or requests. It requires an absolute path, rejects raw traversal and symlink ancestry, then checks canonical containment outside the entire checkout and its ancestors. This also rejects Linux doubled-leading-slash checkout aliases and ignored/unlisted checkout folders. Existing private stores are not automatically migrated or repaired; owner-only WSL setup and backup remain deliberate operator responsibilities.
+
+The separate POSIX editorial file guard also checks canonical containment after its raw path and symlink checks. Ledger, capture-input, backup and Python preview callers inherit that boundary, including refusal of doubled-leading-slash checkout/ancestor aliases. Owner-only permissions, single-link regular files and safe error codes retain their existing contracts.
 
 ## Release boundaries
 

@@ -10,8 +10,6 @@ from .history_store import HistoryStore
 LABELS = {'added': 'Notice added to the checked feed', 'edited': 'Notice text changed in the checked feed',
           'removed': 'Notice no longer present in the checked feed'}
 MAX_CHANGES_PER_OBSERVATION = 100
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROTECTED_DIRS = ('data', 'public', 'src', 'dist', 'dist-pages', 'tracker', 'tests', 'docs', '.git', '.github')
 
 def make_report(store: HistoryStore, code: str, limit: int) -> dict:
     require(type(limit) is int and 1 <= limit <= 100, 'invalid_report_limit')
@@ -46,8 +44,6 @@ def main(argv: list[str] | None = None) -> int:
         command.add_argument('--archive-dir', type=Path, required=True)
     args = parser.parse_args(argv)
     try:
-        destination = args.archive_dir.resolve()
-        require(destination != PROJECT_ROOT and not any(destination == PROJECT_ROOT / folder or PROJECT_ROOT / folder in destination.parents for folder in PROTECTED_DIRS), 'unsafe_archive_destination')
         store = HistoryStore(args.archive_dir)
         if args.command == 'record':
             with args.snapshot.open('rb') as handle:

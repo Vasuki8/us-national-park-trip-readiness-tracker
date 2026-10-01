@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { PUBLIC_PILOT_FRESH_TIME, PUBLIC_PILOT_STALE_TIME, publicParkSnapshots, publicParks } from './pilot-clock.ts';
-test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME)); });
+import { describeAlerts } from '../src/lib/readiness.ts';
+import { PUBLIC_PILOT_REFERENCE_TIME, PUBLIC_PILOT_STALE_TIME, guidanceScenarioTime, publicHistories, publicParkSnapshots, publicParks, publicRules } from './pilot-clock.ts';
+test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date(PUBLIC_PILOT_REFERENCE_TIME)); });
 test('keyboard search, state filtering and empty results', async ({ page }) => {
   const external: string[] = [];
   page.on('request', (request) => { if (!request.url().startsWith('http://127.0.0.1:4321/')) external.push(request.url()); });
@@ -18,6 +19,7 @@ test('keyboard search, state filtering and empty results', async ({ page }) => {
   expect(external).toEqual([]);
 });
 test('Yosemite date checks never reuse a year or stale review', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'yose'))));
   await page.goto('/parks/yosemite/');
   await page.getByLabel('Visit date').fill('2026-09-30');
   await page.getByRole('button', { name: 'Check entry guidance' }).click();
@@ -31,6 +33,7 @@ test('Yosemite date checks never reuse a year or stale review', async ({ page })
   await expect(page.locator('#decision-title')).toHaveText('Entry guidance needs a fresh review');
 });
 test('Rocky Mountain separates areas and exact time boundaries', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'romo' && rule.areas.includes('rest')))));
   await page.goto('/parks/rocky-mountain/');
   await page.getByLabel('Visit date').fill('2026-09-30');
   await page.getByRole('button', { name: 'Check entry guidance' }).click();
@@ -39,6 +42,7 @@ test('Rocky Mountain separates areas and exact time boundaries', async ({ page }
   await page.getByLabel('Arrival time').fill('08:00');
   await page.getByRole('button', { name: 'Check entry guidance' }).click();
   await expect(page.locator('#decision-title')).toHaveText('Outside this reviewed timed-entry window');
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'romo' && rule.areas.includes('bear-lake')))));
   await page.getByLabel('Planned area').selectOption('bear-lake');
   await page.getByRole('button', { name: 'Check entry guidance' }).click();
   await expect(page.locator('#decision-title')).toHaveText('Review your timed-entry reservation');
@@ -72,12 +76,17 @@ test('official links and evidence remain usable with JavaScript disabled', async
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4321/parks/yosemite/');
   const snapshot = publicParkSnapshots.find((item) => item.park_code === 'yose')!;
+  const history = publicHistories.find((item) => item.park_code === 'yose')!;
   expect(JSON.parse((await page.locator('#alert-status').getAttribute('data-snapshot'))!)).toEqual(snapshot);
-  await expect(page.getByRole('heading', { name: 'Notices retained from the checked feed' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: snapshot.records[0].title, exact: true })).toBeVisible();
-  await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at!);
-  await expect(page.locator('[data-history-observation]')).toHaveCount(1);
-  await expect(page.getByText('Baseline recorded', { exact: true })).toBeVisible();
+  const retained = page.locator('section.panel').filter({ has: page.getByRole('heading', { name: 'Notices retained from the checked feed', exact: true }) });
+  await expect(retained).toHaveCount(snapshot.records.length ? 1 : 0);
+  if (snapshot.records.length) {
+    await expect(retained.getByRole('heading', { name: snapshot.records[0].title, exact: true })).toBeVisible();
+    await expect(retained.locator('article')).toHaveCount(snapshot.records.length);
+  }
+  await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at ?? 'Never');
+  await expect(page.locator('[data-history-observation]')).toHaveCount(history.observations.length);
+  await expect(page.getByText('Baseline recorded', { exact: true })).toHaveCount(history.observations.filter((observation) => observation.comparison === 'baseline').length);
   await expect(page.getByRole('link', { name: 'Read the official source', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Check entry guidance' })).toBeDisabled();
   await expect(page.locator('[data-check]').first()).toBeDisabled();
@@ -85,18 +94,19 @@ test('official links and evidence remain usable with JavaScript disabled', async
   await context.close();
 });
 
-test('successful checked feeds retain notices and never give a park-wide all-clear', async ({ page }) => {
+test('paired feed evidence retains notices and its independently aged limitations', async ({ page }) => {
   for (const park of publicParks) {
     const snapshot = publicParkSnapshots.find((item) => item.park_code === park.code)!;
     await page.goto(`/parks/${park.slug}/`);
     expect(JSON.parse((await page.locator('#alert-status').getAttribute('data-snapshot'))!)).toEqual(snapshot);
     await expect(page.locator('#alert-status')).toContainText('Coverage incomplete');
-    await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at!);
+    await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at ?? 'Never');
     await expect(page.locator('#alert-status a')).toHaveAttribute('href', park.conditions_url);
+    const expected = describeAlerts(snapshot, new Date(PUBLIC_PILOT_REFERENCE_TIME));
+    await expect(page.locator('#notice-title')).toHaveText(expected.title);
+    await expect(page.locator('#notice-detail')).toHaveText(expected.detail);
     const retained = page.locator('section.panel').filter({ has: page.getByRole('heading', { name: 'Notices retained from the checked feed', exact: true }) });
     if (snapshot.records.length) {
-      await expect(page.locator('#notice-title')).toHaveText('Official notices need your review');
-      await expect(page.locator('#notice-detail')).toContainText('not a park-wide status');
       await expect(retained.locator('article')).toHaveCount(snapshot.records.length);
       for (const record of snapshot.records) {
         const notice = retained.locator('article').filter({ has: page.getByRole('heading', { name: record.title, exact: true }) });
@@ -109,13 +119,48 @@ test('successful checked feeds retain notices and never give a park-wide all-cle
       }
     } else {
       await expect(retained).toHaveCount(0);
-      await expect(page.locator('#notice-title')).toHaveText('No alerts returned by the checked feed');
-      await expect(page.locator('#notice-detail')).toContainText('This is not an all-clear.');
     }
     await page.clock.setFixedTime(new Date(PUBLIC_PILOT_STALE_TIME));
     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-    await expect(page.locator('#notice-title')).toHaveText('The condition snapshot needs a fresh check');
+    const aged = describeAlerts(snapshot, new Date(PUBLIC_PILOT_STALE_TIME));
+    await expect(page.locator('#notice-title')).toHaveText(aged.title);
+    await expect(page.locator('#notice-detail')).toHaveText(aged.detail);
     expect(JSON.parse((await page.locator('#alert-status').getAttribute('data-snapshot'))!)).toEqual(snapshot);
-    await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
+    await page.clock.setFixedTime(new Date(PUBLIC_PILOT_REFERENCE_TIME));
   }
+});
+
+test('entry live-region text changes only when the displayed decision changes', async ({ page }) => {
+  const rule = publicRules.find((item) => item.park_code === 'yose')!;
+  await page.clock.install({ time: new Date(guidanceScenarioTime([rule])) });
+  await page.goto('/parks/yosemite/');
+  await page.getByLabel('Visit date').fill(rule.effective_from);
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  const decision = page.locator('#entry-decision');
+  await expect(decision).toHaveAttribute('role', 'status');
+  await expect(decision).toHaveAttribute('aria-live', 'polite');
+  await expect(decision).toHaveAttribute('data-state', 'not-required-under-rule');
+  await decision.evaluate((element) => {
+    element.setAttribute('data-text-changes', '0');
+    new MutationObserver((records) => {
+      element.setAttribute('data-text-changes', String(Number(element.getAttribute('data-text-changes')) + records.length));
+    }).observe(element, { childList: true, characterData: true, subtree: true });
+  });
+  await page.clock.fastForward(60_000);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(decision).toHaveAttribute('data-text-changes', '0');
+  const expiry = Date.parse(rule.reviewed_at) + 168 * 3_600_000;
+  await page.clock.setFixedTime(new Date(expiry));
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(decision).toHaveAttribute('data-state', 'not-required-under-rule');
+  await expect(decision).toHaveAttribute('data-text-changes', '0');
+  await page.clock.setFixedTime(new Date(expiry + 1));
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(decision).toHaveAttribute('data-state', 'stale');
+  await expect(page.locator('#decision-title')).toHaveText('Entry guidance needs a fresh review');
+  await expect.poll(async () => Number(await decision.getAttribute('data-text-changes'))).toBeGreaterThan(0);
+  const changed = await decision.getAttribute('data-text-changes');
+  await page.clock.fastForward(60_000);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(decision).toHaveAttribute('data-text-changes', changed!);
 });

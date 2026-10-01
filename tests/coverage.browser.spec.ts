@@ -1,19 +1,28 @@
-import { test, expect } from '@playwright/test';
-import { PUBLIC_PILOT_FRESH_TIME } from './pilot-clock.ts';
-test('source coverage distinguishes five reviewed parks from two dated-rule parks', async ({ page }) => {
-  await page.clock.install({ time: new Date(PUBLIC_PILOT_FRESH_TIME) });
+import { test, expect, type Page } from '@playwright/test';
+import { summarizeCoverage } from '../src/lib/source-coverage.ts';
+import { PUBLIC_PILOT_REFERENCE_TIME, PUBLIC_PILOT_STALE_TIME, publicNotes, publicParkSnapshots, publicParks, publicRules } from './pilot-clock.ts';
+const coverageInput = { parks: publicParks, rules: publicRules, notes: publicNotes, snapshots: publicParkSnapshots };
+async function assertLabels(page: Page, now: string) {
+  const expected = summarizeCoverage(coverageInput, new Date(now));
+  for (const row of expected.rows) {
+    await expect(page.locator(`[data-entry-label="${row.code}"]`)).toHaveText(row.entryLabel);
+    await expect(page.locator(`[data-alert-label="${row.code}"]`)).toHaveText(row.alertLabel);
+  }
+  return expected;
+}
+test('source coverage preserves stored guidance counts and each feed freshness', async ({ page }) => {
+  await page.clock.install({ time: new Date(PUBLIC_PILOT_REFERENCE_TIME) });
   await page.goto('/');
-  await expect(page.locator('[data-coverage-metric="storedReviewParks"]').first()).toHaveText('05');
-  await expect(page.locator('[data-coverage-metric="datedRuleParks"]').first()).toHaveText('02');
-  await expect(page.locator('[data-coverage-metric="recentAlertParks"]').first()).toHaveText('05');
-  await expect(page.locator('[data-alert-label]').filter({ hasText: 'Alert feed checked' })).toHaveCount(5);
-  await expect(page.locator('[data-entry-label]').filter({ hasText: 'Undated source review' })).toHaveCount(3);
+  const expected = await assertLabels(page, PUBLIC_PILOT_REFERENCE_TIME);
+  for (const metric of ['storedReviewParks', 'datedRuleParks', 'recentAlertParks'] as const) {
+    await expect(page.locator(`[data-coverage-metric="${metric}"]`).first()).toHaveText(String(expected[metric]).padStart(2, '0'));
+  }
   await page.clock.fastForward(8 * 24 * 60 * 60 * 1000);
+  await assertLabels(page, PUBLIC_PILOT_STALE_TIME);
   await expect(page.locator('[data-coverage-metric="recentAlertParks"]').first()).toHaveText('00');
-  await expect(page.locator('[data-alert-label]').filter({ hasText: 'Alert check needs refreshing' })).toHaveCount(5);
 });
 test('all three undated reviews remain unresolved for a future visit', async ({ page }) => {
-  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_REFERENCE_TIME));
   for (const slug of ['yellowstone', 'zion', 'grand-canyon']) {
     await page.goto(`/parks/${slug}/`);
     await expect(page.locator('[data-undated-guidance]')).toBeVisible();
@@ -24,14 +33,12 @@ test('all three undated reviews remain unresolved for a future visit', async ({ 
     await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'not-verified');
   }
 });
-test('directory review labels expire while the existing page stays open', async ({ page }) => {
-  await page.clock.install({ time: new Date(PUBLIC_PILOT_FRESH_TIME) });
+test('directory labels retain independent review and feed ages while the page stays open', async ({ page }) => {
+  await page.clock.install({ time: new Date(PUBLIC_PILOT_REFERENCE_TIME) });
   await page.goto('/parks/');
-  await expect(page.locator('[data-entry-label]').filter({ hasText: 'needs refreshing' })).toHaveCount(0);
-  await expect(page.locator('[data-alert-label]').filter({ hasText: 'Alert feed checked' })).toHaveCount(5);
+  await assertLabels(page, PUBLIC_PILOT_REFERENCE_TIME);
   await page.clock.fastForward(8 * 24 * 60 * 60 * 1000);
-  await expect(page.locator('[data-entry-label]').filter({ hasText: 'needs refreshing' })).toHaveCount(5);
-  await expect(page.locator('[data-alert-label]').filter({ hasText: 'Alert check needs refreshing' })).toHaveCount(5);
+  await assertLabels(page, PUBLIC_PILOT_STALE_TIME);
 });
 test('undated supporting evidence and limitations work without JavaScript', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });

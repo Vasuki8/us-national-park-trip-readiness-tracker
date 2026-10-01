@@ -152,6 +152,32 @@ class StageCliTests(unittest.TestCase):
         self.assertEqual(code, 2); self.assertEqual(json.loads(out)['error_code'], 'nps_key_not_configured')
         self.assertFalse(self.root.exists()); self.assertEqual(err, '')
 
+    def test_all_commands_refuse_unlisted_checkout_or_relative_roots_before_staging_access(self):
+        project = Path(__file__).resolve().parents[1]
+        destinations = [Path('state/staging'), project/'state/staging',
+                            project/'.superpowers/private-staging', project/'unlisted-private-staging',
+                            project.parent, self.root/'..'/'other-stage']
+        if project.anchor == '/':
+            destinations.extend([Path('/' + str(project))/'state/staging',
+                                 Path('/' + str(project.parent))])
+        for destination in destinations:
+            for command in ('status', 'recover', 'collect'):
+                with self.subTest(destination=str(destination), command=command):
+                    out, err = io.StringIO(), io.StringIO()
+                    confirmation = ['--live'] if command == 'collect' else []
+                    with patch.dict(os.environ, {'NPS_API_KEY': 'synthetic-private-key'}), \
+                         patch.object(StagingCollector, command, return_value={'operation': 'status'}) as operation, \
+                         patch('tracker.stage.request_page') as request, \
+                         redirect_stdout(out), redirect_stderr(err):
+                        code = main([command, '--park', 'yose', '--staging-dir', str(destination), *confirmation])
+                    self.assertEqual(code, 2)
+                    self.assertEqual(json.loads(out.getvalue())['error_code'], 'unsafe_staging_destination')
+                    self.assertEqual(err.getvalue(), '')
+                    operation.assert_not_called(); request.assert_not_called()
+                    self.assertNotIn(str(destination), out.getvalue())
+                    self.assertNotIn('synthetic-private-key', out.getvalue())
+        self.assertFalse(self.root.exists())
+
     def test_collect_refuses_pages_output_before_requests_or_writes(self):
         for park in ('yose', 'all'):
             for nested in (False, True):
@@ -169,7 +195,7 @@ class StageCliTests(unittest.TestCase):
                     def fetch(code, start, key):
                         requests.append(code)
                         return feed([raw(code=code)])
-                    with patch('tracker.staging.PROJECT_ROOT', project), \
+                    with patch('tracker.history_store.PROJECT_ROOT', project), \
                          patch('tracker.stage.utc_now', return_value=T0), \
                          patch('tracker.stage.request_page', side_effect=fetch), \
                          patch.dict(os.environ, {'NPS_API_KEY': 'synthetic-private-key'}), \

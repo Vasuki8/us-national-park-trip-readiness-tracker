@@ -97,6 +97,32 @@ class CliTests(unittest.TestCase):
             self.assertEqual(result, 2)
             self.assertIn('unsafe_archive_destination', err.getvalue())
 
+    def test_record_and_report_refuse_unlisted_checkout_or_relative_roots_before_archive_access(self):
+        project = Path(__file__).resolve().parents[1]
+        original = self.input.read_bytes()
+        destinations = [Path('state/alert-history'), project/'state/alert-history',
+                            project/'.superpowers/private-history', project/'unlisted-private-history',
+                            project.parent, self.root/'..'/'other-history']
+        if project.anchor == '/':
+            destinations.extend([Path('/' + str(project))/'state/alert-history',
+                                 Path('/' + str(project.parent))])
+        for destination in destinations:
+            for command in ('record', 'report'):
+                with self.subTest(destination=str(destination), command=command):
+                    out, err = io.StringIO(), io.StringIO()
+                    selection = ['--snapshot', str(self.input)] if command == 'record' else ['--park', 'yose']
+                    with patch.object(HistoryStore, 'append', return_value='a'*64) as append, \
+                         patch.object(HistoryStore, 'read', return_value=[]) as read, \
+                         contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = main([command, *selection, '--archive-dir', str(destination)])
+                    self.assertEqual(code, 2)
+                    self.assertEqual(out.getvalue(), '')
+                    self.assertIn('unsafe_archive_destination', err.getvalue())
+                    append.assert_not_called(); read.assert_not_called()
+                    self.assertNotIn(str(destination), err.getvalue())
+                    self.assertEqual(self.input.read_bytes(), original)
+        self.assertFalse(self.root.exists())
+
     def test_record_refuses_pages_output_without_writing_archive(self):
         original = self.input.read_bytes()
         for nested in (False, True):
@@ -110,7 +136,7 @@ class CliTests(unittest.TestCase):
                 destination = output/'private-history' if nested else output
                 before = {p:p.read_bytes() for p in project.rglob('*') if p.is_file()}
                 out, err = io.StringIO(), io.StringIO()
-                with patch('tracker.history.PROJECT_ROOT', project), \
+                with patch('tracker.history_store.PROJECT_ROOT', project), \
                      contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
                     code = main(['record', '--snapshot', str(self.input),
                                  '--archive-dir', str(destination)])

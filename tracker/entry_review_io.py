@@ -25,6 +25,10 @@ def check_path(value: Path) -> Path:
     for item in reversed((path, *path.parents)):
         if item.is_symlink():
             raise ReviewStoreError('symlink_private_path')
+    # POSIX permits a distinct lexical // anchor for the same local destination.
+    path = path.resolve()
+    require(path != REPO_ROOT and REPO_ROOT not in path.parents and path not in REPO_ROOT.parents,
+            'protected_repository_path')
     return path
 
 def private_stat(path: Path, *, directory: bool = False):
