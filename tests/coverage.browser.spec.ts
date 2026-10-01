@@ -49,7 +49,7 @@ test('all three undated reviews remain unresolved for a future visit', async ({ 
     await page.goto(`/parks/${slug}/`);
     await expect(page.locator('[data-undated-guidance]')).toBeVisible();
     await expect(page.locator('[data-undated-guidance]')).toContainText('Dates not published');
-    await expect(page.locator('[data-undated-guidance] a')).toHaveAttribute('href', /^https:\/\/www\.nps\.gov\//);
+    await expect(page.locator('[data-undated-guidance]').getByRole('link', { name: 'Read the official source', exact: true })).toHaveAttribute('href', /^https:\/\/www\.nps\.gov\//);
     await page.getByLabel('Visit date').fill('2027-06-01');
     await page.getByRole('button', { name: 'Check entry guidance' }).click();
     await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'not-verified');
@@ -67,7 +67,7 @@ test('undated supporting evidence and limitations work without JavaScript', asyn
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4321/parks/grand-canyon/');
   await expect(page.locator('[data-undated-guidance]')).toContainText('not a determination for your travel dates');
-  await expect(page.locator('[data-undated-guidance] a')).toBeVisible();
+  await expect(page.locator('[data-undated-guidance]').getByRole('link', { name: 'Read the official source', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Check entry guidance' })).toBeDisabled();
   await context.close();
 });

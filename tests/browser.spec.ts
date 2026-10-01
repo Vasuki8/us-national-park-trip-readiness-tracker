@@ -221,10 +221,11 @@ test('paired feed evidence retains notices and its independently aged limitation
       for (const record of snapshot.records) {
         const notice = retained.locator('article').filter({ has: page.getByRole('heading', { name: record.title, exact: true }) });
         await expect(notice).toContainText(record.description);
-        if (record.url) await expect(notice.getByRole('link')).toHaveAttribute('href', record.url);
+        const providerLink = notice.getByRole('link', { name: 'More information link supplied by NPS', exact: true });
+        if (record.url) await expect(providerLink).toHaveAttribute('href', record.url);
         else {
           await expect(notice).toContainText('NPS did not supply a direct link for this alert.');
-          await expect(notice.locator('a')).toHaveCount(0);
+          await expect(notice.locator('a:not([data-correction-link])')).toHaveCount(0);
         }
       }
     } else {
