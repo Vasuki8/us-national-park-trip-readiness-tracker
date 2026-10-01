@@ -18,6 +18,14 @@ if (context) {
     if (title.textContent !== result.title) title.textContent = result.title;
     if (detail.textContent !== result.detail) detail.textContent = result.detail;
     document.querySelector<HTMLElement>('#entry-decision')!.dataset.state = result.state;
+    const rule = rules.find((rule) => rule.id === result.ruleId);
+    const evidence = document.querySelector<HTMLAnchorElement>('#decision-evidence')!;
+    evidence.href = rule ? `#entry-rule-${encodeURIComponent(rule.id)}` : '#guidance-title';
+    const label = rule
+      ? result.state === 'stale' ? 'View the stored rule needing a fresh review' : 'View the stored rule used for this result'
+      : 'Browse stored entry guidance';
+    if (evidence.textContent !== label) evidence.textContent = label;
+    evidence.hidden = false;
   };
   const progress = () => {
     const completed = checks.filter((check) => check.checked).length;

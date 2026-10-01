@@ -13,5 +13,6 @@ const { park } = Astro.props;
     <button class="button" type="submit" id="check-entry" disabled>Check entry guidance</button>
   </form>
   <div class="decision" id="entry-decision" role="status" aria-live="polite" data-state="needs-input"><strong id="decision-title">Start with your visit date</strong><p id="decision-detail">Results use stored source reviews, not live reservation systems. Your selections stay on this page and are not saved or sent.</p></div>
+  <a class="text-link small" id="decision-evidence" href="#guidance-title" hidden>Browse stored entry guidance</a>
   <noscript><p class="note">Interactive date checking requires JavaScript. Stored guidance and official source links remain available below.</p></noscript>
 </section>

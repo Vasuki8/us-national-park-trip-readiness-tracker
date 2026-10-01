@@ -50,6 +50,45 @@ test('Rocky Mountain separates areas and exact time boundaries', async ({ page }
   await page.getByRole('button', { name: 'Check entry guidance' }).click();
   await expect(page.locator('#decision-title')).toHaveText('Verify the exact time boundary');
 });
+test('Rocky Mountain decisions link to the exact stored rule even when result wording is unchanged', async ({ page }) => {
+  const rest = publicRules.find((rule) => rule.park_code === 'romo' && rule.areas.includes('rest'))!;
+  const bearLake = publicRules.find((rule) => rule.park_code === 'romo' && rule.areas.includes('bear-lake'))!;
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime([rest, bearLake])));
+  await page.goto('/parks/rocky-mountain/');
+  const evidence = page.locator('#decision-evidence');
+  await expect(evidence).toBeHidden();
+  await expect(page.locator('#entry-decision #decision-evidence')).toHaveCount(0);
+  await page.getByLabel('Visit date').fill('2026-09-30');
+  await page.getByLabel('Planned area').selectOption('rest');
+  await page.locator('#special-case').check();
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  await expect(page.locator('#decision-title')).toHaveText('Check the rules for your circumstances');
+  const decisionText = await page.locator('#entry-decision').innerText();
+  await expect(evidence).toBeVisible();
+  await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(rest.id)}`);
+  await page.getByLabel('Planned area').selectOption('bear-lake');
+  await expect(page.locator('#entry-decision')).toHaveText(decisionText);
+  await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(bearLake.id)}`);
+  await expect(evidence).toHaveText('View the stored rule used for this result');
+  await evidence.focus();
+  await expect(evidence).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(`http://127.0.0.1:4321/parks/rocky-mountain/#entry-rule-${encodeURIComponent(bearLake.id)}`);
+  const matched = page.locator(`[id="entry-rule-${bearLake.id}"]`);
+  await expect(matched.getByRole('heading', { name: 'Bear Lake Road Corridor', exact: true })).toBeVisible();
+  await expect(matched.getByRole('heading', { name: 'Bear Lake Road Corridor', exact: true })).toBeInViewport();
+  const supportingText = matched.locator('summary');
+  await supportingText.focus();
+  await page.keyboard.press('Enter');
+  await expect(matched.locator('blockquote')).toBeVisible();
+  await expect(matched.locator('blockquote')).toHaveText(bearLake.evidence.excerpt);
+  await expect(matched.getByRole('link', { name: 'Read the official source', exact: true })).toHaveAttribute('href', bearLake.evidence.url);
+  await page.getByLabel('Visit date').fill('2027-06-01');
+  await expect(page.locator('#decision-title')).toHaveText('Entry requirements not verified for this date');
+  await expect(evidence).toHaveAttribute('href', '#guidance-title');
+  await expect(evidence).toHaveText('Browse stored entry guidance');
+});
+
 test('checklist is self-reported and resets when trip details change', async ({ page }) => {
   await page.goto('/parks/yosemite/');
   await page.locator('[data-check]').first().check();
@@ -158,6 +197,7 @@ test('official links and evidence remain usable with JavaScript disabled', async
   await expect(page.locator('[data-history-observation]')).toHaveCount(history.observations.length);
   await expect(page.getByText('Baseline recorded', { exact: true })).toHaveCount(history.observations.filter((observation) => observation.comparison === 'baseline').length);
   await expect(page.getByRole('link', { name: 'Read the official source', exact: true })).toBeVisible();
+  await expect(page.locator('#decision-evidence')).toBeHidden();
   await expect(page.getByRole('button', { name: 'Check entry guidance' })).toBeDisabled();
   await expect(page.locator('[data-check]').first()).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Reset checklist' })).toBeDisabled();

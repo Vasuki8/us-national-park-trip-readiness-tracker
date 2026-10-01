@@ -25,4 +25,5 @@ if (timelines.length) {
   refreshHistory();
   window.setInterval(refreshHistory, 60_000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHistory(); });
+  window.addEventListener('pageshow', refreshHistory);
 }

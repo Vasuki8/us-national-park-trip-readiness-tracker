@@ -20,7 +20,7 @@ const rule: readiness.Rule = {
 
 // Execute the browser script and real decision layer; only DOM and clock APIs are substituted.
 class Element extends EventTarget {
-  value = ''; checked = false; disabled = true;
+  value = ''; href = ''; hidden = false; checked = false; disabled = true;
   dataset: Record<string, string> = {};
   textWrites: string[] = [];
   private text = '';
@@ -28,19 +28,20 @@ class Element extends EventTarget {
   set textContent(value: string) { this.text = value; this.textWrites.push(value); }
 }
 
-function tripPage() {
+function tripPage(rules: readiness.Rule[] = [rule]) {
   let now = Date.parse('2026-09-28T20:00:00Z');
   let minuteRefresh: (() => void) | undefined;
   const selectors = ['trip-context', 'trip-form', 'trip-date', 'trip-time', 'trip-area', 'special-case',
-    'check-entry', 'reset-checklist', 'decision-title', 'decision-detail', 'entry-decision', 'checklist-progress'];
+    'check-entry', 'reset-checklist', 'decision-title', 'decision-detail', 'entry-decision', 'checklist-progress', 'decision-evidence'];
   const elements = new Map(selectors.map((id) => [`#${id}`, new Element()]));
   const element = (selector: string) => {
     const result = elements.get(selector);
     assert.ok(result, `expected page element ${selector}`);
     return result;
   };
-  element('#trip-context').dataset = { rules: JSON.stringify([rule]), park: 'test', timezone: 'America/Los_Angeles' };
+  element('#trip-context').dataset = { rules: JSON.stringify(rules), park: 'test', timezone: 'America/Los_Angeles' };
   element('#trip-date').value = '2026-09-29';
+  element('#decision-evidence').hidden = true;
   const checks = Array.from({ length: 5 }, () => new Element());
   const review = new Element(); review.dataset.reviewed = rule.reviewed_at;
   const document = Object.assign(new EventTarget(), {
@@ -187,6 +188,62 @@ test('minute and visibility refreshes invalidate checklist checks after silent t
     assert.equal(page.element('#entry-decision').dataset.state, 'not-verified', refresh);
     assert.equal(page.checks[0].checked, false, refresh);
     assert.equal(page.element('#checklist-progress').textContent, '0 of 5 items reviewed by you', refresh);
+  }
+});
+
+test('decision evidence follows the exact area rule even when decision wording is unchanged', () => {
+  const page = tripPage([
+    { ...rule, id: 'synthetic-bear', areas: ['bear-lake'] },
+    { ...rule, id: 'synthetic-rest', areas: ['rest'] },
+  ]);
+  const link = page.element('#decision-evidence');
+  assert.equal(link.hidden, true, 'evidence navigation waits for a submitted decision');
+  page.element('#trip-area').value = 'bear-lake';
+  page.submit();
+  assert.equal(link.hidden, false);
+  assert.equal(link.href, '#entry-rule-synthetic-bear');
+  assert.equal(link.textContent, 'View the stored rule used for this result');
+  const writes = page.decisionWrites();
+  page.showPage(true);
+  page.element('#trip-area').value = 'rest';
+  page.flushTasks();
+  assert.deepEqual(page.decisionWrites(), writes, 'the two synthetic rules give identical wording');
+  assert.equal(link.href, '#entry-rule-synthetic-rest');
+  page.element('#trip-date').value = '2027-06-01';
+  page.element('#trip-form').dispatchEvent(new Event('input'));
+  assert.equal(link.href, '#guidance-title', 'an unmatched date must not retain the previous exact rule');
+  assert.equal(link.textContent, 'Browse stored entry guidance');
+});
+
+test('stale matched evidence remains historical and updates its link label without choosing a new rule', () => {
+  const page = tripPage();
+  const link = page.element('#decision-evidence');
+  page.submit();
+  assert.equal(link.href, '#entry-rule-synthetic-entry');
+  page.setTime('2026-10-05T19:00:00.001Z');
+  page.refreshMinute();
+  assert.equal(link.href, '#entry-rule-synthetic-entry');
+  assert.equal(link.textContent, 'View the stored rule needing a fresh review');
+  const writes = link.textWrites.length;
+  page.changeVisibility(false); page.showPage(true); page.flushTasks();
+  assert.equal(link.textWrites.length, writes, 'an unchanged historical link is not repeatedly rewritten');
+});
+
+test('evidence navigation identifies unique unresolved matches but never selects one conflicting rule', () => {
+  for (const scenario of [
+    { rules: [{ ...rule, review_status: 'needs_review' as const }], area: '', state: 'review-required', href: '#entry-rule-synthetic-entry' },
+    { rules: [{ ...rule, requirement: 'timed_entry' as const, start_time: '09:00', end_time: '14:00' }], area: '', state: 'needs-input', href: '#entry-rule-synthetic-entry' },
+    { rules: [rule, { ...rule, id: 'conflicting-entry' }], area: '', state: 'conflict', href: '#guidance-title' },
+    { rules: [{ ...rule, areas: ['known'] }], area: '', state: 'needs-input', href: '#guidance-title' },
+    { rules: [{ ...rule, areas: ['known'] }], area: 'unknown', state: 'not-verified', href: '#guidance-title' },
+    { rules: [], area: '', state: 'not-verified', href: '#guidance-title' },
+  ]) {
+    const page = tripPage(scenario.rules);
+    page.element('#trip-area').value = scenario.area;
+    page.submit();
+    assert.equal(page.element('#entry-decision').dataset.state, scenario.state);
+    assert.equal(page.element('#decision-evidence').href, scenario.href);
+    assert.equal(page.element('#decision-evidence').hidden, false);
   }
 });
 

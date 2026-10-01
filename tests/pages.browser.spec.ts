@@ -55,6 +55,46 @@ test('project-path entry checker and checklist remain interactive', async ({ pag
   await expect(page.locator('[data-check]:checked')).toHaveCount(0);
 });
 
+test('project-path evidence follows restored areas and retains the original review after expiry', async ({ page }) => {
+  const rest = publicRules.find((rule) => rule.park_code === 'romo' && rule.areas.includes('rest'))!;
+  const bearLake = publicRules.find((rule) => rule.park_code === 'romo' && rule.areas.includes('bear-lake'))!;
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime([rest, bearLake])));
+  await page.goto(`${base}parks/rocky-mountain/`);
+  const evidence = page.locator('#decision-evidence');
+  await expect(evidence).toBeHidden();
+  await page.getByLabel('Visit date').fill('2026-09-30');
+  await page.getByLabel('Planned area').selectOption('bear-lake');
+  await page.locator('#special-case').check();
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  await expect(page.locator('#decision-title')).toHaveText('Check the rules for your circumstances');
+  const decisionText = await page.locator('#entry-decision').innerText();
+  await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(bearLake.id)}`);
+  // Model restoration after pageshow without claiming a browser-specific cache policy.
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    document.querySelector<HTMLSelectElement>('#trip-area')!.value = 'rest';
+  });
+  await expect(page.locator('#entry-decision')).toHaveText(decisionText);
+  await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(rest.id)}`);
+  await evidence.click();
+  await expect(page).toHaveURL(`http://127.0.0.1:4324${base}parks/rocky-mountain/#entry-rule-${encodeURIComponent(rest.id)}`);
+  const matched = page.locator(`[id="entry-rule-${rest.id}"]`);
+  await expect(matched.getByRole('heading', { name: 'Rest of park', exact: true })).toBeVisible();
+  await expect(matched.getByRole('link', { name: 'Read the official source', exact: true })).toHaveAttribute('href', rest.evidence.url);
+  await page.clock.setFixedTime(new Date(Date.parse(rest.reviewed_at) + 168 * 3_600_000 + 1));
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'stale');
+  await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(rest.id)}`);
+  await expect(evidence).toHaveText('View the stored rule needing a fresh review');
+  await expect(evidence).toBeVisible();
+  await page.setViewportSize({ width: 360, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await expect(matched.locator('time').first()).toHaveAttribute('datetime', rest.reviewed_at);
+  await expect(matched.locator('time').first()).toHaveText(rest.reviewed_at);
+  await expect(matched.locator('[data-reviewed]')).toHaveAttribute('data-reviewed', rest.reviewed_at);
+  await expect(matched.locator('[data-reviewed]')).toContainText('Needs a fresh review');
+});
+
 test('project-path trip return resynchronizes restored choices and checklist progress', async ({ page }) => {
   await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'romo'))));
   await page.goto(`${base}parks/rocky-mountain/`);

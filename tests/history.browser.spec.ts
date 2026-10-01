@@ -82,6 +82,21 @@ test('history freshness ages on an open page without rewriting evidence clocks',
   await expect(page.locator('[data-history-status]')).toHaveText('History needs a fresh check');
   expect(await page.locator('[data-history] time').evaluateAll((items) => items.map((el) => el.getAttribute('datetime')))).toEqual(times);
 });
+test('history expires on page return without advancing timers or rewriting evidence', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-28T13:00:00Z'));
+  await page.goto(`${fixtureBase}/mixed/`);
+  await expect(page.locator('[data-history-status]')).toContainText('Recent feed check');
+  const metadata = await page.locator('[data-history]').getAttribute('data-history-metadata');
+  const times = await page.locator('[data-history] time').evaluateAll((items) => items.map((element) => element.getAttribute('datetime')));
+  await page.clock.setFixedTime(new Date('2026-09-28T16:00:00Z'));
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await expect(page.locator('[data-history-status]')).toContainText('Recent feed check');
+  await page.clock.setFixedTime(new Date('2026-09-28T16:00:00.001Z'));
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await expect(page.locator('[data-history-status]')).toHaveText('History needs a fresh check');
+  expect(await page.locator('[data-history]').getAttribute('data-history-metadata')).toBe(metadata);
+  expect(await page.locator('[data-history] time').evaluateAll((items) => items.map((element) => element.getAttribute('datetime')))).toEqual(times);
+});
 test('omitted history is disclosed rather than presented as zero changes', async ({ page }) => {
   await page.goto(`${fixtureBase}/truncated/`);
   await expect(page.locator('[data-history]')).toContainText('2 older recorded checks not shown');
