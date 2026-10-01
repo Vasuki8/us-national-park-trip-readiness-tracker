@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { guidanceScenarioTime, publicRules } from './pilot-clock.ts';
+import { guidanceScenarioTime, publicRules, publicParks, publicParkSnapshots } from './pilot-clock.ts';
 import { describeHistory } from '../src/lib/history.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
 
@@ -216,4 +216,46 @@ test('project-path corrections retain source identity and return to the exact no
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`http://127.0.0.1:4324${base}parks/yosemite/#${encodeURIComponent(anchor!)}`);
   await expect(page.locator(`[id="${anchor}"] h3`)).toBeInViewport();
+});
+
+test('project-path notice filters reveal an exact native fragment without changing correction destinations', async ({ page }) => {
+  const snapshot = publicParkSnapshots.find(item => new Set(item.records.map(record => record.category)).size > 1)!;
+  const park = publicParks.find(item => item.code === snapshot.park_code)!;
+  const selected = snapshot.records[0];
+  const target = snapshot.records.find(record => record.category !== selected.category)!;
+  const route = `${base}parks/${park.slug}/`;
+  await page.goto(route);
+  const search = page.getByLabel('Search retained notices', { exact: true });
+  const category = page.getByLabel('Notice category', { exact: true });
+  await search.fill(selected.title);
+  await category.selectOption(selected.category);
+  const anchor = `alert-${park.code}-${target.id}`;
+  const article = page.locator('[data-retained-notice]').filter({ has: page.getByRole('heading', { name: target.title, exact: true, includeHidden: true }) });
+  await expect(article).toHaveCount(1);
+  await expect(article).toBeHidden();
+  await page.evaluate(fragment => {
+    const link = document.createElement('a');
+    link.id = 'project-notice-fragment-test';
+    link.textContent = 'Open another retained notice';
+    link.href = `#${encodeURIComponent(fragment)}`;
+    document.querySelector('[data-retained-notices]')!.before(link);
+  }, anchor);
+  await page.locator('#project-notice-fragment-test').focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#${encodeURIComponent(anchor)}`);
+  await expect(search).toHaveValue('');
+  await expect(category).toHaveValue('');
+  await expect(page.locator('[data-retained-notice]:visible')).toHaveCount(snapshot.records.length);
+  await expect(page.locator('[data-notice-count]')).toHaveText(`Showing ${snapshot.records.length} of ${snapshot.records.length} retained notices`);
+  await expect(article.getByRole('heading', { name: target.title, exact: true })).toBeInViewport();
+  const correction = article.getByRole('link', { name: 'Report a correction about this source', exact: true });
+  const destination = `${base}corrections/?source=${encodeURIComponent(`alert:${park.code}:${target.id}`)}`;
+  await expect(correction).toHaveAttribute('href', destination);
+  await correction.click();
+  await expect(page).toHaveURL(`http://127.0.0.1:4324${destination}`);
+  await expect(page.locator('#correction-return')).toHaveAttribute('href', `${route}#${encodeURIComponent(anchor)}`);
+  await page.locator('#correction-return').focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#${encodeURIComponent(anchor)}`);
+  await expect(page.locator('[data-retained-notice]').filter({ has: page.getByRole('heading', { name: target.title, exact: true }) })).toBeVisible();
 });

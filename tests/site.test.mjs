@@ -60,6 +60,64 @@ test('all park pages retain the exact public checked-feed snapshot and official 
 
 test('informational pages describe the hosted manual pilot honestly', () => assertLivePilotCopy(output));
 
+test('retained-notice filters use the complete public inventory and exact provider categories', () => {
+  const normalize = (text) => text.toLowerCase().replace(/\s+/g, ' ').trim();
+  for (const park of parks) {
+    const snapshot = snapshots.find((item) => item.park_code === park.code);
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const retained = html.match(/<section\b[^>]*\bdata-retained-notices\b[^>]*>[\s\S]*?<\/section>/)?.[0];
+    if (!snapshot.records.length) {
+      assert.equal(retained, undefined, `${park.code}: no filters for an empty retained feed`);
+      assert.doesNotMatch(html, /data-notice-search/);
+      continue;
+    }
+    assert.ok(retained, `${park.code}: retained notice section is filterable`);
+    const articles = [...retained.matchAll(/<article\b([^>]*)>[\s\S]*?<\/article>/g)];
+    assert.equal(articles.length, snapshot.records.length);
+    for (const [index, record] of snapshot.records.entries()) {
+      const attributes = articles[index][1];
+      assert.match(attributes, /\bdata-retained-notice\b/);
+      assert.equal(decodeHtml(attributes.match(/\bid="([^"]*)"/)[1]), `alert-${park.code}-${record.id}`);
+      assert.equal(decodeHtml(attributes.match(/\bdata-notice-text="([^"]*)"/)[1]), normalize(`${record.title} ${record.description}`));
+      assert.equal(decodeHtml(attributes.match(/\bdata-notice-category="([^"]*)"/)[1]), record.category);
+      assert.doesNotMatch(attributes, /\bhidden(?:[\s=>]|$)/, 'all notices remain readable in static HTML');
+    }
+    const categorySelect = retained.match(/<select\b[^>]*\bdata-notice-category\b[^>]*>([\s\S]*?)<\/select>/);
+    assert.ok(categorySelect, 'category control exists');
+    const options = [...categorySelect[1].matchAll(/<option\b[^>]*\bvalue="([^"]*)"/g)].map((match) => decodeHtml(match[1]));
+    assert.deepEqual(options, ['', ...new Set(snapshot.records.map((record) => record.category))].sort());
+    assert.deepEqual(embeddedJson(html, 'data-snapshot'), snapshot);
+  }
+});
+
+test('retained-notice filtering has a static fallback, honest empty state and complete-print disclosure', () => {
+  for (const park of parks) {
+    const snapshot = snapshots.find((item) => item.park_code === park.code);
+    if (!snapshot.records.length) continue;
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const retained = html.match(/<section\b[^>]*\bdata-retained-notices\b[^>]*>[\s\S]*?<\/section>/)?.[0];
+    assert.ok(retained, `${park.code}: retained notices keep fallback and disclosure`);
+    const controls = retained.match(/<div\b[^>]*\bdata-notice-controls\b[^>]*>/)?.[0];
+    assert.ok(controls);
+    assert.match(controls, /\bhidden(?:[\s=>]|$)/, 'inactive controls are hidden without JavaScript');
+    assert.match(retained, /<label\b[^>]*for="notice-search"[^>]*>Search retained notices<\/label>/);
+    assert.match(retained, /<label\b[^>]*for="notice-category"[^>]*>Notice category<\/label>/);
+    assert.match(retained, /<button\b[^>]*type="button"[^>]*\bdata-notice-clear\b[^>]*>Clear notice filters<\/button>/);
+    const count = retained.match(/<p\b[^>]*\bdata-notice-count\b[^>]*>[\s\S]*?<\/p>/)?.[0];
+    assert.ok(count);
+    assert.match(count, /role="status"/);
+    assert.match(count, /aria-live="polite"/);
+    assert.ok(count.includes(`Showing ${snapshot.records.length} of ${snapshot.records.length} retained notices`));
+    assert.match(retained, /No retained notices match these filters\./);
+    assert.match(retained, /This does not establish that conditions are clear\./);
+    assert.match(retained, /<noscript>[\s\S]*Search and category filters require JavaScript\./);
+    assert.ok(retained.includes(`All ${snapshot.records.length} retained notices are included in this page copy.`));
+    assert.match(retained, /Search and category selections do not limit it\./);
+    assert.match(retained, /Area scope is not classified/);
+    assert.match(retained, /applicability remains unconfirmed/);
+  }
+});
+
 test('public source articles offer exact base-aware correction links without JavaScript', () => {
   for (const park of parks) {
     const snapshot = snapshots.find((item) => item.park_code === park.code);
