@@ -6,6 +6,8 @@
 
 `src/lib/readiness.ts` is the pure clock-injected decision layer. `scripts/validate-data.ts` gates build-time inventory, hashes, timestamp coherence and source scope. `tracker/alerts.py` handles injectable collection, bounded transport and atomic writes. Astro pages/components render meaningful HTML, and small browser scripts handle search and page-only trip choices. Tests use synthetic provider responses, never live network requests.
 
+The park directory applies the current search and state values on initialization and after page return (`pageshow`), as well as normal input/change events. Page-return resync runs in a zero-delay timer because persisted form restoration can follow the event; see [the documented history-traversal ordering](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event). Cards, the result count and the empty state then follow restored controls without input events. Unchanged counts do not rewrite the live-region text. The application adds no storage, URL parameters or transmission of search selections.
+
 ## Clock semantics
 
 `reviewed_at` is our page review, not a publisher change time. `last_checked_at` is an attempted collection. `last_successful_fetch_at` advances only after a complete valid feed. `observed_first_at` and `observed_changed_at` are our observations, not the true start of an event. `source_updated_at` stays null without trustworthy field-specific source evidence. `built_at` is artifact creation; `published_at` stays null without separately established publication metadata. Deploying an existing verified artifact does not rewrite its manifest or source clocks.
@@ -25,6 +27,8 @@ The collector uses only a fixed NPS HTTPS endpoint. Its private key is in a requ
 The private collector/archive/staging path retains normalized evidence and immutable history receipts, excluding API headers and raw HTTP responses; see `docs/STAGING_COLLECTION.md`. Detailed operator captures, checkpoint metadata and recovery receipts belong in the private handoff outside the website checkout. Public alert updates require deliberate reviewed promotion. Astro escapes notice strings and browser scripts use textContent, not untrusted innerHTML. `parkCode` determines alert scope; a provider URL can be absent, or a validated provider-supplied HTTPS destination. Nullable URLs and safe external links are covered by the tested normalization contract documented in `docs/NPS_PREFLIGHT.md`.
 
 The alert archive and staging APIs share a destination guard before storage operations or requests. It requires an absolute path, rejects raw traversal and symlink ancestry, then checks canonical containment outside the entire checkout and its ancestors. This also rejects Linux doubled-leading-slash checkout aliases and ignored/unlisted checkout folders. Existing private stores are not automatically migrated or repaired; owner-only WSL setup and backup remain deliberate operator responsibilities.
+
+The separate POSIX editorial file guard also checks canonical containment after its raw path and symlink checks. Ledger, capture-input, backup and Python preview callers inherit that boundary, including refusal of doubled-leading-slash checkout/ancestor aliases. Owner-only permissions, single-link regular files and safe error codes retain their existing contracts.
 
 ## Release boundaries
 

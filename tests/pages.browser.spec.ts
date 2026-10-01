@@ -2,6 +2,29 @@ import { test, expect } from '@playwright/test';
 import { guidanceScenarioTime, publicRules } from './pilot-clock.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
 
+test('project-path directory resynchronizes restored filters on page return', async ({ page }) => {
+  for (const route of [base, `${base}parks/`]) {
+    await page.goto(route);
+    // A browser can restore controls without dispatching input/change events.
+    await page.evaluate(() => {
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      document.querySelector<HTMLInputElement>('#park-search')!.value = 'rocky';
+      document.querySelector<HTMLSelectElement>('#state-filter')!.value = 'Colorado';
+    });
+    await expect(page.locator('[data-park-card]:visible')).toHaveCount(1);
+    await expect(page.locator('[data-park-card]:visible h3')).toContainText('Rocky Mountain');
+    await expect(page.locator('#search-count')).toHaveText('1 park shown');
+    await expect(page.locator('#empty-search')).toBeHidden();
+    await page.evaluate(() => {
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      document.querySelector<HTMLInputElement>('#park-search')!.value = '';
+      document.querySelector<HTMLSelectElement>('#state-filter')!.value = '';
+    });
+    await expect(page.locator('[data-park-card]:visible')).toHaveCount(5);
+    await expect(page.locator('#search-count')).toHaveText('5 parks shown');
+  }
+});
+
 test('project-path search and navigation load working assets', async ({ page }) => {
   const failures: string[] = [];
   page.on('pageerror', error => failures.push(error.message));
