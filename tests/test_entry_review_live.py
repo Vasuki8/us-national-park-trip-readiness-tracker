@@ -10,13 +10,16 @@ from html import escape
 from pathlib import Path
 from unittest.mock import patch
 
+from entry_source_fixtures import synthetic_guidance
 from tracker.entry_sources import PROFILES, PROFILE_VERSION, digest
 from tracker.entry_html import inspect_html
 from tracker.entry_review_store import EntryReviewStore, ReviewStoreError
 from tracker.entry_review_live import run_live_capture, main
 
 ROOT=Path(__file__).resolve().parents[1]
-RECORDS=json.loads((ROOT/'data/rules.json').read_text())+json.loads((ROOT/'data/entry-notes.json').read_text())
+GUIDANCE=synthetic_guidance()
+RECORDS=GUIDANCE['rules']+GUIDANCE['notes']
+SEED={'schema_version':1,'proposals':[]}
 CHECKED='2026-09-29T14:00:00.000Z'
 NOW=datetime(2026,9,29,15,0,tzinfo=timezone.utc)
 
@@ -47,6 +50,15 @@ class LiveEntryReviewTests(unittest.TestCase):
         self.base.chmod(0o700)
         self.store=EntryReviewStore(self.base/'review')
         self.packets=self.base/'packets'
+        # Keep the real initial-inventory loader while decoupling historical
+        # capture clocks from subsequently promoted public guidance.
+        for variable,filename,value in [
+                ('RECORDS_FILE','rules.json',GUIDANCE['rules']),
+                ('NOTES_FILE','entry-notes.json',GUIDANCE['notes']),
+                ('SEED_FILE','entry-review.json',SEED)]:
+            path=self.base/filename
+            path.write_text(json.dumps(value)); path.chmod(0o600)
+            self.enterContext(patch('tracker.entry_review_live.'+variable,path))
 
     def run_live(self, expected=None, failed_code=None, checked=CHECKED, now=NOW):
         with patch('tracker.entry_review_live.capture_source',side_effect=capture_all(failed_code,checked)):
@@ -197,7 +209,7 @@ class LiveEntryReviewTests(unittest.TestCase):
         self.assertEqual(state['records'],state['events'][0]['request']['records'])
 
     def test_existing_legacy_baseline_is_preserved_on_live_append(self):
-        seed=json.loads((ROOT/'data/entry-review.json').read_text())
+        seed=SEED
         initial_checked='2026-09-29T13:00:00.000Z'
         captures=[fake_pair(code,checked=initial_checked)[0] for code in PROFILES]
         yell_html=next(c['html'] for c in captures if c['source_url']==PROFILES['yell']['url'])

@@ -7,9 +7,9 @@ import { join, resolve, dirname } from 'node:path';
 import { historyDigest } from '../scripts/validate-history.ts';
 import { canonicalPreview, readPreviewBundle } from '../scripts/preview-bundle.ts';
 import { buildPreview, previewEnvironment, ROOT } from '../scripts/build-preview.ts';
-const json=(path:string)=>JSON.parse(readFileSync(new URL(path,import.meta.url),'utf8'));
+import { syntheticEmptyViews } from './synthetic-preview.ts';
 function input(dir:string){
-  const views=json('../data/history.json').map((history:any)=>({history,snapshot:json(`../data/alerts/${history.park_code}.json`)}));
+  const views=syntheticEmptyViews();
   const body={schema_version:1,purpose:'private_preview',data_kind:'synthetic',publication_performed:false,views};
   const bundle={...body,bundle_id:historyDigest(body)},path=join(dir,'bundle.json');writeFileSync(path,canonicalPreview(bundle),{mode:0o600});return {path,bundle};
 }

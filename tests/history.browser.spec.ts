@@ -1,16 +1,51 @@
 import { test, expect } from '@playwright/test';
+import { historyDigest } from '../scripts/validate-history.ts';
+import { PUBLIC_PILOT_FRESH_TIME, publicHistories, publicParkSnapshots, publicParks } from './pilot-clock.ts';
 const fixtureBase = 'http://127.0.0.1:4322';
-test('production changes page and all parks disclose missing history without fixture text', async ({ page }) => {
+test('production changes page and all parks retain paired public baselines without fixture text', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
   await page.goto('/changes/');
   await expect(page.locator('[data-history]')).toHaveCount(5);
-  await expect(page.getByText('History not collected', { exact: true })).toHaveCount(5);
-  await expect(page.locator('[data-history-observation]')).toHaveCount(0);
-  for (const slug of ['yosemite', 'rocky-mountain', 'yellowstone', 'zion', 'grand-canyon']) {
-    await page.goto(`/parks/${slug}/`);
+  await expect(page.getByText('Baseline recorded', { exact: true })).toHaveCount(5);
+  await expect(page.locator('[data-history-observation]')).toHaveCount(5);
+  for (const park of publicParks) {
+    const snapshot = publicParkSnapshots.find((item) => item.park_code === park.code)!;
+    const history = publicHistories.find((item) => item.park_code === park.code)!;
+    expect(history.snapshot_hash).toBe(historyDigest(snapshot));
+    const expectedMetadata = {
+      collection_status: snapshot.collection_status, last_checked_at: snapshot.last_checked_at,
+      last_successful_fetch_at: snapshot.last_successful_fetch_at,
+    };
+    const overview = page.locator(`#history-${park.code}`);
+    expect(JSON.parse((await overview.getAttribute('data-history-metadata'))!)).toEqual(expectedMetadata);
+    expect(await overview.locator('time').evaluateAll((items) => items.map((el) => el.getAttribute('datetime')))).toEqual([
+      snapshot.last_successful_fetch_at, ...history.observations.map((observation) => observation.checked_at),
+    ]);
+    await expect(overview.locator('[data-history-status]')).toHaveText('Recent feed check; coverage remains limited');
+  }
+  for (const park of publicParks) {
+    const snapshot = publicParkSnapshots.find((item) => item.park_code === park.code)!;
+    const history = publicHistories.find((item) => item.park_code === park.code)!;
+    await page.goto(`/parks/${park.slug}/`);
     await expect(page.locator('[data-history]')).toHaveCount(1);
-    await expect(page.getByText('History not collected', { exact: true })).toBeVisible();
+    await expect(page.getByText('Baseline recorded', { exact: true })).toBeVisible();
+    await expect(page.locator('[data-history-observation]')).toHaveCount(history.observations.length);
+    expect(await page.locator('[data-history] time').evaluateAll((items) => items.map((el) => el.getAttribute('datetime')))).toEqual([
+      snapshot.last_successful_fetch_at, ...history.observations.map((observation) => observation.checked_at),
+    ]);
+    await expect(page.locator('[data-history]')).toContainText('not evidence that its restrictions began at this time');
+    await expect(page.locator('[data-history-status]')).toHaveText('Recent feed check; coverage remains limited');
     expect(await page.content()).not.toContain('historyInjected');
   }
+});
+
+test('separate uncollected fixture discloses missing history without an all-clear', async ({ page }) => {
+  await page.goto(`${fixtureBase}/empty/`);
+  await expect(page.locator('[data-history-status]')).toHaveText('History not collected');
+  await expect(page.locator('[data-history-observation]')).toHaveCount(0);
+  await expect(page.locator('[data-history-detail]')).toContainText('An empty timeline does not mean that nothing has changed');
+  const metadata = JSON.parse((await page.locator('[data-history]').getAttribute('data-history-metadata'))!);
+  expect(metadata).toEqual({ collection_status: 'never_checked', last_checked_at: null, last_successful_fetch_at: null });
 });
 test('synthetic timeline renders baseline and source-linked before-after changes without executing markup', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-09-28T13:00:00Z') });

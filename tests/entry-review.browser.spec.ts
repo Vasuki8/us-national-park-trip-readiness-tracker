@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { PUBLIC_PILOT_FRESH_TIME, publicParks, publicRules } from './pilot-clock.ts';
 const base = 'http://127.0.0.1:4322/entry-review';
 for (const state of ['changed', 'missing', 'failed', 'sticky']) {
   test(`pending ${state} source review blocks a conclusion and retains original evidence dates`, async ({ page }) => {
@@ -34,9 +35,16 @@ test('review warning fits 360px and doubled text without hiding source links', a
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 test('production data remains approved and empty register does not expose synthetic review fixtures', async ({ page }) => {
-  await page.goto('/parks/yosemite/');
-  await expect(page.locator('[data-entry-review-notice]')).toHaveCount(0);
-  const rules = JSON.parse(await page.locator('#trip-context').getAttribute('data-rules') || '[]');
-  expect(rules[0].review_status).toBe('reviewed'); expect(rules[0].reviewed_at).toBe('2026-09-28T19:55:31Z');
-  expect(await page.content()).not.toContain('SYNTHETIC_REVIEW_CANDIDATE');
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
+  for (const park of publicParks) {
+    await page.goto(`/parks/${park.slug}/`);
+    await expect(page.locator('[data-entry-review-notice]')).toHaveCount(0);
+    const rules = JSON.parse(await page.locator('#trip-context').getAttribute('data-rules') || '[]');
+    expect(rules).toEqual(publicRules.filter((rule) => rule.park_code === park.code));
+    for (const rule of rules) {
+      expect(rule.review_status).toBe('reviewed');
+      await expect(page.locator(`time[datetime="${rule.reviewed_at}"]`).first()).toBeVisible();
+    }
+    expect(await page.content()).not.toContain('SYNTHETIC_REVIEW_CANDIDATE');
+  }
 });

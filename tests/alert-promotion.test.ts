@@ -7,13 +7,14 @@ import { spawnSync } from 'node:child_process';
 import { canonicalPreview } from '../scripts/preview-bundle.ts';
 import { historyDigest } from '../scripts/validate-history.ts';
 import { buildAlertPromotionPatch } from '../scripts/prepare-alert-promotion.ts';
+import { createSyntheticPromotionProject, syntheticEmptyViews, syntheticPublicFiles } from './synthetic-preview.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const json = (path: string) => JSON.parse(readFileSync(join(root, path), 'utf8'));
 const mixed = json('tests/fixtures/history-preview.json').cases.mixed;
 const fixtures = json('tests/fixtures/history-preview.json').cases;
 function candidate(kind = 'unreviewed_source') {
-  const views = json('data/history.json').map((history: any) => ({history, snapshot: json(`data/alerts/${history.park_code}.json`)}));
+  const views = syntheticEmptyViews();
   views[0] = structuredClone(mixed);
   const body = {schema_version: 1, purpose: 'private_preview', data_kind: kind, publication_performed: false, views};
   return {...body, bundle_id: historyDigest(body)};
@@ -22,12 +23,11 @@ function temporary(fn: (dir: string) => void) {
   const dir = mkdtempSync(join(tmpdir(), 'alert-promotion-'));
   try { fn(dir); } finally { rmSync(dir, {recursive: true, force: true}); }
 }
-function run(bundle: string, output: string, project = root, archive?: string) {
+function run(bundle: string, output: string, project: string, archive?: string) {
   return spawnSync(process.execPath, ['--experimental-strip-types', join(project, 'scripts/prepare-alert-promotion.ts'),
     '--bundle', bundle, '--output', output, ...(archive ? ['--archive-dir', archive] : [])], {cwd: project, encoding: 'utf8', timeout: 65000});
 }
-const currentFiles = () => [...['yose', 'romo', 'yell', 'zion', 'grca'].map(code => `data/alerts/${code}.json`), 'data/history.json']
-  .map(path => ({path, text: readFileSync(join(root, path), 'utf8')}));
+const currentFiles = () => syntheticPublicFiles();
 function withView(view: any) {
   const value = candidate(); value.views[0] = structuredClone(view);
   const {bundle_id, ...body} = value; return {...body, bundle_id: historyDigest(body)};
@@ -40,10 +40,13 @@ function publicCheckpoint(view: any) {
 }
 
 test('offline CLI creates a private patch that applies matching snapshots and histories together', () => temporary(dir => {
+  const project = createSyntheticPromotionProject(dir);
   const bundle = join(dir, 'bundle.json'), output = join(dir, 'candidate.patch');
   writeFileSync(bundle, canonicalPreview(candidate()), {mode: 0o600});
-  const before = readFileSync(join(root, 'data/history.json'));
-  const result = run(bundle, output);
+  const paths = currentFiles().map(file => file.path);
+  const before = paths.map(path => readFileSync(join(project, path)));
+  const production = paths.map(path => readFileSync(join(root, path)));
+  const result = run(bundle, output, project);
   assert.equal(result.status, 0, result.stderr);
   const report = JSON.parse(result.stdout);
   assert.equal(report.publication_performed, false);
@@ -53,12 +56,14 @@ test('offline CLI creates a private patch that applies matching snapshots and hi
   const patch = readFileSync(output, 'utf8');
   assert.match(patch, /diff --git a\/data\/alerts\/yose.json b\/data\/alerts\/yose.json/);
   assert.match(patch, /diff --git a\/data\/history.json b\/data\/history.json/);
-  assert.deepEqual(readFileSync(join(root, 'data/history.json')), before);
+  paths.forEach((path, index) => {
+    assert.deepEqual(readFileSync(join(project, path)), before[index]);
+    assert.deepEqual(readFileSync(join(root, path)), production[index]);
+  });
   // Apply only to a disposable copy; verify the actual Git patch and pairing contract.
   const sandbox = join(dir, 'copy');
   mkdirSync(join(sandbox, 'data/alerts'), {recursive: true});
-  for (const code of ['yose', 'romo', 'yell', 'zion', 'grca']) copyFileSync(join(root, `data/alerts/${code}.json`), join(sandbox, `data/alerts/${code}.json`));
-  copyFileSync(join(root, 'data/history.json'), join(sandbox, 'data/history.json'));
+  for (const path of paths) copyFileSync(join(project, path), join(sandbox, path));
   const applied = spawnSync('git', ['apply', output], {cwd: sandbox, encoding: 'utf8'});
   assert.equal(applied.status, 0, applied.stderr);
   assert.deepEqual(JSON.parse(readFileSync(join(sandbox, 'data/alerts/yose.json'), 'utf8')), mixed.snapshot);
@@ -67,13 +72,14 @@ test('offline CLI creates a private patch that applies matching snapshots and hi
 }));
 
 test('synthetic bundle is refused without output or source-text diagnostics', () => temporary(dir => {
+  const project = createSyntheticPromotionProject(dir);
   const bundle = join(dir, 'bundle.json'), output = join(dir, 'candidate.patch');
   writeFileSync(bundle, canonicalPreview(candidate('synthetic')), {mode: 0o600});
-  const result = run(bundle, output);
+  const result = run(bundle, output, project);
   assert.equal(result.status, 2);
   assert.equal(result.stdout, '');
   assert.doesNotMatch(result.stderr, /Synthetic|alert-promotion-/);
-  assert.deepEqual(readdirSync(dir), ['bundle.json']);
+  assert.deepEqual(readdirSync(dir).sort(), ['bundle.json', 'project']);
 }));
 
 test('failed and quarantined candidates preserve last-good timestamps and status in the patch', () => {
@@ -190,21 +196,23 @@ test('patch uses original bytes for stale-base refusal and handles a missing fin
 }));
 
 test('exact retries are immutable and conflicting destinations are never overwritten', () => temporary(dir => {
+  const project = createSyntheticPromotionProject(dir);
   const bundle = join(dir, 'bundle.json'), output = join(dir, 'candidate.patch');
   writeFileSync(bundle, canonicalPreview(candidate()), {mode: 0o600});
-  assert.equal(run(bundle, output).status, 0);
+  assert.equal(run(bundle, output, project).status, 0);
   const before = statSync(output).mtimeMs, bytes = readFileSync(output);
-  assert.equal(run(bundle, output).status, 0);
+  assert.equal(run(bundle, output, project).status, 0);
   assert.equal(statSync(output).mtimeMs, before);
   assert.equal(statSync(output).mode & 0o077, 0);
   writeFileSync(output, 'retained conflicting bytes');
-  assert.equal(run(bundle, output).status, 2);
+  assert.equal(run(bundle, output, project).status, 2);
   assert.equal(readFileSync(output, 'utf8'), 'retained conflicting bytes');
-  assert.equal(readdirSync(dir).length, 2);
+  assert.equal(readdirSync(dir).length, 3);
   assert.ok(bytes.length > 0);
 }));
 
 test('a retry refuses corrupt UTF-8 bytes even when lossy decoding would preserve the apparent text', () => temporary(dir => {
+  const project = createSyntheticPromotionProject(dir);
   const value = withView(fixtures.baseline), record = value.views[0].snapshot.records[0];
   record.description += '\uFFFD'; record.evidence_excerpt = record.description;
   record.content_hash = historyDigest({id: record.id, title: record.title, description: record.description, url: record.url, category: record.category});
@@ -212,30 +220,31 @@ test('a retry refuses corrupt UTF-8 bytes even when lossy decoding would preserv
   const {bundle_id, ...body} = value; value.bundle_id = historyDigest(body);
   const bundle = join(dir, 'bundle.json'), output = join(dir, 'candidate.patch');
   writeFileSync(bundle, canonicalPreview(value), {mode: 0o600});
-  assert.equal(run(bundle, output).status, 0);
+  assert.equal(run(bundle, output, project).status, 0);
   const bytes = readFileSync(output), position = bytes.indexOf(Buffer.from('\uFFFD'));
   assert.ok(position > 0);
   const corrupt = Buffer.concat([bytes.subarray(0, position), Buffer.from([0xff]), bytes.subarray(position + 3)]);
   writeFileSync(output, corrupt);
-  assert.equal(run(bundle, output).status, 2);
+  assert.equal(run(bundle, output, project).status, 2);
   assert.deepEqual(readFileSync(output), corrupt);
 }));
 
 test('checkout destinations, public parents and unsafe input aliases refuse without writes', () => temporary(dir => {
+  const project = createSyntheticPromotionProject(dir);
   const bundle = join(dir, 'bundle.json'), output = join(dir, 'candidate.patch');
   writeFileSync(bundle, canonicalPreview(candidate()), {mode: 0o600});
-  for (const destination of [join(root, 'dist-pages/private.patch'), join(root, 'state/private.patch'), dirname(root), 'relative.patch']) {
-    assert.equal(run(bundle, destination).status, 2);
+  for (const destination of [join(project, 'dist-pages/private.patch'), join(project, 'state/private.patch'), dirname(project), 'relative.patch']) {
+    assert.equal(run(bundle, destination, project).status, 2);
   }
-  chmodSync(bundle, 0o644); assert.equal(run(bundle, output).status, 2);
+  chmodSync(bundle, 0o644); assert.equal(run(bundle, output, project).status, 2);
   chmodSync(bundle, 0o600);
-  chmodSync(dir, 0o755); assert.equal(run(bundle, output).status, 2);
+  chmodSync(dir, 0o755); assert.equal(run(bundle, output, project).status, 2);
   chmodSync(dir, 0o700);
   const alias = join(dir, 'alias.json'); symlinkSync(bundle, alias);
-  assert.equal(run(alias, output).status, 2);
+  assert.equal(run(alias, output, project).status, 2);
   rmSync(alias); linkSync(bundle, alias);
-  assert.equal(run(bundle, output).status, 2);
-  assert.deepEqual(readdirSync(dir).sort(), ['alias.json', 'bundle.json']);
+  assert.equal(run(bundle, output, project).status, 2);
+  assert.deepEqual(readdirSync(dir).sort(), ['alias.json', 'bundle.json', 'project']);
 }));
 
 function archivedScenario(dir: string, scenario: string) {

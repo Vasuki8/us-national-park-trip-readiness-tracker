@@ -1,8 +1,7 @@
 ---
 import Layout from '../../../../../src/layouts/Layout.astro';
 import EntryReviewNotice from '../../../../../src/components/EntryReviewNotice.astro';
-import rawRules from '../../../../../data/rules.json';
-import rawNotes from '../../../../../data/entry-notes.json';
+import syntheticGuidance from '../../../../fixtures/synthetic-guidance.json';
 import { assessEntrySources, applyEntryReview, guidanceDigest, type EntrySourceObservation } from '../../../../../scripts/entry-review';
 import { evaluateEntry, type Rule } from '../../../../../src/lib/readiness';
 import type { EntryNote } from '../../../../../scripts/validate-entry-notes';
@@ -11,6 +10,8 @@ export function getStaticPaths() {
 }
 const state = Astro.params.state;
 const now = new Date('2026-09-29T03:00:00Z');
+if (syntheticGuidance.purpose !== 'synthetic_test_guidance') throw new Error('invalid_synthetic_guidance_fixture');
+const { rules: rawRules, notes: rawNotes } = syntheticGuidance;
 const records: (Rule | EntryNote)[] = [...rawRules as Rule[], ...rawNotes as EntryNote[]];
 const batch = (checked_at: string): EntrySourceObservation[] => records.map((record) => ({
   guidance_id: record.id, guidance_hash: guidanceDigest(record), source_url: record.evidence.url,

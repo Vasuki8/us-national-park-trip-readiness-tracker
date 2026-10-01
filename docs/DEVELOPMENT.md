@@ -2,13 +2,13 @@
 
 ## Structure
 
-`data/parks.json` holds the reviewed pilot inventory, park-specific official URLs and IANA timezones. `data/rules.json` holds annual entry guidance, exact excerpt evidence and rights-review metadata. `data/alerts/*.json` holds collector state, initially never checked.
+`data/parks.json` holds the reviewed pilot inventory, park-specific official URLs and IANA timezones. `data/rules.json` holds annual entry guidance, exact excerpt evidence and rights-review metadata. `data/alerts/*.json` holds the approved public collector state; the first five successful baselines were promoted with owner approval. Historic and synthetic tests use explicit fixtures rather than these mutable public snapshots.
 
 `src/lib/readiness.ts` is the pure clock-injected decision layer. `scripts/validate-data.ts` gates build-time inventory, hashes, timestamp coherence and source scope. `tracker/alerts.py` handles injectable collection, bounded transport and atomic writes. Astro pages/components render meaningful HTML, and small browser scripts handle search and page-only trip choices. Tests use synthetic provider responses, never live network requests.
 
 ## Clock semantics
 
-`reviewed_at` is our page review, not a publisher change time. `last_checked_at` is an attempted collection. `last_successful_fetch_at` advances only after a complete valid feed. `observed_first_at` and `observed_changed_at` are our observations, not the true start of an event. `source_updated_at` stays null without trustworthy field-specific source evidence. `built_at` is artifact creation; `published_at` stays null because no deployment is configured.
+`reviewed_at` is our page review, not a publisher change time. `last_checked_at` is an attempted collection. `last_successful_fetch_at` advances only after a complete valid feed. `observed_first_at` and `observed_changed_at` are our observations, not the true start of an event. `source_updated_at` stays null without trustworthy field-specific source evidence. `built_at` is artifact creation; `published_at` stays null without separately established publication metadata. Deploying an existing verified artifact does not rewrite its manifest or source clocks.
 
 The browser recalculates freshness every minute and when the tab becomes visible. Entry review expiration is 168 hours; alert expiration is four hours. Stale guidance remains readable as historical evidence but cannot grant a current exemption. Trip dates/times are wall-clock values at the park, not UTC conversions from the browser timezone.
 
@@ -16,7 +16,7 @@ The browser recalculates freshness every minute and when the tab becomes visible
 
 The collector uses only a fixed NPS HTTPS endpoint. Its private key is in a request header, and redirects are disabled. It permits three attempts with bounded waits, 100 pages and 5,000 total records. Pagination counts must remain stable and IDs unique. A drop of more than half the last-good records is quarantined for review. This conservative threshold intentionally favors retaining notices over implying reopening; a later operator workflow must resolve legitimate mass removals.
 
-The private collector/archive/staging path retains normalized evidence and immutable history receipts, excluding API headers and raw HTTP responses; see `docs/STAGING_COLLECTION.md`. Detailed operator captures, checkpoint metadata and recovery receipts belong in the private handoff outside the website checkout. Public alert snapshots remain `never_checked` until deliberate reviewed promotion. Astro escapes notice strings and browser scripts use textContent, not untrusted innerHTML. `parkCode` determines alert scope; a provider URL can be absent, or a validated provider-supplied HTTPS destination. Nullable URLs and safe external links are covered by the tested normalization contract documented in `docs/NPS_PREFLIGHT.md`.
+The private collector/archive/staging path retains normalized evidence and immutable history receipts, excluding API headers and raw HTTP responses; see `docs/STAGING_COLLECTION.md`. Detailed operator captures, checkpoint metadata and recovery receipts belong in the private handoff outside the website checkout. Public alert updates require deliberate reviewed promotion. Astro escapes notice strings and browser scripts use textContent, not untrusted innerHTML. `parkCode` determines alert scope; a provider URL can be absent, or a validated provider-supplied HTTPS destination. Nullable URLs and safe external links are covered by the tested normalization contract documented in `docs/NPS_PREFLIGHT.md`.
 
 ## Release boundaries
 

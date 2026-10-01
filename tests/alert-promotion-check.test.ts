@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { canonicalPreview, PILOT_CODES } from '../scripts/preview-bundle.ts';
 import { historyDigest } from '../scripts/validate-history.ts';
+import { syntheticEmptyViews, syntheticPublicFiles } from './synthetic-preview.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const hash = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
@@ -30,9 +31,8 @@ function fixture(dir: string, archived = false) {
     for (const view of views) writeFileSync(join(project, `data/alerts/${view.snapshot.park_code}.json`), JSON.stringify(view.snapshot, null, 2) + '\n');
     writeFileSync(join(project, 'data/history.json'), JSON.stringify(views.map((view: any) => view.history), null, 2) + '\n');
   } else {
-    for (const path of publicPaths) copyFileSync(join(root, path), join(project, path));
-    const views = JSON.parse(readFileSync(join(project, 'data/history.json'), 'utf8')).map((history: any) =>
-      ({history, snapshot: JSON.parse(readFileSync(join(project, `data/alerts/${history.park_code}.json`), 'utf8'))}));
+    for (const file of syntheticPublicFiles()) writeFileSync(join(project, file.path), file.text);
+    const views = syntheticEmptyViews();
     views[0] = JSON.parse(readFileSync(join(root, 'tests/fixtures/history-preview.json'), 'utf8')).cases.mixed;
     const body = {schema_version: 1, purpose: 'private_preview', data_kind: 'unreviewed_source', publication_performed: false, views};
     writeFileSync(bundle, canonicalPreview({...body, bundle_id: historyDigest(body)}), {mode: 0o600});

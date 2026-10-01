@@ -1,57 +1,112 @@
 [
   {
-    "schema_version": 1,
+    "head_observation_id": "b0144fa9bc475086154c4ffa6598ace8af80aac3508367b6dcadbf659d08cadd",
+    "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-01T00:20:43.666438Z",
+        "collection_status": "success",
+        "comparison": "baseline",
+        "observation_id": "b0144fa9bc475086154c4ffa6598ace8af80aac3508367b6dcadbf659d08cadd",
+        "omitted_changes": 0,
+        "sequence": 1
+      }
+    ],
+    "omitted_changes": 0,
+    "omitted_observations": 0,
     "park_code": "yose",
-    "head_observation_id": null,
-    "snapshot_hash": "90d886b7e25bc8ffb20251a350ce1074fe71e5c55f524e2b4936fd69669e3def",
-    "total_observations": 0,
-    "omitted_observations": 0,
+    "schema_version": 1,
+    "snapshot_hash": "d21e1c72f78db3e56911c441e4de9b67ff730c370a57abc20d27e23511d9484c",
     "total_changes": 0,
-    "omitted_changes": 0,
-    "observations": []
+    "total_observations": 1
   },
   {
-    "schema_version": 1,
+    "head_observation_id": "ae395aa680dbb1916f26150d63288c2ad17b848d47f74dd8308d247d32c59684",
+    "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-01T00:20:43.666438Z",
+        "collection_status": "success",
+        "comparison": "baseline",
+        "observation_id": "ae395aa680dbb1916f26150d63288c2ad17b848d47f74dd8308d247d32c59684",
+        "omitted_changes": 0,
+        "sequence": 1
+      }
+    ],
+    "omitted_changes": 0,
+    "omitted_observations": 0,
     "park_code": "romo",
-    "head_observation_id": null,
-    "snapshot_hash": "1853e589ceffc145abb20e3d3c1ea61641552cddeeba1b93e97932b1ad45d5c6",
-    "total_observations": 0,
-    "omitted_observations": 0,
+    "schema_version": 1,
+    "snapshot_hash": "c95714075ac988261a4d9989a2a0b273de5f1791646f3ad6fd774f659da16dcf",
     "total_changes": 0,
-    "omitted_changes": 0,
-    "observations": []
+    "total_observations": 1
   },
   {
-    "schema_version": 1,
+    "head_observation_id": "1e0f44ad86288ee3e9d4c17fc44dad905b7b1bfce64c154dee866abf9efb9300",
+    "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-01T00:20:43.666438Z",
+        "collection_status": "success",
+        "comparison": "baseline",
+        "observation_id": "1e0f44ad86288ee3e9d4c17fc44dad905b7b1bfce64c154dee866abf9efb9300",
+        "omitted_changes": 0,
+        "sequence": 1
+      }
+    ],
+    "omitted_changes": 0,
+    "omitted_observations": 0,
     "park_code": "yell",
-    "head_observation_id": null,
-    "snapshot_hash": "f04b9cc294cb8db429574cec89447b5768b738c3bee41fd31b62dc97c76d7f47",
-    "total_observations": 0,
-    "omitted_observations": 0,
+    "schema_version": 1,
+    "snapshot_hash": "30760a3cdd35b8b02f28fe8e15da301c2508c023513453a4a31914a0b57fabf4",
     "total_changes": 0,
-    "omitted_changes": 0,
-    "observations": []
+    "total_observations": 1
   },
   {
-    "schema_version": 1,
+    "head_observation_id": "1a143c4f42e39dd5097d6e88522aae5639e961923aea47304f960583b38bf691",
+    "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-01T00:20:43.666438Z",
+        "collection_status": "success",
+        "comparison": "baseline",
+        "observation_id": "1a143c4f42e39dd5097d6e88522aae5639e961923aea47304f960583b38bf691",
+        "omitted_changes": 0,
+        "sequence": 1
+      }
+    ],
+    "omitted_changes": 0,
+    "omitted_observations": 0,
     "park_code": "zion",
-    "head_observation_id": null,
-    "snapshot_hash": "aef817eef79c1e5ffcd3093a8281d70c00becfeae01f3fffd922e9c881608e6f",
-    "total_observations": 0,
-    "omitted_observations": 0,
+    "schema_version": 1,
+    "snapshot_hash": "df41de6b00c2342d4dcb860eeef5c2bcdb5902a5aa4d6eb4e9f5e5ca6fb1d7f3",
     "total_changes": 0,
-    "omitted_changes": 0,
-    "observations": []
+    "total_observations": 1
   },
   {
-    "schema_version": 1,
-    "park_code": "grca",
-    "head_observation_id": null,
-    "snapshot_hash": "31006e172bfa2c3f2646fc18f81b1405687f51a3296086d6bfed6e0c2c462155",
-    "total_observations": 0,
-    "omitted_observations": 0,
-    "total_changes": 0,
+    "head_observation_id": "a1a9140c9b5c77b15b1dbb82f1e405907bc7ca18282a4df44f7d7b842a100343",
+    "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-01T00:20:43.666438Z",
+        "collection_status": "success",
+        "comparison": "baseline",
+        "observation_id": "a1a9140c9b5c77b15b1dbb82f1e405907bc7ca18282a4df44f7d7b842a100343",
+        "omitted_changes": 0,
+        "sequence": 1
+      }
+    ],
     "omitted_changes": 0,
-    "observations": []
+    "omitted_observations": 0,
+    "park_code": "grca",
+    "schema_version": 1,
+    "snapshot_hash": "4b27b4409a107a2c09f5b8b0523375ac83f3e0bb1a320bcaf47feb3811ed19f5",
+    "total_changes": 0,
+    "total_observations": 1
   }
 ]

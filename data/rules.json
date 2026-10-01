@@ -1,83 +1,83 @@
 [
   {
-    "id": "yose-entry-2026",
-    "park_code": "yose",
     "areas": [
       "*"
     ],
     "effective_from": "2026-01-01",
     "effective_to": "2026-12-31",
-    "start_time": null,
     "end_time": null,
-    "requirement": "no_timed_entry",
-    "reviewed_at": "2026-09-28T19:55:31Z",
-    "review_status": "reviewed",
-    "summary": "NPS states that Yosemite is not using a timed entrance reservation system in 2026. This does not settle activity permits, camping, fees or road access.",
-    "exception_note": "Other permits and operational restrictions are separate.",
     "evidence": {
-      "url": "https://www.nps.gov/yose/planyourvisit/reservations.htm",
-      "excerpt": "Yosemite National Park today announced it will no longer use a timed reservation system in 2026.",
       "content_hash": "35ee1fa98bb408006fc742112b7192a35725885cf5f7342b26fcc34a0827989a",
+      "excerpt": "Yosemite National Park today announced it will no longer use a timed reservation system in 2026.",
       "hash_scope": "excerpt",
-      "reviewed_at": "2026-09-28T19:55:31Z",
+      "method": "manual_official_page_review",
+      "reviewed_at": "2026-10-01T01:18:28.701Z",
       "source_updated_at": null,
-      "method": "manual_official_page_review"
+      "url": "https://www.nps.gov/yose/planyourvisit/reservations.htm"
     },
+    "exception_note": "Other permits and operational restrictions are separate.",
+    "id": "yose-entry-2026",
+    "park_code": "yose",
+    "requirement": "no_timed_entry",
+    "review_status": "reviewed",
+    "reviewed_at": "2026-10-01T01:18:28.701Z",
     "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
-    "rights_reviewed_at": "2026-09-28T19:55:31Z"
+    "rights_reviewed_at": "2026-09-28T19:55:31Z",
+    "start_time": null,
+    "summary": "NPS states that Yosemite is not using a timed entrance reservation system in 2026. This does not settle activity permits, camping, fees or road access."
   },
   {
-    "id": "romo-rest-2026",
-    "park_code": "romo",
     "areas": [
       "rest"
     ],
     "effective_from": "2026-05-22",
     "effective_to": "2026-10-12",
-    "start_time": "09:00",
     "end_time": "14:00",
-    "requirement": "timed_entry",
-    "reviewed_at": "2026-09-28T19:55:31Z",
-    "review_status": "reviewed",
-    "summary": "For areas outside Bear Lake Road, the reviewed 2026 window is May 22 through October 12, from 09:00 to 14:00 in park-local time.",
-    "exception_note": "Some camping/service reservations and wilderness permits have separate entry provisions. Re-entry also needs separate review; consult the official questions and answers.",
     "evidence": {
-      "url": "https://www.nps.gov/romo/planyourvisit/timed-entry-permit-system.htm",
-      "excerpt": "Timed Entry reservations are needed to enter Rocky Mountain National Park between the hours of 9 a.m. to 2 p.m. daily beginning on Friday, May 22 through Monday, October 12, 2026.",
       "content_hash": "7b62f3aa17d973171004ea1c492ec13c1eee69a10340eecfc3abb35261ef411b",
+      "excerpt": "Timed Entry reservations are needed to enter Rocky Mountain National Park between the hours of 9 a.m. to 2 p.m. daily beginning on Friday, May 22 through Monday, October 12, 2026.",
       "hash_scope": "excerpt",
-      "reviewed_at": "2026-09-28T19:55:31Z",
+      "method": "manual_official_page_review",
+      "reviewed_at": "2026-10-01T01:18:28.701Z",
       "source_updated_at": null,
-      "method": "manual_official_page_review"
+      "url": "https://www.nps.gov/romo/planyourvisit/timed-entry-permit-system.htm"
     },
+    "exception_note": "Some camping/service reservations and wilderness permits have separate entry provisions. Re-entry also needs separate review; consult the official questions and answers.",
+    "id": "romo-rest-2026",
+    "park_code": "romo",
+    "requirement": "timed_entry",
+    "review_status": "reviewed",
+    "reviewed_at": "2026-10-01T01:18:28.701Z",
     "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
-    "rights_reviewed_at": "2026-09-28T19:55:31Z"
+    "rights_reviewed_at": "2026-09-28T19:55:31Z",
+    "start_time": "09:00",
+    "summary": "For areas outside Bear Lake Road, the reviewed 2026 window is May 22 through October 12, from 09:00 to 14:00 in park-local time."
   },
   {
-    "id": "romo-bear-lake-2026",
-    "park_code": "romo",
     "areas": [
       "bear-lake"
     ],
     "effective_from": "2026-05-22",
     "effective_to": "2026-10-18",
-    "start_time": "05:00",
     "end_time": "18:00",
-    "requirement": "timed_entry",
-    "reviewed_at": "2026-09-28T19:55:31Z",
-    "review_status": "reviewed",
-    "summary": "For the Bear Lake Road Corridor, the reviewed 2026 window is May 22 through October 18, from 05:00 to 18:00 in park-local time.",
-    "exception_note": "Some camping/service reservations and wilderness permits have separate entry provisions. Re-entry also needs separate review; consult the official questions and answers.",
     "evidence": {
-      "url": "https://www.nps.gov/romo/planyourvisit/timed-entry-permit-system.htm",
-      "excerpt": "Timed Entry+ Bear Lake Road Reservations are needed to enter the Bear Lake Road Corridor between the hours of 5 a.m. to 6 p.m. daily beginning on Friday, May 22 through Sunday, October 18, 2026.",
       "content_hash": "22cd3a3528d316df3c42f78084e6bd16090ed6e4ddfa6a4ca5c7816a505ceac9",
+      "excerpt": "Timed Entry+ Bear Lake Road Reservations are needed to enter the Bear Lake Road Corridor between the hours of 5 a.m. to 6 p.m. daily beginning on Friday, May 22 through Sunday, October 18, 2026.",
       "hash_scope": "excerpt",
-      "reviewed_at": "2026-09-28T19:55:31Z",
+      "method": "manual_official_page_review",
+      "reviewed_at": "2026-10-01T01:18:28.701Z",
       "source_updated_at": null,
-      "method": "manual_official_page_review"
+      "url": "https://www.nps.gov/romo/planyourvisit/timed-entry-permit-system.htm"
     },
+    "exception_note": "Some camping/service reservations and wilderness permits have separate entry provisions. Re-entry also needs separate review; consult the official questions and answers.",
+    "id": "romo-bear-lake-2026",
+    "park_code": "romo",
+    "requirement": "timed_entry",
+    "review_status": "reviewed",
+    "reviewed_at": "2026-10-01T01:18:28.701Z",
     "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
-    "rights_reviewed_at": "2026-09-28T19:55:31Z"
+    "rights_reviewed_at": "2026-09-28T19:55:31Z",
+    "start_time": "05:00",
+    "summary": "For the Bear Lake Road Corridor, the reviewed 2026 window is May 22 through October 18, from 05:00 to 18:00 in park-local time."
   }
 ]
