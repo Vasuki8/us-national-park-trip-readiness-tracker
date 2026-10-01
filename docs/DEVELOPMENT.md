@@ -42,6 +42,8 @@ The same command's `--check --bundle PATH --patch PATH --candidate-id HASH` mode
 
 Upstream `tracker.preview` now enforces the same private bundle storage boundary: an absolute output outside the entire checkout, an existing owner-only parent, owner-only output directory and single-link regular files. It reuses the existing POSIX guards and refuses insecure retained candidates before creating a writer lock, rather than chmod or move existing files. Synthetic browser inputs use caller-owned temporary storage outside the checkout, removed after the isolated preview build has copied its input. See `docs/PREVIEW_BUNDLES.md` for migration from older relative `state/` destinations.
 
+The preview builder also requires an explicit external `--workspace-parent`. Input and workspace permissions are verified, build children use private creation permissions, and readiness checks inspect the complete bounded workspace tree before completion or serving. Astro runs inside that workspace with a separately pinned source root and bundled prerender dependencies, keeping intermediate files outside the checkout across filesystems. The synthetic browser harness removes its external build directory after the server exits. Existing in-checkout preview workspaces must be rebuilt using the updated operator command.
+
 The initial editing environment could not download npm dependencies, so a temporary feature-branch job generated the lockfile without lifecycle scripts and a separate job committed only that lockfile. That bootstrap workflow has been removed. Local development and normal CI now use `npm ci` with the committed lockfile; there is no permanent write-enabled dependency bootstrap.
 
 ## Review notes

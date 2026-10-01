@@ -1,8 +1,12 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (Toronto time), after documentation of the private GitHub backup procedure**.
+Updated: **September 30, 2026 (Toronto time), after repair and verification of the external private preview workspace**.
 
 ## Current main and launch preparation handoff
+
+**Latest development handoff:** `scripts/build-preview.ts` now requires `--workspace-parent` pointing to an existing owner-only directory outside the checkout. It validates private input/workspace permissions and links, builds with private creation permissions, and verifies the complete bounded output tree before marking or serving it ready. Astro runs from that private workspace with a pinned source root and bundled prerender dependencies, so cross-filesystem builds keep candidate intermediates outside the checkout. The synthetic browser harness owns and cleans up its external input/build directories. Operator commands and migration details are in `docs/PREVIEW_BUNDLES.md`.
+
+Fresh WSL verification passed **195 Node + 415 Python + 40 generated-site tests = 650 local tests**, strict standalone TypeScript, zero Astro diagnostics and both 14-page production builds. An actual synthetic preview build and loopback HTTP check passed. Independent review passed the 19 focused Node tests and additional permission/link/size probes, with no Critical, Important or Minor findings. Astro's in-checkout generated helpers contain source/type metadata and the loopback server lock only, with no candidate data or private paths. Both Chromium suites still require supported-Linux CI; the earlier CI results below cover earlier heads. Public data is unchanged. Detailed current operator review, backup and candidate receipts remain exclusively in private storage; follow that handoff for the next deliberate promotion action.
 
 Repository: [Vasuki8/us-national-park-trip-readiness-tracker](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker). **`main`** remains the integrated baseline; continue the proposed launch tooling on **`codex/prepare-live-pilot`**. [PR #2](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/2) is merged at `467ecbe6ddd695132d3e779215554f9852028b53`, preserving all reviewed safeguards and the previously merged [PR #3](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/3) manual NPS-preflight repair. PR #1 is already merged. The branch audit found no unique unpublished code in the nine older local development branches: their complete trees match existing main-history snapshots. The remote foundation branch is already an ancestor of main; the separate preflight branch has the exact content already integrated by PR #3.
 

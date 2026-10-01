@@ -8,5 +8,7 @@ if(process.argv.includes('dev'))throw new Error('Use the explicit private previe
 if(process.argv.includes('preview'))readReady(root,workspace);
 export default defineConfig({
   output:'static',trailingSlash:'always',outDir:paths.output,cacheDir:paths.cache,
+  // Prerender chunks live outside the checkout's node_modules ancestry.
+  vite:{environments:{prerender:{resolve:{noExternal:true}}}},
   server:{host:'127.0.0.1',port:4323},
 });
