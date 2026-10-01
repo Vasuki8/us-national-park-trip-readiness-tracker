@@ -1,12 +1,12 @@
 # Owner-selected private GitHub backup
 
-The owner selected GitHub for the separate backup on September 30, 2026. Use a dedicated **private** repository, `Vasuki8/parkreadiness-private-backups`, separate from the public website repository. This replaces the earlier blanket restriction against GitHub backups for this owner-selected destination. Public repositories, Pages outputs and Actions artifacts remain unsuitable for private evidence.
+The owner selected GitHub for the separate backup on September 30, 2026. Use a dedicated **private** repository separate from the public website repository. Record the exact selected repository identity privately. This replaces the earlier blanket restriction against GitHub backups for this owner-selected destination. Public repositories, Pages outputs and Actions artifacts remain unsuitable for private evidence.
 
 Keep the authoritative working ledger, alert archive and local verified backups on the WSL Linux filesystem outside the website checkout. GitHub is the remote second copy. A local clone on C: or D: is a transfer/recovery workspace, not a separate physical backup. GitHub access controls protect this private repository; this procedure does not claim client-side encryption or indefinite retention.
 
 ## Repository and local setup
 
-Before uploading evidence, confirm through authenticated GitHub repository metadata that the exact repository is private, owned by Vasuki8 and writable by the owner. Keep Actions disabled and do not enable Pages or add collaborators. Check privacy again before each upload and recovery. If visibility or identity is wrong or cannot be checked, stop.
+Before uploading evidence, confirm through authenticated GitHub repository metadata that the exact selected repository is private, owned by the expected owner and writable by that owner. Keep Actions disabled and do not enable Pages or add collaborators. Check privacy again before each upload and recovery. If visibility or identity is wrong or cannot be checked, stop.
 
 Use owner-only WSL directories with no symlink ancestry for the working root, transfer clone and recovery parent. The existing `tracker.entry_review_backup` verifier still enforces private local files and parents. Clone and copy under `umask 077`; set `core.autocrlf=false` and use `* -text` in the backup repository's `.gitattributes` so database and manifest bytes are preserved. Git does not preserve POSIX privacy permissions remotely: enforce and verify them again on materialized WSL files.
 
@@ -43,10 +43,10 @@ The entry-review backup contains no alert archive. After collection has stopped,
 
 A labeled synthetic push/download/restore probe may verify credentials, Git transport, byte preservation and the existing restore path. It does not establish a backup of real evidence, physical durability, human review or release readiness. Keep any probe separate under `probes/`. Every real session requires actual current-head ledger and alert-archive uploads, fresh-download verification and the owner's review before public-data application or deployment.
 
-## First real recovery receipt
+## Record recovery privately
 
-On September 30, 2026 (Toronto time), the owner explicitly approved the real upload. Private commit `5b112b8590d69d85853210044b71a7e5885c5c7c` contains the selected two-file ledger backup and separate 27-file alert archive with its manifest. A fresh authenticated remote clone verified the current ledger checkpoint, exact database bytes and a restore into a new private directory with full-state equality. All five downloaded alert chains replayed and matched the original checkpoints, retaining 17 notices. Credentials and reviewer packets were excluded. The original working ledger did not change.
+Retain the exact private repository identity, remote commit, selected checkpoint IDs, byte/count comparisons, restore/replay outcomes and recovery paths outside the website checkout. Check that the working ledger remains unchanged during the rehearsal. Exclude these detailed real-session receipts from public documentation and PR descriptions.
 
-The current-head backup gate now passes. Six source-review proposals remain pending, public alert data is unchanged and no deployment has occurred. The backup becomes historical when reconciliation advances the ledger; repeat this procedure for that new head. Exact checkpoint IDs and the current handoff are in `PROJECT_STATUS.md`; detailed recovery receipts remain outside the website checkout.
+Use the verified downloaded current-head backup for the local readiness report and keep that operator report privately. A backup becomes historical when reconciliation advances the ledger; repeat this procedure for that new head. Recovery does not approve source context or authorize public-data application or deployment.
 
 Reference: [GitHub repository visibility](https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories) and [ordinary Git repository limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits).
