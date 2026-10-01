@@ -50,7 +50,7 @@ The preview config verifies the ready marker before serving. Do not expose the s
 
 ## What the preview shows
 
-The candidate/not-published warning is visible above every park. Each section combines current feed records and the production `HistoryTimeline` component, including original before/after evidence and check timestamps. Empty, failed, quarantined and stale states remain distinct. No changes to date rules, editorial reviews or source timestamps are made. Source text is escaped, never executed as HTML.
+The candidate/not-published warning is visible above every park. Each section combines current feed records and the production `HistoryTimeline` component, including original before/after evidence and check timestamps. Empty, failed, quarantined and stale states remain distinct. No changes to date rules, editorial reviews or source timestamps are made. Source text is escaped, never executed as HTML. Notice links use the same provider-supplied label and no-referrer policy as the public pages; a missing URL displays an explicit note without an anchor or invented destination.
 
 Only the candidate page and small `preview.json` metadata are served; the bundle input and private archive are not the web root. Candidate metadata identifies each park's head but contains no archive paths, raw responses or pending receipts. The existing production build remains unchanged, including empty public histories.
 

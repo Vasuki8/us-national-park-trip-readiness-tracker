@@ -14,7 +14,7 @@ def main():
     with tempfile.TemporaryDirectory() as folder:
         root = Path(folder)/'archive'; store = HistoryStore(root)
         first = snapshot([notice('a'),notice('b')]); store.append(first)
-        changed = notice('a',now=T1,title='Preview-only synthetic notice',description='Synthetic evidence <script>window.previewInjected=1</script>')
+        changed = notice('a',now=T1,title='Preview-only synthetic notice',description='Synthetic evidence <script>window.previewInjected=1</script>',url=None)
         changed['observed_first_at'] = T0
         store.append(next_snapshot(first,records=[changed]))
         for code,status in [('romo','failed'),('yell','quarantined')]:

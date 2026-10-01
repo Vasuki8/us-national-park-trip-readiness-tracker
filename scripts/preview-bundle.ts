@@ -7,7 +7,7 @@ export const PILOT_CODES = ['yose','romo','yell','zion','grca'] as const;
 export const MAX_BUNDLE_BYTES = 10 * 1024 * 1024;
 export interface PreviewSnapshot {
   park_code: string; collection_status: string; last_checked_at: string | null; last_successful_fetch_at: string | null;
-  records: {id:string; title:string; description:string; url:string; category:string}[];
+  records: {id:string; title:string; description:string; url:string | null; category:string}[];
 }
 export interface PreviewBundle {
   schema_version: 1; purpose: 'private_preview'; data_kind: 'synthetic' | 'unreviewed_source';

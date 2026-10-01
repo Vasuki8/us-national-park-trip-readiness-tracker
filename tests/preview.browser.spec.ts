@@ -6,6 +6,13 @@ test('real candidate bundle builds five separately labeled park previews',async(
   await expect(page.locator('[data-preview-banner]')).toContainText('Not published');
   await expect(page.locator('[data-preview-park]')).toHaveCount(5);
   await expect(page.locator('[data-preview-park="yose"] [data-current-record]')).toHaveCount(1);
+  const unlinked=page.locator('[data-preview-park="yose"] [data-current-record]');
+  await expect(unlinked).toContainText('NPS did not supply a direct link for this alert.');
+  await expect(unlinked.locator('a')).toHaveCount(0);
+  const supplied=page.locator('[data-preview-park="romo"] [data-current-record]').getByRole('link',{name:'More information link supplied by NPS'});
+  await expect(supplied).toHaveAttribute('href','https://www.nps.gov/romo/test.htm');
+  await expect(supplied).toHaveAttribute('rel','noopener noreferrer');
+  await expect(supplied).toHaveAttribute('referrerpolicy','no-referrer');
   await expect(page.locator('[data-preview-park="yose"] [data-history-observation]')).toHaveCount(2);
   await expect(page.locator('[data-preview-park="grca"] [data-history-status]')).toHaveText('History not collected');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content','noindex, nofollow');
