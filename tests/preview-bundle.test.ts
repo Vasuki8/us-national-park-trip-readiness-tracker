@@ -5,11 +5,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { historyDigest } from '../scripts/validate-history.ts';
 import { validatePreviewBundle, readPreviewBundle, canonicalPreview } from '../scripts/preview-bundle.ts';
+import { syntheticEmptyViews } from './synthetic-preview.ts';
 const json = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
 const fixtures = json('./fixtures/history-preview.json').cases;
 function bundle(scenario = 'empty') {
-  const histories = json('../data/history.json');
-  const views = histories.map((history: any) => ({history, snapshot: json(`../data/alerts/${history.park_code}.json`)}));
+  const views = syntheticEmptyViews();
   views[0] = structuredClone(fixtures[scenario]);
   const body = {schema_version: 1, purpose: 'private_preview', data_kind: 'synthetic', publication_performed: false, views};
   return {...body, bundle_id: historyDigest(body)};

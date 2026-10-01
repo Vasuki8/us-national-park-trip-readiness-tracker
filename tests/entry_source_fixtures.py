@@ -4,9 +4,17 @@ import json
 import sys
 from datetime import datetime, timezone
 from html import escape
+from pathlib import Path
 from tracker.entry_sources import PROFILES, inspect_entry_sources
 
 NOW = datetime(2026, 9, 30, 1, tzinfo=timezone.utc)
+
+def synthetic_guidance():
+    """Load fixed test guidance whose review clocks match the historic scenarios."""
+    fixture = json.loads((Path(__file__).resolve().parent/'fixtures'/'synthetic-guidance.json').read_text())
+    if fixture['purpose'] != 'synthetic_test_guidance':
+        raise ValueError('invalid_synthetic_guidance_fixture')
+    return fixture
 
 def make_fixture(records, scenario):
     captures = []

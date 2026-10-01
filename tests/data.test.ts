@@ -3,18 +3,23 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validateInventory, validateRule, validateSnapshot } from '../scripts/validate-data.ts';
 import { validateSourceRights } from '../scripts/validate-source-rights.ts';
+import { syntheticEmptyViews } from './synthetic-preview.ts';
 const parks = JSON.parse(readFileSync('data/parks.json', 'utf8'));
 const rules = JSON.parse(readFileSync('data/rules.json', 'utf8'));
 const snapshot = JSON.parse(readFileSync('data/alerts/yose.json', 'utf8'));
 const notes = JSON.parse(readFileSync('data/entry-notes.json', 'utf8'));
 const sourceRights = JSON.parse(readFileSync('data/source-rights.json', 'utf8'));
+const uncollected = syntheticEmptyViews()[0].snapshot;
 test('production inventory contains exactly the five pilots', () => { validateInventory(parks); assert.equal(parks.length, 5); });
 test('every stored rule has valid official evidence and an excerpt hash', () => { for (const rule of rules) validateRule(rule, parks); });
 test('uncollected snapshots cannot claim a successful check', () => {
-  assert.throws(() => validateSnapshot({ ...snapshot, last_successful_fetch_at: '2026-09-28T19:00:00Z' }, 'yose'));
+  assert.throws(() => validateSnapshot({ ...uncollected, last_successful_fetch_at: '2026-09-28T19:00:00Z' }, 'yose'));
 });
 test('successful snapshots require coherent timestamps', () => {
-  assert.throws(() => validateSnapshot({ ...snapshot, collection_status: 'success' }, 'yose'));
+  assert.throws(() => validateSnapshot({ ...uncollected, collection_status: 'success' }, 'yose'));
+});
+test('all five public alert snapshots satisfy the production contract', () => {
+  for (const park of parks) validateSnapshot(JSON.parse(readFileSync(`data/alerts/${park.code}.json`, 'utf8')), park.code);
 });
 test('rule evidence cannot point to a lookalike hostname', () => {
   assert.throws(() => validateRule({ ...rules[0], evidence: { ...rules[0].evidence, url: 'https://www.nps.gov.evil.test/yose/' } }, parks));

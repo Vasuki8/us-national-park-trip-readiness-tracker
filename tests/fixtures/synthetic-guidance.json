@@ -1,0 +1,157 @@
+{
+  "purpose": "synthetic_test_guidance",
+  "rules": [
+    {
+      "id": "yose-entry-2026",
+      "park_code": "yose",
+      "areas": [
+        "*"
+      ],
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "start_time": null,
+      "end_time": null,
+      "requirement": "no_timed_entry",
+      "reviewed_at": "2026-09-28T19:55:31Z",
+      "review_status": "reviewed",
+      "summary": "NPS states that Yosemite is not using a timed entrance reservation system in 2026. This does not settle activity permits, camping, fees or road access.",
+      "exception_note": "Other permits and operational restrictions are separate.",
+      "evidence": {
+        "url": "https://www.nps.gov/yose/planyourvisit/reservations.htm",
+        "excerpt": "Yosemite National Park today announced it will no longer use a timed reservation system in 2026.",
+        "content_hash": "35ee1fa98bb408006fc742112b7192a35725885cf5f7342b26fcc34a0827989a",
+        "hash_scope": "excerpt",
+        "reviewed_at": "2026-09-28T19:55:31Z",
+        "source_updated_at": null,
+        "method": "manual_official_page_review"
+      },
+      "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+      "rights_reviewed_at": "2026-09-28T19:55:31Z"
+    },
+    {
+      "id": "romo-rest-2026",
+      "park_code": "romo",
+      "areas": [
+        "rest"
+      ],
+      "effective_from": "2026-05-22",
+      "effective_to": "2026-10-12",
+      "start_time": "09:00",
+      "end_time": "14:00",
+      "requirement": "timed_entry",
+      "reviewed_at": "2026-09-28T19:55:31Z",
+      "review_status": "reviewed",
+      "summary": "For areas outside Bear Lake Road, the reviewed 2026 window is May 22 through October 12, from 09:00 to 14:00 in park-local time.",
+      "exception_note": "Some camping/service reservations and wilderness permits have separate entry provisions. Re-entry also needs separate review; consult the official questions and answers.",
+      "evidence": {
+        "url": "https://www.nps.gov/romo/planyourvisit/timed-entry-permit-system.htm",
+        "excerpt": "Timed Entry reservations are needed to enter Rocky Mountain National Park between the hours of 9 a.m. to 2 p.m. daily beginning on Friday, May 22 through Monday, October 12, 2026.",
+        "content_hash": "7b62f3aa17d973171004ea1c492ec13c1eee69a10340eecfc3abb35261ef411b",
+        "hash_scope": "excerpt",
+        "reviewed_at": "2026-09-28T19:55:31Z",
+        "source_updated_at": null,
+        "method": "manual_official_page_review"
+      },
+      "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+      "rights_reviewed_at": "2026-09-28T19:55:31Z"
+    },
+    {
+      "id": "romo-bear-lake-2026",
+      "park_code": "romo",
+      "areas": [
+        "bear-lake"
+      ],
+      "effective_from": "2026-05-22",
+      "effective_to": "2026-10-18",
+      "start_time": "05:00",
+      "end_time": "18:00",
+      "requirement": "timed_entry",
+      "reviewed_at": "2026-09-28T19:55:31Z",
+      "review_status": "reviewed",
+      "summary": "For the Bear Lake Road Corridor, the reviewed 2026 window is May 22 through October 18, from 05:00 to 18:00 in park-local time.",
+      "exception_note": "Some camping/service reservations and wilderness permits have separate entry provisions. Re-entry also needs separate review; consult the official questions and answers.",
+      "evidence": {
+        "url": "https://www.nps.gov/romo/planyourvisit/timed-entry-permit-system.htm",
+        "excerpt": "Timed Entry+ Bear Lake Road Reservations are needed to enter the Bear Lake Road Corridor between the hours of 5 a.m. to 6 p.m. daily beginning on Friday, May 22 through Sunday, October 18, 2026.",
+        "content_hash": "22cd3a3528d316df3c42f78084e6bd16090ed6e4ddfa6a4ca5c7816a505ceac9",
+        "hash_scope": "excerpt",
+        "reviewed_at": "2026-09-28T19:55:31Z",
+        "source_updated_at": null,
+        "method": "manual_official_page_review"
+      },
+      "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+      "rights_reviewed_at": "2026-09-28T19:55:31Z"
+    }
+  ],
+  "notes": [
+    {
+      "id": "yell-general-entry",
+      "park_code": "yell",
+      "subject_type": "general_entry",
+      "period_status": "not_published",
+      "effective_from": null,
+      "effective_to": null,
+      "reviewed_at": "2026-09-28T20:40:20Z",
+      "review_status": "reviewed",
+      "summary": "The reviewed NPS permits page says no reservation is needed for general park entry. It separately directs visitors to overnight reservations and activity permits.",
+      "limitation": "The cited entry statement does not publish an effective date range. This is a stored source observation, not a determination for your travel dates. Fees, activity permits, overnight arrangements and access conditions need separate checks.",
+      "evidence": {
+        "url": "https://www.nps.gov/yell/planyourvisit/permitsandreservations.htm",
+        "excerpt": "Visiting Yellowstone does not require a reservation to enter",
+        "content_hash": "f8e2d03744a503a87bba8e156917ccc5b1e16db6e8997d10a1e7b92db009d149",
+        "hash_scope": "excerpt",
+        "reviewed_at": "2026-09-28T20:40:20Z",
+        "source_updated_at": null,
+        "method": "manual_official_page_review"
+      },
+      "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+      "rights_reviewed_at": "2026-09-28T20:40:20Z"
+    },
+    {
+      "id": "zion-general-entry",
+      "park_code": "zion",
+      "subject_type": "general_entry",
+      "period_status": "not_published",
+      "effective_from": null,
+      "effective_to": null,
+      "reviewed_at": "2026-09-28T20:40:20Z",
+      "review_status": "reviewed",
+      "summary": "The reviewed NPS page distinguishes entering the park or riding a shuttle from activities that require their own permits.",
+      "limitation": "The cited entry statement does not publish an effective date range. This is a stored source observation, not a determination for your travel dates. Fees, activity permits, overnight arrangements and access conditions need separate checks.",
+      "evidence": {
+        "url": "https://www.nps.gov/zion/planyourvisit/permitsandreservations.htm",
+        "excerpt": "No tickets, permits, or reservations needed to enter Zion National Park or ride the shuttle",
+        "content_hash": "ac39295d53f9271453038ae2cfe75eb368979884ae78adc3dba83a675ae02b22",
+        "hash_scope": "excerpt",
+        "reviewed_at": "2026-09-28T20:40:20Z",
+        "source_updated_at": null,
+        "method": "manual_official_page_review"
+      },
+      "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+      "rights_reviewed_at": "2026-09-28T20:40:20Z"
+    },
+    {
+      "id": "grca-general-entry",
+      "park_code": "grca",
+      "subject_type": "general_entry",
+      "period_status": "not_published",
+      "effective_from": null,
+      "effective_to": null,
+      "reviewed_at": "2026-09-28T20:40:20Z",
+      "review_status": "reviewed",
+      "summary": "The reviewed NPS operations page says general entry does not use reservations or timed entry. It separately publishes changing facility and area conditions.",
+      "limitation": "The cited entry statement does not publish an effective date range. This is a stored source observation, not a determination for your travel dates. Fees, activity permits, overnight arrangements and access conditions need separate checks.",
+      "evidence": {
+        "url": "https://www.nps.gov/grca/planyourvisit/grand-canyon-national-park-public-health-update.htm",
+        "excerpt": "Reservations are not required to enter Grand Canyon National Park. The park does not have timed entry.",
+        "content_hash": "daa124bf6faa2037c3819ccb6d270cd314ce052c047764c533367ef2c31e6e46",
+        "hash_scope": "excerpt",
+        "reviewed_at": "2026-09-28T20:40:20Z",
+        "source_updated_at": null,
+        "method": "manual_official_page_review"
+      },
+      "rights_basis": "NPS government-authored text excerpt and original planning summary; no media or marks reproduced",
+      "rights_reviewed_at": "2026-09-28T20:40:20Z"
+    }
+  ]
+}

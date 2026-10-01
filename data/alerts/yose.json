@@ -1,14 +1,33 @@
 {
-  "schema_version": 1,
+  "collection_status": "success",
+  "coverage_status": "checked_feed_only",
+  "error_code": null,
+  "last_checked_at": "2026-10-01T00:20:43.666438Z",
+  "last_successful_fetch_at": "2026-10-01T00:20:43.666438Z",
   "park_code": "yose",
   "provider": "NPS",
-  "source_url": "https://developer.nps.gov/api/v1/alerts?parkCode=yose",
-  "collection_status": "never_checked",
-  "coverage_status": "not_collected",
-  "last_checked_at": null,
-  "last_successful_fetch_at": null,
-  "source_updated_at": null,
   "published_at": null,
-  "records": [],
-  "error_code": null
+  "records": [
+    {
+      "area_id": null,
+      "category": "Park Closure",
+      "content_hash": "2ceb24c0aa839f4e3cfcdf3b46aff50775603ba7c8728c672e8af1c6bd1dcbb9",
+      "description": "The Dome Fire is burning in the wilderness northeast of Wawona. Glacier Point Road is temporarily closed because of reduced visibility along the road due to smoke and to safely allow firefighting operations. Additionally, there are some trail closures south of Glacier Point Road.. Smoky conditions are possible, with brief periods of unhealthy air quality in some places at some times..",
+      "effective_from": null,
+      "effective_to": null,
+      "evidence_excerpt": "The Dome Fire is burning in the wilderness northeast of Wawona. Glacier Point Road is temporarily closed because of reduced visibility along the road due to smoke and to safely allow firefighting operations. Additionally, there are some trail closures south of Glacier Point Road.. Smoky conditions are possible, with brief periods of unhealthy air quality in some places at some times..",
+      "hash_scope": "normalized_record",
+      "id": "7FB2991F-FED2-4E87-8002-B4BADAD2749F",
+      "observed_changed_at": "2026-10-01T00:20:43.666438Z",
+      "observed_first_at": "2026-10-01T00:20:43.666438Z",
+      "park_code": "yose",
+      "scope_status": "unclassified",
+      "source_updated_at": null,
+      "title": "Glacier Point Road is temporarily closed due to the Dome Fire",
+      "url": "https://inciweb.wildfire.gov/incident-information/caynp-dome-fire"
+    }
+  ],
+  "schema_version": 1,
+  "source_updated_at": null,
+  "source_url": "https://developer.nps.gov/api/v1/alerts?parkCode=yose"
 }

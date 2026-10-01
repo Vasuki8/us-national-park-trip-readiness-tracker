@@ -6,14 +6,15 @@ import { evaluateEntry } from '../src/lib/readiness.ts';
 import { summarizeCoverage } from '../src/lib/source-coverage.ts';
 const load = (path: string) => JSON.parse(readFileSync(new URL(`../data/${path}`, import.meta.url), 'utf8'));
 const NOW = new Date('2026-09-29T03:00:00Z');
-const rules = load('rules.json'), notes = load('entry-notes.json'), parks = load('parks.json');
+const {rules, notes} = JSON.parse(readFileSync(new URL('./fixtures/synthetic-guidance.json', import.meta.url), 'utf8'));
+const parks = load('parks.json');
 const records = [...rules, ...notes];
 function batch() {
   return records.map((r) => ({ guidance_id: r.id, guidance_hash: guidanceDigest(r), source_url: r.evidence.url,
     checked_at: '2026-09-29T01:00:00Z', status: 'observed', excerpt: r.evidence.excerpt }));
 }
 const empty = () => ({ schema_version: 1, proposals: [] });
-test('every real dated-rule fixture is suspended before its no-reservation conclusion', () => {
+test('every synthetic dated-rule fixture is suspended before its no-reservation conclusion', () => {
   for (const rule of rules) {
     const obs = batch(); obs.find((o) => o.guidance_id === rule.id)!.excerpt += ' Synthetic changed text.';
     const pending = assessEntrySources(records, obs, empty(), NOW).register;
@@ -35,8 +36,10 @@ test('all six source bindings and five park coverage rows propagate holds withou
   for (const note of gated.slice(rules.length)) assert.equal(note.effective_from, null);
 });
 test('production review register is empty and cannot claim active source monitoring', () => {
+  const publicRecords = [...load('rules.json'), ...load('entry-notes.json')];
+  const publicNow = new Date(Math.max(...publicRecords.map(r => Date.parse(r.reviewed_at))) + 1);
   const register = load('entry-review.json'); assert.deepEqual(register, empty());
-  assert.deepEqual(applyEntryReview(records, register, NOW).guidance, records);
+  assert.deepEqual(applyEntryReview(publicRecords, register, publicNow).guidance, publicRecords);
 });
 test('a matching source check does not rescue a weekly-expired approval', () => {
   const later = new Date('2026-10-06T01:00:00Z'); const obs = batch(); obs.forEach((o) => o.checked_at = '2026-10-06T00:00:00Z');

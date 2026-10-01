@@ -11,6 +11,7 @@ from html import escape
 from pathlib import Path
 from unittest.mock import patch
 
+from entry_source_fixtures import synthetic_guidance
 from tracker.release_readiness import evaluate_readiness, main, _gate
 from tracker.entry_review_io import ReviewStoreError
 from tracker.entry_sources import PROFILES, digest
@@ -94,9 +95,12 @@ class ReleaseReadinessTests(unittest.TestCase):
           'hosting_rollback','indexing','advertising'])
         self.assertEqual(self.gate(report,'durable_source_review')['status'],'not_checked')
         alerts=self.gate(report,'nps_alert_api')
-        self.assertEqual(alerts['status'],'blocked')
-        self.assertEqual(alerts['evidence']['never_checked'],5)
-        self.assertEqual(alerts['evidence']['successful'],0)
+        self.assertEqual(alerts['status'],'not_checked')
+        self.assertEqual(alerts['reason'],
+            'success_present_but_freshness_and_provider_compatibility_need_release_validation')
+        self.assertTrue(alerts['blocking'])
+        self.assertEqual(alerts['evidence']['never_checked'],0)
+        self.assertEqual(alerts['evidence']['successful'],5)
         self.assertEqual(self.gate(report,'storage_backup')['status'],'not_checked')
         self.assertEqual(self.gate(report,'source_rights')['status'],'pass')
         self.assertEqual(self.gate(report,'hosting_rollback')['status'],'not_checked')
@@ -111,7 +115,7 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(report['release_target'],'pilot')
         self.assertEqual([gate['id'] for gate in report['gates'] if gate['required']], [
             'durable_source_review','nps_alert_api','storage_backup','source_rights','hosting_rollback'])
-        self.assertEqual(report['required_summary'],{'pass':1,'blocked':1,'not_checked':3})
+        self.assertEqual(report['required_summary'],{'pass':1,'blocked':0,'not_checked':4})
         self.assertFalse(self.gate(report,'indexing')['blocking'])
         self.assertFalse(self.gate(report,'advertising')['blocking'])
         self.assertFalse(report['release_ready'])
@@ -235,7 +239,7 @@ class ReleaseReadinessTests(unittest.TestCase):
         with redirect_stdout(out),redirect_stderr(err):
             code=main(['--target','pilot','--format','text'])
         self.assertEqual(code,1); self.assertEqual(err.getvalue(),'')
-        self.assertIn('Required for pilot: 1 pass, 1 blocked, 3 not checked',out.getvalue())
+        self.assertIn('Required for pilot: 1 pass, 0 blocked, 4 not checked',out.getvalue())
         self.assertIn('later target; not required',out.getvalue())
         out,err=io.StringIO(),io.StringIO()
         with redirect_stdout(out),redirect_stderr(err):
@@ -259,11 +263,25 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(err.getvalue(),'invalid_release_readiness_arguments\n')
 
     def test_never_checked_alerts_can_never_be_described_as_clear_or_ready(self):
-        report=evaluate_readiness(ROOT)
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            self.copy_indexing_controls(root)
+            (root/'data/alerts').mkdir(parents=True)
+            for filename in ('rules.json','entry-notes.json'):
+                (root/'data'/filename).write_text('[]')
+            for code in PROFILES:
+                (root/'data/alerts'/f'{code}.json').write_text(json.dumps({
+                    'park_code':code,'collection_status':'never_checked',
+                    'last_checked_at':None,'last_successful_fetch_at':None,'records':[]}))
+            report=evaluate_readiness(root)
         text=json.dumps(report).lower()
         self.assertNotIn('all clear',text)
         self.assertNotIn('no alerts',text)
         alerts=self.gate(report,'nps_alert_api')
+        self.assertFalse(report['release_ready'])
+        self.assertEqual(alerts['status'],'blocked')
+        self.assertEqual(alerts['evidence']['never_checked'],5)
+        self.assertEqual(alerts['evidence']['successful'],0)
         self.assertTrue(alerts['blocking'])
         self.assertIn('never_checked',alerts['reason'])
 
@@ -373,7 +391,8 @@ class ReleaseReadinessTests(unittest.TestCase):
         for name in ['source-rights.json']+[f'alerts/{code}.json' for code in PROFILES]:
             target=root/'data'/name; target.parent.mkdir(parents=True,exist_ok=True)
             target.write_bytes((ROOT/'data'/name).read_bytes())
-        records=public_records()
+        guidance=synthetic_guidance()
+        records=guidance['rules']+guidance['notes']
         for row in records:
             row['summary']='Synthetic test guidance for '+row['id']+'.'
             row['evidence']['excerpt']='Synthetic source excerpt for '+row['id']+'.'
@@ -519,7 +538,7 @@ class ReleaseReadinessTests(unittest.TestCase):
             code=main(['--format','text'])
         self.assertEqual(code,1); self.assertEqual(err.getvalue(),'')
         self.assertIn('Pilot release readiness: BLOCKED',out.getvalue())
-        self.assertIn('[BLOCKED] NPS alert API validation',out.getvalue())
+        self.assertIn('[NOT CHECKED] NPS alert API validation',out.getvalue())
 
         out,err=io.StringIO(),io.StringIO()
         with redirect_stdout(out),redirect_stderr(err):

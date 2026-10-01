@@ -1,6 +1,6 @@
 /** Private local workspaces only; no production fallback and no automatic cleanup. */
-import { lstatSync, mkdirSync, mkdtempSync, readdirSync, openSync, closeSync, writeFileSync, fsyncSync, linkSync, unlinkSync, readFileSync } from 'node:fs';
-import { resolve, dirname, basename, join, isAbsolute } from 'node:path';
+import { lstatSync, mkdtempSync, readdirSync, openSync, closeSync, writeFileSync, fsyncSync, linkSync, unlinkSync, readFileSync } from 'node:fs';
+import { resolve, dirname, basename, join, isAbsolute, relative, sep } from 'node:path';
 function requireValue(value){if(!value)throw new Error('unsafe_or_incomplete_preview');}
 export function assertSafePath(path){
   requireValue(typeof path==='string' && path.length>0);
@@ -9,17 +9,37 @@ export function assertSafePath(path){
     if(dirname(p)===p)break;
   }
 }
-const parentFor=root=>join(resolve(root),'.superpowers','preview-builds');
-export function createWorkspace(root){
-  const parent=parentFor(root);assertSafePath(parent);
-  mkdirSync(parent,{recursive:true,mode:0o700});
+function contains(parent,path){
+  const part=relative(parent,path);
+  return part==='' || (part!=='..' && !part.startsWith('..'+sep) && !isAbsolute(part));
+}
+function outsideCheckout(root,path){
+  requireValue(typeof path==='string' && isAbsolute(path) && path===resolve(path));
+  const project=resolve(root);
+  requireValue(!contains(project,path) && !contains(path,project));
+  assertSafePath(path);
+}
+function privateStat(path,directory=false){
+  requireValue(process.platform!=='win32' && typeof process.getuid==='function');
+  const stat=lstatSync(path);
+  requireValue((directory?stat.isDirectory():stat.isFile()) && stat.uid===process.getuid()
+    && (stat.mode&0o077)===0 && (directory || stat.nlink===1));
+  return stat;
+}
+function privateParent(root,parent){outsideCheckout(root,parent);privateStat(parent,true);}
+export function assertPrivateInput(root,path){
+  outsideCheckout(root,path);privateStat(dirname(path),true);privateStat(path);
+}
+export function createWorkspace(root,parent){
+  privateParent(root,parent);
   requireValue(readdirSync(parent).length<64);
-  return mkdtempSync(join(parent,'run-'));
+  const workspace=mkdtempSync(join(parent,'run-'));privateStat(workspace,true);return workspace;
 }
 export function workspacePaths(root,workspace){
   requireValue(typeof workspace==='string' && isAbsolute(workspace) && workspace===resolve(workspace));
-  requireValue(dirname(workspace)===parentFor(root) && /^run-[A-Za-z0-9]+$/.test(basename(workspace)));
-  assertSafePath(workspace);requireValue(lstatSync(workspace).isDirectory());
+  privateParent(root,dirname(workspace));
+  requireValue(/^run-[A-Za-z0-9]+$/.test(basename(workspace)));
+  assertSafePath(workspace);privateStat(workspace,true);
   const paths={bundle:join(workspace,'bundle.json'),output:join(workspace,'dist'),cache:join(workspace,'cache'),ready:join(workspace,'ready.json')};
   for(const path of Object.values(paths))assertSafePath(path);
   return paths;
@@ -31,10 +51,25 @@ function marker(value){
   return value;
 }
 function boundedText(path,limit){
-  assertSafePath(path);const stat=lstatSync(path);requireValue(stat.isFile() && stat.size<=limit);
+  assertSafePath(path);const stat=privateStat(path);requireValue(stat.size<=limit);
   return readFileSync(path,'utf8');
 }
+function privateTree(root){
+  let count=0,bytes=0;
+  const pending=[root];
+  while(pending.length){
+    const folder=pending.pop();assertSafePath(folder);privateStat(folder,true);
+    for(const name of readdirSync(folder)){
+      requireValue(++count<=4096);
+      const path=join(folder,name);assertSafePath(path);
+      const directory=lstatSync(path).isDirectory(),stat=privateStat(path,directory);
+      if(directory)pending.push(path);
+      else{bytes+=stat.size;requireValue(bytes<=64*1024*1024);}
+    }
+  }
+}
 function verifyOutput(paths,value){
+  privateTree(dirname(paths.bundle));
   const html=boundedText(join(paths.output,'index.html'),16*1024*1024);
   requireValue(/<meta\s+name="robots"\s+content="noindex, nofollow"/.test(html));
   const data=JSON.parse(boundedText(join(paths.output,'preview.json'),65536));

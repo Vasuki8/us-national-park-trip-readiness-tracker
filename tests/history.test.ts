@@ -12,12 +12,13 @@ test('Python archive projection hashes and all fixture states validate in TypeSc
     assert.deepEqual(validateHistory(view.history, view.snapshot), view.history);
   }
 });
-test('all five committed histories match never-collected public snapshots', () => {
+test('all five committed histories match their public snapshots', () => {
   const histories = JSON.parse(readFileSync(new URL('../data/history.json', import.meta.url), 'utf8'));
   assert.equal(histories.length, 5); assert.equal(new Set(histories.map((h: any) => h.park_code)).size, 5);
   for (const h of histories) {
     const snapshot = JSON.parse(readFileSync(new URL(`../data/alerts/${h.park_code}.json`, import.meta.url), 'utf8'));
-    validateHistory(h, snapshot); assert.equal(h.total_observations, 0);
+    assert.equal(historyDigest(snapshot), h.snapshot_hash);
+    assert.deepEqual(validateHistory(h, snapshot), h);
   }
 });
 test('mismatched snapshot contents, status, clock and park fail closed', () => {

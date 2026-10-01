@@ -83,6 +83,8 @@ uv run --frozen python -m tracker.stage status --park all --staging-dir /absolut
 
 A failed request retains last-good records with failure metadata. A suspicious record drop is quarantined rather than treated as closure removal. The batch can have partial committed progress; inspect status and recover pending receipts before retrying. These commands do not publish or back up data. See `docs/STAGING_COLLECTION.md`. Durable evidence, backup and review remain required before public collection or schedules.
 
+After private collection and preview, the offline [alert-data candidate preparer](docs/ALERT_DATA_PROMOTION.md) can write a reviewable patch outside the checkout. Its optional `--archive-dir` check verifies continuity against the complete private archive when observations or changes are omitted from the bounded preview. A read-only `--check` mode compares the recorded candidate hash and exact patch against all six current public base files before an authorized application. It preserves paired snapshots/history and performs no public-data write or approval. Applying real data remains a separate operator decision.
+
 ## Handoff
 
 Read `PROJECT_STATUS.md` first, then `docs/DEVELOPMENT.md`. The approved product design is in `docs/superpowers/specs/2026-09-28-national-park-trip-readiness-design.md`. Implementation plans are in `docs/superpowers/plans/`; the project Pages increment is `2026-09-30-pages-base-path.md`. Source-scope decisions are documented in `docs/ENTRY_SOURCE_REVIEW.md`.

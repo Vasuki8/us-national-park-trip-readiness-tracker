@@ -118,7 +118,7 @@ class PreviewBundleTests(unittest.TestCase):
 
 
     def test_bounds_do_not_delete_existing_files(self):
-        self.output.mkdir(); retained = self.output/'keep'; retained.write_text('keep')
+        self.output.mkdir(mode=0o700); retained = self.output/'keep'; retained.write_text('keep'); retained.chmod(0o600)
         with patch('tracker.preview.MAX_OUTPUT_BYTES', 1):
             with self.assertRaises(HistoryError): prepare_bundle(self.archive, self.output)
         self.assertEqual(retained.read_text(), 'keep')
@@ -143,5 +143,68 @@ class PreviewBundleTests(unittest.TestCase):
     def test_invalid_kind_is_not_accepted_as_approval(self):
         with self.assertRaises(HistoryError): make_bundle(self.store, data_kind='approved_live')
         self.assertEqual(make_bundle(self.store, data_kind='synthetic')['data_kind'], 'synthetic')
+
+    def test_insecure_output_directory_refuses_before_any_writer(self):
+        self.output.mkdir(mode=0o755); before = self.output.stat().st_mtime_ns
+        with patch('tracker.preview.os.open', wraps=os.open) as opened, self.assertRaises(HistoryError):
+            prepare_bundle(self.archive, self.output)
+        opened.assert_not_called()
+        self.assertEqual(list(self.output.iterdir()), [])
+        self.assertEqual(self.output.stat().st_mtime_ns, before)
+        self.assertEqual(self.output.stat().st_mode & 0o777, 0o755)
+
+    def test_readable_equal_candidate_is_not_reused_or_repaired(self):
+        path = prepare_bundle(self.archive, self.output); path.chmod(0o644)
+        before, timestamp = path.read_bytes(), path.stat().st_mtime_ns
+        with patch('tracker.preview.os.open', wraps=os.open) as opened, self.assertRaises(HistoryError):
+            prepare_bundle(self.archive, self.output)
+        opened.assert_not_called()
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(path.stat().st_mtime_ns, timestamp)
+        self.assertEqual(path.stat().st_mode & 0o777, 0o644)
+        self.assertEqual(list(self.output.iterdir()), [path])
+
+    def test_hardlinked_candidate_or_insecure_retained_file_refuses_before_writes(self):
+        path = prepare_bundle(self.archive, self.output); alias = self.root/'alias.json'
+        os.link(path, alias)
+        with patch('tracker.preview.os.open', wraps=os.open) as opened, self.assertRaises(HistoryError):
+            prepare_bundle(self.archive, self.output)
+        opened.assert_not_called()
+        self.assertEqual(path.stat().st_nlink, 2)
+        alias.unlink()
+        retained = self.output/'retained'; retained.write_text('retained'); retained.chmod(0o644)
+        with patch('tracker.preview.os.open', wraps=os.open) as opened, self.assertRaises(HistoryError):
+            prepare_bundle(self.archive, self.output)
+        opened.assert_not_called()
+        self.assertEqual(retained.read_text(), 'retained')
+
+    def test_output_requires_an_existing_owner_only_parent_without_recursive_creation(self):
+        parent = self.root/'shared'; parent.mkdir(mode=0o755)
+        for destination in (parent/'bundles', self.root/'missing'/'bundles'):
+            with self.subTest(destination=destination), self.assertRaises(HistoryError):
+                prepare_bundle(self.archive, destination)
+            self.assertFalse(destination.exists())
+        self.assertFalse((self.root/'missing').exists())
+        self.assertEqual(parent.stat().st_mode & 0o777, 0o755)
+
+    def test_unlisted_checkout_outputs_and_relative_paths_refuse_without_creation(self):
+        project = self.root/'project'; project.mkdir(mode=0o700)
+        with patch('tracker.preview.PROJECT_ROOT', project):
+            for name in ('state/bundles', '.superpowers/inputs', 'unlisted/private'):
+                with self.subTest(name=name), self.assertRaises(HistoryError):
+                    prepare_bundle(self.archive, project/name)
+            self.assertEqual(list(project.iterdir()), [])
+        with patch('os.getcwd', return_value=str(self.root)), self.assertRaises(HistoryError):
+            prepare_bundle(self.archive, Path('relative-bundles'))
+        self.assertFalse((self.root/'relative-bundles').exists())
+
+    def test_unsupported_platform_and_foreign_owner_refuse_without_output(self):
+        owner = os.getuid()
+        with patch('tracker.preview.os.name', 'nt'), self.assertRaises(HistoryError):
+            prepare_bundle(self.archive, self.output)
+        self.assertFalse(self.output.exists())
+        with patch('tracker.entry_review_io.os.getuid', return_value=owner + 1), self.assertRaises(HistoryError):
+            prepare_bundle(self.archive, self.output)
+        self.assertFalse(self.output.exists())
 
 if __name__ == '__main__': unittest.main()

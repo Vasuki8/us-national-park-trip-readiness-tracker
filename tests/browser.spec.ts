@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date('2026-09-29T12:00:00Z')); });
+import { PUBLIC_PILOT_FRESH_TIME, PUBLIC_PILOT_STALE_TIME, publicParkSnapshots, publicParks } from './pilot-clock.ts';
+test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME)); });
 test('keyboard search, state filtering and empty results', async ({ page }) => {
   const external: string[] = [];
   page.on('request', (request) => { if (!request.url().startsWith('http://127.0.0.1:4321/')) external.push(request.url()); });
@@ -24,7 +25,7 @@ test('Yosemite date checks never reuse a year or stale review', async ({ page })
   await page.getByLabel('Visit date').fill('2027-06-01');
   await page.getByRole('button', { name: 'Check entry guidance' }).click();
   await expect(page.locator('#decision-title')).toHaveText('Entry requirements not verified for this date');
-  await page.clock.setFixedTime(new Date('2026-10-10T12:00:00Z'));
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_STALE_TIME));
   await page.getByLabel('Visit date').fill('2026-10-11');
   await page.getByRole('button', { name: 'Check entry guidance' }).click();
   await expect(page.locator('#decision-title')).toHaveText('Entry guidance needs a fresh review');
@@ -70,10 +71,51 @@ test('official links and evidence remain usable with JavaScript disabled', async
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4321/parks/yosemite/');
-  await expect(page.getByRole('heading', { name: 'Conditions have not been collected' })).toBeVisible();
+  const snapshot = publicParkSnapshots.find((item) => item.park_code === 'yose')!;
+  expect(JSON.parse((await page.locator('#alert-status').getAttribute('data-snapshot'))!)).toEqual(snapshot);
+  await expect(page.getByRole('heading', { name: 'Notices retained from the checked feed' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: snapshot.records[0].title, exact: true })).toBeVisible();
+  await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at!);
+  await expect(page.locator('[data-history-observation]')).toHaveCount(1);
+  await expect(page.getByText('Baseline recorded', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Read the official source', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Check entry guidance' })).toBeDisabled();
   await expect(page.locator('[data-check]').first()).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Reset checklist' })).toBeDisabled();
   await context.close();
+});
+
+test('successful checked feeds retain notices and never give a park-wide all-clear', async ({ page }) => {
+  for (const park of publicParks) {
+    const snapshot = publicParkSnapshots.find((item) => item.park_code === park.code)!;
+    await page.goto(`/parks/${park.slug}/`);
+    expect(JSON.parse((await page.locator('#alert-status').getAttribute('data-snapshot'))!)).toEqual(snapshot);
+    await expect(page.locator('#alert-status')).toContainText('Coverage incomplete');
+    await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at!);
+    await expect(page.locator('#alert-status a')).toHaveAttribute('href', park.conditions_url);
+    const retained = page.locator('section.panel').filter({ has: page.getByRole('heading', { name: 'Notices retained from the checked feed', exact: true }) });
+    if (snapshot.records.length) {
+      await expect(page.locator('#notice-title')).toHaveText('Official notices need your review');
+      await expect(page.locator('#notice-detail')).toContainText('not a park-wide status');
+      await expect(retained.locator('article')).toHaveCount(snapshot.records.length);
+      for (const record of snapshot.records) {
+        const notice = retained.locator('article').filter({ has: page.getByRole('heading', { name: record.title, exact: true }) });
+        await expect(notice).toContainText(record.description);
+        if (record.url) await expect(notice.getByRole('link')).toHaveAttribute('href', record.url);
+        else {
+          await expect(notice).toContainText('NPS did not supply a direct link for this alert.');
+          await expect(notice.locator('a')).toHaveCount(0);
+        }
+      }
+    } else {
+      await expect(retained).toHaveCount(0);
+      await expect(page.locator('#notice-title')).toHaveText('No alerts returned by the checked feed');
+      await expect(page.locator('#notice-detail')).toContainText('This is not an all-clear.');
+    }
+    await page.clock.setFixedTime(new Date(PUBLIC_PILOT_STALE_TIME));
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect(page.locator('#notice-title')).toHaveText('The condition snapshot needs a fresh check');
+    expect(JSON.parse((await page.locator('#alert-status').getAttribute('data-snapshot'))!)).toEqual(snapshot);
+    await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
+  }
 });
