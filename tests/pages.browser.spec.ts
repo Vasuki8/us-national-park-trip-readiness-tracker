@@ -196,3 +196,24 @@ test('project-path printing refreshes expired guidance without rewriting source 
     expect(await link.evaluate(element => getComputedStyle(element, '::after').content)).toContain(href!);
   }
 });
+
+test('project-path corrections retain source identity and return to the exact notice', async ({ page }) => {
+  await page.goto(`${base}parks/yosemite/`);
+  const article = page.locator('.source-item[id^="alert-yose-"]').first();
+  const anchor = await article.getAttribute('id');
+  const link = article.locator('[data-correction-link]');
+  const destination = await link.getAttribute('href');
+  expect(destination).toMatch(new RegExp(`^${base}corrections/\\?source=`));
+  await link.click();
+  await expect(page).toHaveURL(`http://127.0.0.1:4324${destination}`);
+  await expect(page.locator('#correction-source')).toBeVisible();
+  await expect(page.locator('#correction-source-label')).toHaveText('Yosemite · Retained NPS notice');
+  await expect(page.locator('#correction-return')).toHaveAttribute('href', `${base}parks/yosemite/#${encodeURIComponent(anchor!)}`);
+  const draft = new URL((await page.locator('#correction-draft').getAttribute('href'))!);
+  expect(draft.searchParams.get('body')).toContain(`https://vasuki8.github.io${base}parks/yosemite/`);
+  expect(draft.searchParams.get('body')).not.toContain('127.0.0.1');
+  await page.locator('#correction-return').focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(`http://127.0.0.1:4324${base}parks/yosemite/#${encodeURIComponent(anchor!)}`);
+  await expect(page.locator(`[id="${anchor}"] h3`)).toBeInViewport();
+});

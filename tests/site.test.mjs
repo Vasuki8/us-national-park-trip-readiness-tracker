@@ -8,6 +8,8 @@ const routes = ['', 'parks', 'parks/yosemite', 'parks/rocky-mountain', 'parks/ye
 const output = process.env.SITE_TEST_OUTPUT || 'dist';
 const base = process.env.SITE_TEST_BASE || '/';
 const parks = JSON.parse(readFileSync(new URL('../data/parks.json', import.meta.url), 'utf8'));
+const rules = JSON.parse(readFileSync(new URL('../data/rules.json', import.meta.url), 'utf8'));
+const notes = JSON.parse(readFileSync(new URL('../data/entry-notes.json', import.meta.url), 'utf8'));
 const histories = JSON.parse(readFileSync(new URL('../data/history.json', import.meta.url), 'utf8'));
 const snapshots = parks.map((park) => JSON.parse(readFileSync(new URL(`../data/alerts/${park.code}.json`, import.meta.url), 'utf8')));
 const decodeHtml = (value) => value.replace(/&(?:quot|amp|lt|gt|#39);/g, (entity) => ({ '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&#39;': "'" })[entity]);
@@ -57,6 +59,52 @@ test('all park pages retain the exact public checked-feed snapshot and official 
 });
 
 test('informational pages describe the hosted manual pilot honestly', () => assertLivePilotCopy(output));
+
+test('public source articles offer exact base-aware correction links without JavaScript', () => {
+  for (const park of parks) {
+    const snapshot = snapshots.find((item) => item.park_code === park.code);
+    const sources = [
+      ...rules.filter((rule) => rule.park_code === park.code).map((rule) => ({ kind: 'rule', id: rule.id, anchor: `entry-rule-${rule.id}` })),
+      ...notes.filter((note) => note.park_code === park.code).map((note) => ({ kind: 'note', id: note.id, anchor: `entry-note-${note.id}` })),
+      ...snapshot.records.map((alert) => ({ kind: 'alert', id: alert.id, anchor: `alert-${park.code}-${alert.id}` })),
+    ];
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const articles = [...html.matchAll(/<article\b[^>]*>[\s\S]*?<\/article>/g)].map(([article]) => article);
+    const correctionLinks = [...html.matchAll(/<a\b[^>]*\bdata-correction-link\b[^>]*>[\s\S]*?<\/a>/g)];
+    assert.equal(correctionLinks.length, sources.length, `${park.code}: one link per current public source`);
+    for (const source of sources) {
+      const matches = articles.filter((article) => decodeHtml(article.match(/^<article\b[^>]*>/)[0]).includes(`id="${source.anchor}"`));
+      assert.equal(matches.length, 1, `${park.code}: exact stable article for ${source.kind}:${source.id}`);
+      const links = [...matches[0].matchAll(/<a\b[^>]*\bdata-correction-link\b[^>]*>[\s\S]*?<\/a>/g)].map(([link]) => link);
+      assert.equal(links.length, 1, `${park.code}: correction link beside ${source.kind}:${source.id}`);
+      const href = links[0].match(/\bhref="([^"]*)"/);
+      assert.ok(href, 'Correction link has a native destination');
+      assert.equal(decodeHtml(href[1]), `${base}corrections/?source=${encodeURIComponent(`${source.kind}:${park.code}:${source.id}`)}`);
+      assert.match(links[0], />Report a correction about this source<\/a>/);
+    }
+  }
+});
+
+test('corrections context catalog retains exactly current public source identities and return destinations', () => {
+  const html = readFileSync(`${output}/corrections/index.html`, 'utf8');
+  const catalog = embeddedJson(html, 'data-correction-sources');
+  const expected = parks.flatMap((park) => {
+    const snapshot = snapshots.find((item) => item.park_code === park.code);
+    return [
+      ...rules.filter((rule) => rule.park_code === park.code).map((rule) => ({ kind: 'rule', recordId: rule.id, sourceUrl: rule.evidence.url, anchor: `entry-rule-${rule.id}` })),
+      ...notes.filter((note) => note.park_code === park.code).map((note) => ({ kind: 'note', recordId: note.id, sourceUrl: note.evidence.url, anchor: `entry-note-${note.id}` })),
+      ...snapshot.records.map((alert) => ({ kind: 'alert', recordId: alert.id, sourceUrl: alert.url, anchor: `alert-${park.code}-${alert.id}` })),
+    ].map(({ anchor, ...source }) => ({
+      ...source,
+      key: `${source.kind}:${park.code}:${source.recordId}`,
+      parkCode: park.code,
+      returnHref: `${base}parks/${park.slug}/#${encodeURIComponent(anchor)}`,
+    }));
+  });
+  const identity = ({ key, parkCode, kind, recordId, sourceUrl, returnHref }) => ({ key, parkCode, kind, recordId, sourceUrl, returnHref });
+  const byKey = (a, b) => a.key.localeCompare(b.key);
+  assert.deepEqual(catalog.map(identity).sort(byKey), expected.sort(byKey));
+});
 
 test('all park pages and changes overview retain exact paired history and observation clocks', () => {
   const overview = readFileSync(`${output}/changes/index.html`, 'utf8');

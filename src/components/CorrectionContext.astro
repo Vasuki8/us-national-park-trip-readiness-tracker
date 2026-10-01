@@ -1,0 +1,35 @@
+---
+import { parks, rules, notes, snapshotFor } from '../lib/data';
+import { createCorrectionSources } from '../lib/corrections';
+import { siteUrl } from '../lib/urls';
+const sources = createCorrectionSources({ parks, rules, notes, snapshots: parks.map(park => snapshotFor(park.code)) }, import.meta.env.BASE_URL);
+---
+<section id="correction-context" aria-labelledby="correction-context-title" data-correction-sources={JSON.stringify(sources)}>
+  <h2 id="correction-context-title">Source for your report</h2>
+  <p id="correction-intro">Use a correction link beside stored guidance or a notice on a park page to bring that source's details here. You can also make a general report below.</p>
+  <p id="correction-unavailable" class="note" role="status" hidden>The referenced source is not available in this published record. Use the general report below and include the park page and official evidence.</p>
+  <div id="correction-source" hidden>
+    <p><strong id="correction-source-label"></strong></p>
+    <p class="small muted">Public record ID: <code id="correction-source-id"></code></p>
+    <p id="correction-wording"></p>
+    <dl id="correction-facts"></dl>
+    <p class="small muted">These times describe our stored record. Check current information at the source.</p>
+    <p><a id="correction-official-source" class="text-link" href="#" rel="noopener noreferrer" referrerpolicy="no-referrer" hidden>Read the source</a><span id="correction-missing-link" hidden>NPS did not supply a direct source link for this notice.</span></p>
+    <p><a id="correction-return" class="text-link" href={siteUrl('/parks/', import.meta.env.BASE_URL)} rel="noopener noreferrer" referrerpolicy="no-referrer">Return to this source on the park page</a></p>
+    <p>The draft includes the public source details shown here. Review it and add your correction on GitHub. Reports are public; omit personal information, booking confirmations and API keys.</p>
+    <p><a id="correction-draft" class="button secondary" href="https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/issues/new" rel="noopener noreferrer" referrerpolicy="no-referrer">Open a GitHub correction draft <span aria-hidden="true">↗</span></a></p>
+  </div>
+  <noscript><p class="note">Source-specific details need JavaScript. Include the park page and official evidence in a general correction below.</p></noscript>
+</section>
+<script>import '../scripts/corrections';</script>
+<style>
+  #correction-context{margin:0 0 36px;padding:24px;border:1px solid var(--line);border-radius:8px;min-width:0;overflow-wrap:anywhere}
+  #correction-context h2{font-size:1.5rem;margin-bottom:16px}
+  #correction-context p{font-size:.9rem;line-height:1.8}
+  #correction-context .small{font-size:.78rem}
+  #correction-wording{white-space:pre-wrap}
+  #correction-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:8px 16px;margin:24px 0;font-size:.8rem;line-height:1.8}
+  #correction-facts :global(dt){font-weight:600}#correction-facts :global(dd){margin:0;min-width:0;overflow-wrap:anywhere}
+  #correction-draft{max-width:100%;white-space:normal;text-align:center}
+  @media(max-width:620px){#correction-context{padding:20px 16px}#correction-facts{grid-template-columns:minmax(0,1fr);gap:4px}#correction-facts :global(dd){margin-bottom:10px}}
+</style>
