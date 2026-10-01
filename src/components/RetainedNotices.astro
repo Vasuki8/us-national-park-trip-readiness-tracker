@@ -29,6 +29,7 @@ const searchableText = (notice: Notice) => `${notice.title} ${notice.description
 </section>
 <script>import '../scripts/notices';</script>
 <style>
+  .retained-notices{overflow-wrap:anywhere}
   .notice-fields{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto;align-items:end;gap:16px;margin:20px 0}
   .notice-fields .field{min-width:0}.notice-fields input,.notice-fields select{min-width:0;max-width:100%}
   .notice-fields button{max-width:100%;white-space:normal}

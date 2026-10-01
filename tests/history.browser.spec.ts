@@ -197,6 +197,10 @@ test('synthetic history links identify current retained IDs while archived wordi
     }
     await page.setViewportSize({ width: 360, height: 800 });
     await page.locator('html').evaluate(element => { element.style.fontSize = '200%'; });
+    const overflow = await page.locator('[data-retained-notice] > p').evaluateAll(elements => elements
+      .filter(element => element.scrollWidth > element.clientWidth + 1)
+      .map(element => ({ id: element.parentElement?.id, text: element.textContent, width: element.clientWidth, scroll: element.scrollWidth })));
+    expect(overflow, 'retained source text wraps at doubled size without changing its wording').toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
     for (const link of await page.locator('[data-history-notice-link]').all()) {
       await expect(link).toBeVisible();
