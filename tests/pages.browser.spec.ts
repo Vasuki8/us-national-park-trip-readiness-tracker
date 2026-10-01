@@ -74,7 +74,7 @@ test('project-path evidence follows restored areas and retains the original revi
     window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
     document.querySelector<HTMLSelectElement>('#trip-area')!.value = 'rest';
   });
-  await expect(page.locator('#entry-decision')).toHaveText(decisionText);
+  await expect(page.locator('#entry-decision')).toHaveText(decisionText, { useInnerText: true });
   await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(rest.id)}`);
   await evidence.click();
   await expect(page).toHaveURL(`http://127.0.0.1:4324${base}parks/rocky-mountain/#entry-rule-${encodeURIComponent(rest.id)}`);

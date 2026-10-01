@@ -67,7 +67,7 @@ test('Rocky Mountain decisions link to the exact stored rule even when result wo
   await expect(evidence).toBeVisible();
   await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(rest.id)}`);
   await page.getByLabel('Planned area').selectOption('bear-lake');
-  await expect(page.locator('#entry-decision')).toHaveText(decisionText);
+  await expect(page.locator('#entry-decision')).toHaveText(decisionText, { useInnerText: true });
   await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(bearLake.id)}`);
   await expect(evidence).toHaveText('View the stored rule used for this result');
   await evidence.focus();
