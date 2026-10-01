@@ -1,8 +1,18 @@
 # Project status and handoff
 
-Updated: **September 30, 2026 (Toronto time), after verified Pages launch, rollback and restoration**.
+Updated: **October 1, 2026 (Toronto time), after manual-refresh verification and hosted-pilot copy repairs**.
 
-## Current live pilot and main handoff
+## Current development handoff
+
+Continue on **`codex/manual-refresh-verification`**, based on integrated main `151e942ec047f746d1288592b6a2bf12d261f0c9`. Informational pages now describe reviewed manual alert/history updates, the four-hour alert freshness window, unscheduled collection and the actual GitHub Pages host. The obsolete claims that no public alerts/history exist or hosting awaits launch are removed.
+
+Generated-site and browser checks follow the current paired history instead of assuming five first baselines forever. Exact metadata, observation clocks/order, visible counts, conditional baseline explanations and omission disclosures remain checked. A real Astro component regression accepts the existing later, bounded, failed and uncollected synthetic histories and rejects corrupted clocks/counts/disclosures. Public release verification still requires the successful public pilot snapshots under the existing release contract; truthful degraded fixture rendering does not clear release eligibility.
+
+Browser scenarios now use a reference after every known review, attempted-check and successful-check timestamp, preserving each park's independent freshness. Annual guidance scenarios use their selected review clocks separately from alert refreshes. Seven new synthetic regressions cover alert-only updates after guidance expiry, partial refreshes, later failed attempts, nullable successes and invalid clocks. Local WSL verification passed **204 Node + 415 Python + 44 generated-site tests = 663 tests**, zero Astro diagnostics and both 14-page builds. Independent review found no remaining findings. Both supported-Linux Chromium suites remain pending for this branch; the local Ubuntu 26.04 browser-runtime limitation remains.
+
+This increment performs no real collection, public-data promotion or deployment. Public data and its original clocks are unchanged, and the live artifact below remains the hosting baseline. Next: complete current-branch CI, then deliberate integration/release review. Future data updates continue through the private collection/review/backup and paired-promotion runbooks; indexing, advertising and recurring operations retain their separate operator decisions.
+
+## Live pilot and integrated main baseline
 
 **Live pilot:** [ParkReadiness](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/) serves verified commit **`303475e260c93f2207e03e08945363cc3ac85882`**, integrated by [PR #4](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/4). The owner-approved eight-file promotion contains six reviewed guidance records and **17 retained notices** (Yosemite 1, Rocky Mountain 0, Yellowstone 5, Zion 7, Grand Canyon 4), with one paired baseline per park. The alert observation time remains **2026-10-01T00:20:43.666438Z**; guidance review time is **2026-10-01T01:18:28.701Z**. Unknown publisher-update and publication timestamps remain null. Deployment reused the verified artifact without rewriting its manifest or source clocks.
 

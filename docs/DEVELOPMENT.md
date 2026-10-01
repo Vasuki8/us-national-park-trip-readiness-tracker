@@ -12,6 +12,10 @@
 
 The browser recalculates freshness every minute and when the tab becomes visible. Entry review expiration is 168 hours; alert expiration is four hours. Stale guidance remains readable as historical evidence but cannot grant a current exemption. Trip dates/times are wall-clock values at the park, not UTC conversions from the browser timezone.
 
+Production verification follows the current paired histories, including later observations and bounded views whose original baseline is no longer visible. Exact metadata, clocks, observation/baseline counts and omission disclosures remain checked. The generated-history regression builds the real component with the isolated archive fixtures and checks both valid views and corrupted output. The generated-site release suite still requires successful public snapshots; accepting degraded synthetic history rendering is not release approval.
+
+`tests/pilot-clock.ts` provides a reference after every known review and attempted/successful feed check. That clock avoids future evidence without making every source fresh. Browser coverage checks preserve each source's independent age; deliberate annual-guidance scenarios use the selected reviews' own clocks and explicit visit dates. Historical/synthetic cases keep independent fixed clocks.
+
 ## Collection limits
 
 The collector uses only a fixed NPS HTTPS endpoint. Its private key is in a request header, and redirects are disabled. It permits three attempts with bounded waits, 100 pages and 5,000 total records. Pagination counts must remain stable and IDs unique. A drop of more than half the last-good records is quarantined for review. This conservative threshold intentionally favors retaining notices over implying reopening; a later operator workflow must resolve legitimate mass removals.

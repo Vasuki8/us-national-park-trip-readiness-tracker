@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PUBLIC_PILOT_FRESH_TIME, publicParkSnapshots, publicParks } from './pilot-clock.ts';
+import { PUBLIC_PILOT_REFERENCE_TIME, publicHistories, publicParkSnapshots, publicParks } from './pilot-clock.ts';
 const url='http://127.0.0.1:4323/';
 test('real candidate bundle builds five separately labeled park previews',async({page})=>{
   await page.clock.install({time:new Date('2026-09-28T13:00:00Z')});await page.goto(url);
@@ -47,10 +47,11 @@ test('candidate preview fits a 360px screen with expanded evidence',async({page}
   for(const summary of await page.locator('details summary').all())await summary.click();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
-test('production build retains public baselines and does not expose candidate routes or notices',async({page,request})=>{
-  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
-  await page.goto('/changes/');await expect(page.locator('[data-history-observation]')).toHaveCount(5);
-  await expect(page.getByText('Baseline recorded',{exact:true})).toHaveCount(5);
+test('production build retains paired public history and does not expose candidate routes or notices',async({page,request})=>{
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_REFERENCE_TIME));
+  const observations=publicHistories.flatMap((history)=>history.observations);
+  await page.goto('/changes/');await expect(page.locator('[data-history-observation]')).toHaveCount(observations.length);
+  await expect(page.getByText('Baseline recorded',{exact:true})).toHaveCount(observations.filter((item)=>item.comparison==='baseline').length);
   expect(await page.content()).not.toContain('Preview-only synthetic notice');
   for(const park of publicParks){
     await page.goto(`/parks/${park.slug}/`);

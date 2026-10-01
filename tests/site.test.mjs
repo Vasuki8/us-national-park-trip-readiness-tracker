@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { assertHistoryCounts, assertHistoryPanel } from './history-rendering.mjs';
+import { assertLivePilotCopy } from './live-pilot-copy.mjs';
 const routes = ['', 'parks', 'parks/yosemite', 'parks/rocky-mountain', 'parks/yellowstone', 'parks/zion', 'parks/grand-canyon', 'how-it-works', 'sources', 'changes', 'about', 'privacy', 'terms', 'corrections'];
 const output = process.env.SITE_TEST_OUTPUT || 'dist';
 const base = process.env.SITE_TEST_BASE || '/';
@@ -54,24 +56,16 @@ test('all park pages retain the exact public checked-feed snapshot and official 
   }
 });
 
-test('all park pages and changes overview retain exact baseline observation clocks', () => {
+test('informational pages describe the hosted manual pilot honestly', () => assertLivePilotCopy(output));
+
+test('all park pages and changes overview retain exact paired history and observation clocks', () => {
   const overview = readFileSync(`${output}/changes/index.html`, 'utf8');
-  assert.equal((overview.match(/data-history-observation/g) || []).length, 5);
-  assert.equal((overview.match(/Baseline recorded/g) || []).length, 5);
+  assertHistoryCounts(overview, histories);
   for (const park of parks) {
     const snapshot = snapshots.find((item) => item.park_code === park.code);
     const history = histories.find((item) => item.park_code === park.code);
     for (const html of [readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8'), overview]) {
-      const panel = html.match(new RegExp(`<section[^>]*id="history-${park.code}"[^>]*>[\\s\\S]*?</section>`))?.[0];
-      assert.ok(panel, `Missing history for ${park.code}`);
-      assert.deepEqual(embeddedJson(panel, 'data-history-metadata'), {
-        collection_status: snapshot.collection_status, last_checked_at: snapshot.last_checked_at,
-        last_successful_fetch_at: snapshot.last_successful_fetch_at,
-      });
-      const clocks = [...panel.matchAll(/<time datetime="([^"]*)"/g)].map((match) => match[1]);
-      assert.deepEqual(clocks, [snapshot.last_successful_fetch_at, ...history.observations.map((item) => item.checked_at)]);
-      assert.equal((panel.match(/data-history-observation/g) || []).length, history.observations.length);
-      assert.ok(panel.includes('not evidence that its restrictions began at this time'));
+      assertHistoryPanel(html, snapshot, history);
     }
   }
 });

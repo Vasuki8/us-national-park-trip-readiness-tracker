@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PUBLIC_PILOT_FRESH_TIME, publicParks, publicRules } from './pilot-clock.ts';
+import { PUBLIC_PILOT_REFERENCE_TIME, publicParks, publicRules } from './pilot-clock.ts';
 const base = 'http://127.0.0.1:4322/entry-review';
 for (const state of ['changed', 'missing', 'failed', 'sticky']) {
   test(`pending ${state} source review blocks a conclusion and retains original evidence dates`, async ({ page }) => {
@@ -35,7 +35,7 @@ test('review warning fits 360px and doubled text without hiding source links', a
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 test('production data remains approved and empty register does not expose synthetic review fixtures', async ({ page }) => {
-  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_REFERENCE_TIME));
   for (const park of publicParks) {
     await page.goto(`/parks/${park.slug}/`);
     await expect(page.locator('[data-entry-review-notice]')).toHaveCount(0);

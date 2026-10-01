@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PUBLIC_PILOT_FRESH_TIME } from './pilot-clock.ts';
+import { guidanceScenarioTime, publicRules } from './pilot-clock.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
 
 test('project-path search and navigation load working assets', async ({ page }) => {
@@ -19,7 +19,7 @@ test('project-path search and navigation load working assets', async ({ page }) 
 });
 
 test('project-path entry checker and checklist remain interactive', async ({ page }) => {
-  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME));
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'romo' && rule.areas.includes('bear-lake')))));
   await page.goto(`${base}parks/rocky-mountain/`);
   await page.getByLabel('Visit date').fill('2026-09-30');
   await page.getByLabel('Planned area').selectOption('bear-lake');

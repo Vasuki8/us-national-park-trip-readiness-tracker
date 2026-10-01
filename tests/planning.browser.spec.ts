@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { PUBLIC_PILOT_FRESH_TIME, publicParkSnapshots } from './pilot-clock.ts';
+import { describeHistory } from '../src/lib/history.ts';
+import { PUBLIC_PILOT_REFERENCE_TIME, publicHistories, publicParkSnapshots } from './pilot-clock.ts';
 const resources = JSON.parse(readFileSync(new URL('../data/planning-resources.json', import.meta.url), 'utf8')).resources;
 const parks = [['yose', 'yosemite'], ['romo', 'rocky-mountain'], ['yell', 'yellowstone'], ['zion', 'zion'], ['grca', 'grand-canyon']];
-test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date(PUBLIC_PILOT_FRESH_TIME)); });
+test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date(PUBLIC_PILOT_REFERENCE_TIME)); });
 test('all five parks expose seven separate source-linked planning checks without claiming conditions coverage', async ({ page }) => {
   for (const [code, slug] of parks) {
     await page.goto(`/parks/${slug}/`);
@@ -20,10 +21,11 @@ test('all five parks expose seven separate source-linked planning checks without
     }
     const snapshot = JSON.parse((await page.locator('#alert-status').getAttribute('data-snapshot'))!);
     expect(snapshot).toEqual(publicParkSnapshots.find((item) => item.park_code === code));
-    expect(snapshot.collection_status).toBe('success');
-    await expect(page.getByText('Baseline recorded', { exact: true })).toBeVisible();
-    await expect(page.locator('[data-history-status]')).toHaveText('Recent feed check; coverage remains limited');
-    await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at);
+    const history = publicHistories.find((item) => item.park_code === code)!;
+    await expect(page.getByText('Baseline recorded', { exact: true })).toHaveCount(history.observations.filter((observation) => observation.comparison === 'baseline').length);
+    await expect(page.locator('[data-history-observation]')).toHaveCount(history.observations.length);
+    await expect(page.locator('[data-history-status]')).toHaveText(describeHistory(snapshot, new Date(PUBLIC_PILOT_REFERENCE_TIME)).title);
+    await expect(page.locator('#alert-status')).toContainText(snapshot.last_successful_fetch_at ?? 'Never');
   }
 });
 test('checklist jumps to official checks without marking any task reviewed', async ({ page }) => {
