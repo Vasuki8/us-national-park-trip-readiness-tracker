@@ -19,8 +19,14 @@ const snapshot = snapshotFor(park.code);
 const notice = describeAlerts(snapshot, new Date());
 ---
 <Layout title={`${park.name} trip readiness`}>
+  <div class="park-readiness-page">
   <nav class="breadcrumb" aria-label="Breadcrumb"><a href={siteUrl('/parks/', import.meta.env.BASE_URL)}>Explore parks</a><span aria-hidden="true">/</span><span>{park.name}</span></nav>
   <section class="park-intro"><div><p class="eyebrow">{park.states.join(' · ')} · National park</p><h1>{park.name}<span>Trip readiness</span></h1><p class="lead">{park.summary}</p></div><a class="button secondary" href={park.official_url}>Official park planning <span aria-hidden="true">↗</span></a></section>
+  <section class="note print-only" id="print-snapshot" aria-label="Printed page copy">
+    <p>Printed page copy. Stored guidance and self-reported checks do not verify bookings or conditions. Recheck official sources before travel.</p>
+    <p>Page-copy time: <time id="print-time">Print time not recorded</time>. This is not a source check.</p>
+    <noscript><p>Freshness is not recalculated without JavaScript; labels reflect the site build. Use the original source review and check times below.</p></noscript>
+  </section>
   <section class="notice-panel" id="alert-status" data-snapshot={JSON.stringify(snapshot)} aria-labelledby="notice-title"><span class="status-symbol" aria-hidden="true">!</span><div><p class="eyebrow">Published restrictions · Coverage incomplete</p><h2 id="notice-title">{notice.title}</h2><p id="notice-detail">{notice.detail}</p><a class="text-link" href={park.conditions_url}>Check official conditions <span aria-hidden="true">↗</span></a><p class="small">Last successful automated check: {snapshot.last_successful_fetch_at ?? 'Never'}. Source update time: {snapshot.source_updated_at ?? 'Not supplied'}.</p></div></section>
   {snapshot.records.length > 0 && <section class="panel"><h2>Notices retained from the checked feed</h2><p>Area scope is not classified. These notices are not filtered to your travel date; applicability remains unconfirmed.</p>{snapshot.records.map((item) => <article class="source-item"><p class="eyebrow">{item.category} · Scope unclassified</p><h3>{item.title}</h3><p>{item.description}</p>{item.url ? <a href={item.url} rel="noopener noreferrer" referrerpolicy="no-referrer">More information link supplied by NPS</a> : <p class="small muted">NPS did not supply a direct link for this alert.</p>}</article>)}</section>}
   {!parkRules.length && parkNotes.length > 0 && <p class="note">Only undated general-entry guidance is stored for this park. The date checker will not infer an exemption; read the source observation below.</p>}
@@ -35,5 +41,6 @@ const notice = describeAlerts(snapshot, new Date());
   <HistoryTimeline history={historyFor(park.code)} snapshot={snapshot} conditionsUrl={park.conditions_url} />
   <PlanningResources parkName={park.name} resources={planningResourcesFor(park.code)} />
   <p class="build-note small muted">Data snapshot: <code>{buildInfo.snapshot_id}</code>. Build created: <time datetime={buildInfo.built_at}>{buildInfo.built_at}</time>. This is not a source-check or publication time.</p>
+  </div>
 </Layout>
 <script>import '../../scripts/trip';</script>

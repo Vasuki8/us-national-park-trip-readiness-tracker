@@ -26,4 +26,5 @@ if (timelines.length) {
   window.setInterval(refreshHistory, 60_000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHistory(); });
   window.addEventListener('pageshow', refreshHistory);
+  window.addEventListener('beforeprint', refreshHistory);
 }

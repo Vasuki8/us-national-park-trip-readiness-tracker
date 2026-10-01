@@ -44,7 +44,7 @@ function coverageRoot(input: coverage.CoverageInput) {
 }
 
 // Execute both actual scripts and real clock-injected copy functions. Timers are held;
-// pageshow is the only refresh signal, independent of browser restoration policy.
+// Dispatched page/print events are the only refresh signals, independent of browser restoration policy.
 function sourcePage(inputs: coverage.CoverageInput[] = [], metadata: (history.HistoryMetadata | string)[] = []) {
   let now = Date.parse(later);
   const roots = inputs.map(coverageRoot);
@@ -77,6 +77,7 @@ function sourcePage(inputs: coverage.CoverageInput[] = [], metadata: (history.Hi
     roots, timelines,
     setTime: (time: string) => { now = Date.parse(time); },
     showPage: (persisted = true) => window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted })),
+    beforePrint: () => window.dispatchEvent(new Event('beforeprint')),
   };
 }
 
@@ -118,6 +119,37 @@ test('page return expires history at its own successful-check clock without chan
   assert.equal(page.timelines[0].title.textContent, 'History needs a fresh check');
   assert.equal(page.timelines[1].title.textContent, 'Recent feed check; coverage remains limited');
   assert.match(page.timelines[0].detail.textContent, /historical, not current conditions/);
+  assert.deepEqual(page.timelines.map(({ root }) => root.dataset.historyMetadata), before);
+});
+
+test('printing expires history independently at each successful-check clock without changing metadata', () => {
+  const page = sourcePage([], [snapshot('early'), snapshot('later', { last_checked_at: later, last_successful_fetch_at: later })]);
+  const before = page.timelines.map(({ root }) => root.dataset.historyMetadata);
+  page.setTime('2026-09-28T16:00:00Z'); page.beforePrint();
+  assert.equal(page.timelines[0].title.textContent, 'Recent feed check; coverage remains limited');
+  page.setTime('2026-09-28T16:00:00.001Z'); page.beforePrint();
+  assert.equal(page.timelines[0].title.textContent, 'History needs a fresh check');
+  assert.equal(page.timelines[1].title.textContent, 'Recent feed check; coverage remains limited');
+  assert.match(page.timelines[0].detail.textContent, /historical, not current conditions/);
+  assert.deepEqual(page.timelines.map(({ root }) => root.dataset.historyMetadata), before);
+  page.beforePrint();
+  assert.deepEqual(page.timelines.map(({ title, detail }) => [title.writes, detail.writes]), [[2, 2], [1, 1]]);
+});
+
+test('printing keeps missing, failed, quarantined, invalid, future and damaged history conservative', () => {
+  const page = sourcePage([], [
+    snapshot('fresh'), snapshot('missing', { collection_status: 'never_checked', last_checked_at: null, last_successful_fetch_at: null }),
+    snapshot('null-clock', { last_successful_fetch_at: null }), snapshot('failed', { collection_status: 'failed' }),
+    snapshot('quarantined', { collection_status: 'quarantined' }), snapshot('invalid', { last_successful_fetch_at: 'invalid' }),
+    snapshot('future', { last_successful_fetch_at: '2026-09-30T12:00:00Z' }), '{', '{}',
+  ]);
+  const before = page.timelines.map(({ root }) => root.dataset.historyMetadata);
+  page.setTime('2026-09-28T16:00:00.001Z'); page.beforePrint();
+  assert.deepEqual(page.timelines.map(({ title }) => title.textContent), [
+    'History needs a fresh check', 'History not collected', 'History needs a fresh check',
+    'The latest check was not successful', 'The latest check was not successful', 'History needs a fresh check',
+    'History needs a fresh check', 'The latest check was not successful', 'The latest check was not successful',
+  ]);
   assert.deepEqual(page.timelines.map(({ root }) => root.dataset.historyMetadata), before);
 });
 

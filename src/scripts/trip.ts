@@ -58,6 +58,17 @@ if (context) {
     }
     if (evaluated) showDecision();
   };
+  const preparePrint = () => {
+    updateFreshness(); progress();
+    const printedAt = new Date().toISOString();
+    const timestamp = document.querySelector<HTMLTimeElement>('#print-time')!;
+    timestamp.dateTime = printedAt;
+    timestamp.textContent = printedAt;
+  };
+  const printButton = document.querySelector<HTMLButtonElement>('#print-page')!;
+  printButton.disabled = false;
+  printButton.addEventListener('click', () => { preparePrint(); window.print(); });
+  window.addEventListener('beforeprint', preparePrint);
   reset(); updateFreshness();
   window.setInterval(updateFreshness, 60_000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) updateFreshness(); });

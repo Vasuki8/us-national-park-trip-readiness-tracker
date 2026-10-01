@@ -20,7 +20,7 @@ const rule: readiness.Rule = {
 
 // Execute the browser script and real decision layer; only DOM and clock APIs are substituted.
 class Element extends EventTarget {
-  value = ''; href = ''; hidden = false; checked = false; disabled = true;
+  value = ''; href = ''; dateTime = ''; hidden = false; checked = false; disabled = true;
   dataset: Record<string, string> = {};
   textWrites: string[] = [];
   private text = '';
@@ -28,11 +28,14 @@ class Element extends EventTarget {
   set textContent(value: string) { this.text = value; this.textWrites.push(value); }
 }
 
-function tripPage(rules: readiness.Rule[] = [rule]) {
+function tripPage(rules: readiness.Rule[] = [rule], snapshot: readiness.AlertState = {
+  collection_status: 'success', last_successful_fetch_at: rule.reviewed_at, records: [],
+}) {
   let now = Date.parse('2026-09-28T20:00:00Z');
   let minuteRefresh: (() => void) | undefined;
   const selectors = ['trip-context', 'trip-form', 'trip-date', 'trip-time', 'trip-area', 'special-case',
-    'check-entry', 'reset-checklist', 'decision-title', 'decision-detail', 'entry-decision', 'checklist-progress', 'decision-evidence'];
+    'check-entry', 'reset-checklist', 'decision-title', 'decision-detail', 'entry-decision', 'checklist-progress', 'decision-evidence',
+    'print-page', 'print-time', 'alert-status', 'notice-title', 'notice-detail'];
   const elements = new Map(selectors.map((id) => [`#${id}`, new Element()]));
   const element = (selector: string) => {
     const result = elements.get(selector);
@@ -42,11 +45,12 @@ function tripPage(rules: readiness.Rule[] = [rule]) {
   element('#trip-context').dataset = { rules: JSON.stringify(rules), park: 'test', timezone: 'America/Los_Angeles' };
   element('#trip-date').value = '2026-09-29';
   element('#decision-evidence').hidden = true;
+  element('#alert-status').dataset.snapshot = JSON.stringify(snapshot);
   const checks = Array.from({ length: 5 }, () => new Element());
   const review = new Element(); review.dataset.reviewed = rule.reviewed_at;
   const document = Object.assign(new EventTarget(), {
     hidden: false,
-    querySelector: (selector: string) => selector === '#alert-status' ? null : element(selector),
+    querySelector: (selector: string) => element(selector),
     querySelectorAll: (selector: string) => {
       if (selector === '[data-check]') return checks;
       assert.equal(selector, '[data-reviewed]');
@@ -54,9 +58,12 @@ function tripPage(rules: readiness.Rule[] = [rule]) {
     },
   });
   const queuedTasks: (() => void)[] = [];
+  const printed: { state: string; progress: string; timestamp: string }[] = [];
   const window = Object.assign(new EventTarget(), {
     setInterval: (callback: () => void, delay: number) => { assert.equal(delay, 60_000); minuteRefresh = callback; },
     setTimeout: (callback: () => void, delay: number) => { assert.equal(delay, 0); queuedTasks.push(callback); },
+    print: () => printed.push({ state: element('#entry-decision').dataset.state,
+      progress: element('#checklist-progress').textContent, timestamp: element('#print-time').dateTime }),
   });
   const source = ts.transpileModule(readFileSync(new URL('../src/scripts/trip.ts', import.meta.url), 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
@@ -68,13 +75,15 @@ function tripPage(rules: readiness.Rule[] = [rule]) {
     window,
   });
   return {
-    element, checks, review,
+    element, checks, review, printed,
     setTime: (time: string) => { now = Date.parse(time); },
     submit: () => element('#trip-form').dispatchEvent(new Event('submit', { cancelable: true })),
     refreshMinute: () => { assert.ok(minuteRefresh); minuteRefresh(); },
     changeVisibility: (hidden: boolean) => { document.hidden = hidden; document.dispatchEvent(new Event('visibilitychange')); },
     decisionWrites: () => [element('#decision-title').textWrites.length, element('#decision-detail').textWrites.length],
     showPage: (persisted: boolean) => window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted })),
+    beforePrint: () => window.dispatchEvent(new Event('beforeprint')),
+    printPage: () => element('#print-page').dispatchEvent(new Event('click')),
     flushTasks: () => queuedTasks.splice(0).forEach((callback) => callback()),
   };
 }
@@ -269,4 +278,55 @@ test('seven-day expiry still updates the decision once and trip changes still re
   assert.equal(page.element('#entry-decision').dataset.state, 'not-verified', 'another year receives no exemption');
   assert.equal(page.checks[0].checked, false);
   assert.equal(page.element('#checklist-progress').textContent, '0 of 5 items reviewed by you');
+});
+
+test('printing prepares the current page without submitting a decision or completing checklist items', () => {
+  const page = tripPage();
+  assert.equal(page.element('#print-page').disabled, false);
+  page.checks[0].checked = true; // Restoration can happen without a change event.
+  const metadata = JSON.stringify(page.element('#trip-context').dataset);
+  page.printPage();
+  assert.equal(page.printed.length, 1);
+  assert.equal(page.printed[0].progress, '1 of 5 items reviewed by you');
+  assert.equal(page.printed[0].timestamp, '2026-09-28T20:00:00.000Z');
+  assert.equal(page.element('#print-time').textContent, page.printed[0].timestamp);
+  assert.deepEqual(page.decisionWrites(), [0, 0], 'printing does not run the first entry check');
+  assert.equal(page.element('#decision-evidence').hidden, true);
+  assert.equal(page.checks.filter(check => check.checked).length, 1);
+  assert.equal(JSON.stringify(page.element('#trip-context').dataset), metadata);
+});
+
+test('native beforeprint refreshes guidance and alert expiry with original source clocks intact', () => {
+  const snapshot = { collection_status: 'success', last_successful_fetch_at: '2026-10-05T15:00:00Z', records: [] };
+  const page = tripPage([rule], snapshot);
+  page.submit();
+  page.setTime('2026-10-05T19:00:00Z');
+  page.beforePrint();
+  assert.equal(page.element('#entry-decision').dataset.state, 'not-required-under-rule');
+  assert.equal(page.element('#notice-title').textContent, 'No alerts returned by the checked feed');
+  page.checks[0].checked = true;
+  page.setTime('2026-10-05T19:00:00.001Z');
+  page.beforePrint();
+  assert.equal(page.element('#entry-decision').dataset.state, 'stale');
+  assert.match(page.review.textContent, /Needs a fresh review/);
+  assert.equal(page.element('#notice-title').textContent, 'The condition snapshot needs a fresh check');
+  assert.equal(page.element('#checklist-progress').textContent, '1 of 5 items reviewed by you');
+  assert.equal(page.review.dataset.reviewed, rule.reviewed_at);
+  assert.equal(page.element('#alert-status').dataset.snapshot, JSON.stringify(snapshot));
+  assert.equal(page.element('#print-time').dateTime, '2026-10-05T19:00:00.001Z');
+  assert.equal(page.printed.length, 0, 'a native print event never opens another dialog');
+});
+
+test('printing silently changed trip details clears the old checklist before opening the dialog', () => {
+  const page = tripPage();
+  page.submit();
+  page.checks.forEach(check => { check.checked = true; });
+  page.checks[0].dispatchEvent(new Event('change'));
+  page.element('#trip-date').value = '2027-06-01';
+  page.printPage();
+  assert.equal(page.printed.length, 1);
+  assert.equal(page.printed[0].state, 'not-verified');
+  assert.equal(page.printed[0].progress, '0 of 5 items reviewed by you');
+  assert.equal(page.checks.some(check => check.checked), false);
+  assert.equal(page.element('#decision-evidence').href, '#guidance-title');
 });

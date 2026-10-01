@@ -41,4 +41,5 @@ const ordered = PLANNING_CATEGORIES.map(category => resources.find(item => item.
   .planning-review time{display:block;overflow-wrap:anywhere}
   @media(max-width:960px){.planning-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media(max-width:620px){.planning-grid{grid-template-columns:minmax(0,1fr)}.planning-card{padding:20px}.planning-resources h2{font-size:1.5rem;line-height:1.35}}
+  @media print{.planning-grid{grid-template-columns:minmax(0,1fr)}.planning-card{break-inside:avoid;padding:16px}.planning-resources{margin-block:24px}.planning-card h3{margin-block:10px 8px}.planning-prompt{margin-bottom:12px}.planning-review{margin-top:12px}}
 </style>

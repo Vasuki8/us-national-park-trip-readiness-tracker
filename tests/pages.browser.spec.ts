@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { guidanceScenarioTime, publicRules } from './pilot-clock.ts';
+import { describeHistory } from '../src/lib/history.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
 
 test('project-path directory resynchronizes restored filters on page return', async ({ page }) => {
@@ -151,4 +152,47 @@ test('all project pages and metadata remain available without launch claims', as
   expect(manifest.published_at).toBeNull();
   expect(manifest.live_collection_enabled).toBe(false);
   expect(await (await request.get(base + 'robots.txt')).text()).toContain('Disallow: /');
+});
+
+test('project-path printing refreshes expired guidance without rewriting source evidence', async ({ page }) => {
+  const rule = publicRules.find(rule => rule.park_code === 'romo' && rule.areas.includes('bear-lake'))!;
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime([rule])));
+  await page.goto(`${base}parks/rocky-mountain/`);
+  await page.getByLabel('Visit date').fill('2026-09-30');
+  await page.getByLabel('Planned area').selectOption('bear-lake');
+  await page.getByLabel('Arrival time').fill('08:00');
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  await page.locator('[data-check]').first().check();
+  const sourceClocks = await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => element.getAttribute('datetime')));
+  const snapshotText = await page.locator('#alert-status').getAttribute('data-snapshot');
+  const historyText = await page.locator('[data-history]').getAttribute('data-history-metadata');
+  const expired = new Date(Date.parse(rule.reviewed_at) + 168 * 3_600_000 + 1);
+  await page.clock.setFixedTime(expired);
+  await page.evaluate(() => {
+    window.print = () => {
+      // Model the native event without opening the platform print dialog.
+      window.dispatchEvent(new Event('beforeprint'));
+      document.documentElement.dataset.printCalls = String(Number(document.documentElement.dataset.printCalls || '0') + 1);
+    };
+  });
+  await page.getByRole('button', { name: 'Print / save this page' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-print-calls', '1');
+  await expect(page.locator('#decision-title')).toHaveText('Entry guidance needs a fresh review');
+  await expect(page.locator('[data-history-status]')).toHaveText(describeHistory(JSON.parse(historyText!), expired).title);
+  await expect(page.locator('#checklist-progress')).toHaveText('1 of 5 items reviewed by you');
+  await expect(page.locator('#print-time')).toHaveAttribute('datetime', expired.toISOString());
+  await expect(page.locator('#print-time')).toHaveText(expired.toISOString());
+  await expect(page.locator('#alert-status')).toHaveAttribute('data-snapshot', snapshotText!);
+  await expect(page.locator('[data-history]')).toHaveAttribute('data-history-metadata', historyText!);
+  expect(await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => element.getAttribute('datetime')))).toEqual(sourceClocks);
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('#print-snapshot')).toBeVisible();
+  await expect(page.locator('#print-snapshot')).toContainText('not a source check');
+  await expect(page.locator('#print-page')).toBeHidden();
+  await expect(page.locator('#trip-date')).toHaveValue('2026-09-30');
+  await expect(page.locator('[data-check]:checked')).toHaveCount(1);
+  for (const link of await page.locator('.planning-link').all()) {
+    const href = await link.getAttribute('href');
+    expect(await link.evaluate(element => getComputedStyle(element, '::after').content)).toContain(href!);
+  }
 });
