@@ -8,3 +8,5 @@ The live five-park pilot publishes reviewed alert snapshots through deliberate u
 4. Run Node/Python tests, Astro check, both builds and generated-site checks; run supported browser verification if available. Review the complete diff and update the current handoff with measured results and remaining work.
 
 This increment performs no real collection, data promotion, hosting change or deployment. The existing live artifact and original public evidence clocks remain the release baseline.
+
+Completed: the failing copy/history/clock regressions were reproduced before their fixes. Local verification passed 663 tests, strict changed-file TypeScript checks, Astro check and both builds. Independent review found no remaining findings. Implementation head `846511f` passed Verify pilot #169 with all 743 tests, both Chromium suites and three retained accessibility screenshots. PR #5 remains separate from deliberate main integration and deployment.
