@@ -1,6 +1,6 @@
 # Visitor-facing notice history
 
-This capability converts verified committed archive observations into a bounded visitor timeline. It is not an automatic publisher, a real-world event log or source-content permission. Production history is initially empty for all five parks. Synthetic populated histories exist only under `tests/` and the separate test-site output under `.superpowers/`.
+This capability converts verified committed archive observations into a bounded visitor timeline. It is not an automatic publisher, a real-world event log or source-content permission. Production loads only reviewed paired public snapshots/history. Synthetic populated histories exist only under `tests/` and the separate test-site output under `.superpowers/`.
 
 ## Data path and consistency
 
@@ -12,7 +12,7 @@ A snapshot digest binds the displayed records and clocks, not the publisher's au
 
 ## Observation semantics
 
-The first successful check is a baseline, not a batch of new closures. A later added/edited/removed item describes a difference between successful accepted feeds. Removed means **no longer present in the checked feed**, not a confirmed reopening. Failed and quarantined checks remain visible but generate no notice differences. An empty timeline does not mean that nothing changed; an unchanged comparison concerns only the checked feed.
+The first successful check is a baseline, not a batch of new closures. A complete projection requires its earliest success to be a baseline even after initial failed or quarantined attempts. A bounded projection can omit an older baseline; absence from the visible window alone does not establish a first success. Promotion additionally checks new comparison semantics against the public checkpoint's nullable successful-fetch clock. A later added/edited/removed item describes a difference between successful accepted feeds. Removed means **no longer present in the checked feed**, not a confirmed reopening. Failed and quarantined checks remain visible but generate no notice differences. An empty timeline does not mean that nothing changed; an unchanged comparison concerns only the checked feed.
 
 Evidence panels retain the before/after title, description, category, source URL and normalized-record digest. Source text is ordinary escaped Astro text, never `set:html`. A currently reachable official link may have changed since the archived observation. Observation times are not NPS update times, effective dates or publication times. Date/area applicability is not inferred.
 

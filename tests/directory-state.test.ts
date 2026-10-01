@@ -14,22 +14,26 @@ class Element extends EventTarget {
   set textContent(value: string) { this.text = value; this.textWrites.push(value); }
 }
 
+interface DirectoryPark { name: string; code: string; states: readonly string[]; searchText?: string | null }
+
 // Execute the actual browser script with synthetic cards and only DOM APIs replaced.
-function directoryPage(query = '', state = '') {
+function directoryPage(query = '', state = '', parks: readonly DirectoryPark[] = [
+  { name: 'Yosemite', code: 'yose', states: ['California'] },
+  { name: 'Yellowstone', code: 'yell', states: ['Wyoming', 'Montana', 'Idaho'] },
+  { name: 'Zion', code: 'zion', states: ['Utah'] },
+]) {
   const search = new Element(); search.value = query;
   const filter = new Element(); filter.value = state;
-  const count = new Element(); count.textContent = '3 parks in this pilot'; count.textWrites = [];
+  const count = new Element(); count.textContent = `${parks.length} parks in this pilot`; count.textWrites = [];
   const empty = new Element(); empty.hidden = true;
-  const parks = [
-    { name: 'Yosemite', code: 'yose', states: ['California'] },
-    { name: 'Yellowstone', code: 'yell', states: ['Wyoming', 'Montana', 'Idaho'] },
-    { name: 'Zion', code: 'zion', states: ['Utah'] },
-  ];
   const cards = parks.map((park) => {
     const card = new Element();
-    card.dataset = { search: `${park.name} ${park.code} ${park.states.join(' ')}`.toLowerCase(), states: JSON.stringify(park.states) };
+    card.dataset = Object.freeze({ states: JSON.stringify(park.states), ...(park.searchText === null ? {} : {
+      search: park.searchText ?? `${park.name} ${park.code} ${park.states.join(' ')}`.toLowerCase(),
+    }) });
     return card;
   });
+  const originalMetadata = JSON.stringify(cards.map((card) => card.dataset));
   const elements = new Map([['#park-search', search], ['#state-filter', filter], ['#search-count', count], ['#empty-search', empty]]);
   const document = {
     querySelector: (selector: string) => {
@@ -55,7 +59,8 @@ function directoryPage(query = '', state = '') {
   }).outputText;
   runInNewContext(source, { document, window });
   return {
-    search, filter, count, empty, flushTasks,
+    search, filter, count, empty, flushTasks, originalMetadata,
+    metadata: () => JSON.stringify(cards.map((card) => card.dataset)),
     showPage: () => window.dispatchEvent(new Event('pageshow')),
     shown: () => parks.filter((_, index) => !cards[index].hidden).map((park) => park.name),
     restore: (restoredQuery: string, restoredState: string) => {
@@ -141,4 +146,81 @@ test('existing input and change events still filter and clear the directory', ()
   page.filter.dispatchEvent(new Event('change'));
   assert.deepEqual(page.shown(), ['Yosemite', 'Yellowstone', 'Zion']);
   assert.equal(page.count.textContent, '3 parks shown');
+});
+
+const multiwordParks: readonly DirectoryPark[] = [
+  { name: 'Rocky Mountain', code: 'romo', states: ['Colorado'] },
+  { name: 'Grand Canyon', code: 'grca', states: ['Arizona'] },
+  { name: 'Synthetic [.*] Park', code: 'synt', states: ['Testing'] },
+];
+
+test('prefilled multiword names match pasted whitespace without rewriting visitor controls', () => {
+  for (const query of ['  ROCKY   MOUNTAIN  ', 'rocky\tmountain', '\tRocky\u00a0 Mountain\n']) {
+    const page = directoryPage(query, '', multiwordParks);
+    assert.deepEqual(page.shown(), ['Rocky Mountain'], query);
+    assert.equal(page.count.textContent, '1 park shown');
+    assert.equal(page.empty.hidden, true);
+    assert.equal(page.search.value, query, 'matching must not rewrite the pasted query');
+    assert.equal(page.metadata(), page.originalMetadata);
+  }
+});
+
+test('equivalent whitespace queries remain quiet through input and queued control restoration', () => {
+  const page = directoryPage('rocky mountain', '', multiwordParks);
+  assert.deepEqual(page.shown(), ['Rocky Mountain']);
+  assert.deepEqual(page.count.textWrites, ['1 park shown']);
+  const typed = '  ROCKY \t  MOUNTAIN  ';
+  page.search.value = typed;
+  page.search.dispatchEvent(new Event('input'));
+  assert.deepEqual(page.shown(), ['Rocky Mountain']);
+  assert.equal(page.search.value, typed);
+  page.showPage();
+  const restored = '\nrocky\t Mountain  ';
+  page.search.value = restored;
+  page.filter.value = 'Colorado';
+  page.flushTasks();
+  assert.deepEqual(page.shown(), ['Rocky Mountain']);
+  assert.equal(page.search.value, restored);
+  assert.equal(page.filter.value, 'Colorado');
+  assert.deepEqual(page.count.textWrites, ['1 park shown']);
+  assert.equal(page.empty.hidden, true);
+  assert.equal(page.metadata(), page.originalMetadata);
+});
+
+test('card search text normalizes mixed whitespace and case while absent search metadata stays excluded', () => {
+  const page = directoryPage('synthetic national park', '', [
+    { name: 'Synthetic National Park', code: 'synt', states: ['Testing'], searchText: '  SYNTHETIC\tNATIONAL\nPARK  synt\u00a0Testing  ' },
+    { name: 'Missing search metadata', code: 'none', states: ['Testing'], searchText: null },
+  ]);
+  assert.deepEqual(page.shown(), ['Synthetic National Park']);
+  assert.equal(page.count.textContent, '1 park shown');
+  assert.equal(page.metadata(), page.originalMetadata);
+  page.search.value = ' \t\n ';
+  page.search.dispatchEvent(new Event('input'));
+  assert.deepEqual(page.shown(), ['Synthetic National Park'], 'empty normalized queries cannot select a card without search metadata');
+  assert.equal(page.search.value, ' \t\n ');
+  assert.equal(page.metadata(), page.originalMetadata);
+});
+
+test('normalized multiword search remains literal and combines with exact state filtering', () => {
+  const query = '  SYNTHETIC   [.*]  PARK  ';
+  const page = directoryPage(query, 'Testing', multiwordParks);
+  assert.deepEqual(page.shown(), ['Synthetic [.*] Park']);
+  for (const state of ['testing', 'Test', 'Testing ', 'Utah']) {
+    page.filter.value = state;
+    page.filter.dispatchEvent(new Event('change'));
+    assert.deepEqual(page.shown(), [], state);
+    assert.equal(page.count.textContent, '0 parks shown');
+    assert.equal(page.empty.hidden, false);
+    assert.equal(page.filter.value, state);
+  }
+  page.filter.value = 'Testing';
+  page.search.value = '[.*]';
+  page.search.dispatchEvent(new Event('input'));
+  assert.deepEqual(page.shown(), ['Synthetic [.*] Park'], 'regular-expression punctuation is a literal substring');
+  page.search.value = '<img src=x>';
+  page.search.dispatchEvent(new Event('input'));
+  assert.deepEqual(page.shown(), []);
+  assert.equal(page.search.value, '<img src=x>');
+  assert.equal(page.metadata(), page.originalMetadata);
 });

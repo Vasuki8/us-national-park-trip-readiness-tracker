@@ -78,6 +78,63 @@ test('baselines and failed observations cannot acquire fabricated changes', () =
     assert.throws(() => validateHistory(v.history, v.snapshot));
   }
 });
+
+function afterInitialFailures(name = 'baseline') {
+  const view = copy(name);
+  for (const observation of view.history.observations) observation.sequence += 2;
+  view.history.total_observations += 2;
+  view.history.observations.push(
+    {observation_id: 'd'.repeat(64), sequence: 2, checked_at: '2026-09-28T09:00:00Z',
+      collection_status: 'quarantined', comparison: 'not_compared', change_count: 0, omitted_changes: 0, changes: []},
+    {observation_id: 'e'.repeat(64), sequence: 1, checked_at: '2026-09-28T08:00:00Z',
+      collection_status: 'failed', comparison: 'not_compared', change_count: 0, omitted_changes: 0, changes: []},
+  );
+  return view;
+}
+
+test('first success after initial failures must remain a baseline throughout complete history', () => {
+  for (const name of ['baseline', 'mixed', 'failed']) {
+    const view = afterInitialFailures(name), original = structuredClone(view);
+    assert.deepEqual(validateHistory(view.history, view.snapshot), view.history);
+    assert.deepEqual(view, original, 'validating must preserve retained records and clocks');
+    const firstSuccess = view.history.observations.find((observation: any) => observation.sequence === 3);
+    firstSuccess.comparison = 'compared';
+    assert.throws(() => validateHistory(view.history, view.snapshot), /invalid_history/, name);
+  }
+});
+
+test('first success after initial failures cannot invent added or edited notices', () => {
+  for (const kind of ['added', 'edited']) {
+    const view = afterInitialFailures();
+    const after = Object.fromEntries(['category', 'description', 'id', 'title', 'url', 'content_hash']
+      .map(key => [key, view.snapshot.records[0][key]]));
+    const before: Record<string, unknown> | null = kind === 'added' ? null : {...after, title: 'Synthetic invented predecessor'};
+    if (before) before.content_hash = historyDigest(Object.fromEntries(
+      ['category', 'description', 'id', 'title', 'url'].map(key => [key, before[key]])));
+    const firstSuccess = view.history.observations[0];
+    firstSuccess.comparison = 'compared'; firstSuccess.change_count = 1;
+    firstSuccess.changes = [{kind, record_id: after.id, before, after}];
+    view.history.total_changes = 1;
+    const original = structuredClone(view);
+    assert.throws(() => validateHistory(view.history, view.snapshot), /invalid_history/, kind);
+    assert.deepEqual(view, original, 'refusal must not repair or rewrite candidate evidence');
+  }
+});
+
+test('omitted baselines and complete histories without any success remain valid', () => {
+  const bounded = copy(); bounded.history.observations.pop(); bounded.history.omitted_observations = 1;
+  assert.deepEqual(validateHistory(bounded.history, bounded.snapshot), bounded.history);
+  const failed = afterInitialFailures('empty');
+  failed.snapshot.collection_status = 'quarantined'; failed.snapshot.coverage_status = 'incomplete';
+  failed.snapshot.error_code = 'response_requires_review';
+  failed.snapshot.last_checked_at = failed.history.observations[0].checked_at;
+  failed.history.head_observation_id = failed.history.observations[0].observation_id;
+  failed.history.snapshot_hash = historyDigest(failed.snapshot);
+  const original = structuredClone(failed);
+  assert.deepEqual(validateHistory(failed.history, failed.snapshot), failed.history);
+  assert.equal(failed.snapshot.last_successful_fetch_at, null);
+  assert.deepEqual(failed, original);
+});
 test('omitted counts must reconcile and cannot silently hide visible changes', () => {
   for (const mutate of [(h: any) => h.total_changes = 0, (h: any) => h.omitted_changes = 0,
     (h: any) => h.omitted_observations = -1, (h: any) => h.observations[0].omitted_changes = 1]) {

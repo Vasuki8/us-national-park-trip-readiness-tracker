@@ -1,8 +1,22 @@
 # Project status and handoff
 
-Updated: **October 1, 2026 (Toronto time), during history-to-retained-evidence navigation development**.
+Updated: **October 1, 2026 (Toronto time), during directory search and first-success history validation development**.
 
 ## Current development handoff
+
+Continue on **`codex/trip-return-state`**, based on integrated `main` commit `c32e6c7762d0677229ddb1102f6abe24e50135bc`. [PR #6](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/6) now repairs pasted directory searches and first-success history validation, alongside the history, navigation and readiness work below. It remains unmerged. The PR records its current review state and final exact-head CI receipt; this increment is ordinary development and does not publish a release.
+
+Pasting `Rocky   Mountain` now finds the same park as `Rocky Mountain`. Directory matching trims, lowercases and collapses whitespace in both the query and card search text while retaining literal substring matching and the exact state filter. Prefilled, typed and queued page-return controls use the same normalization. Raw visitor values and card metadata remain unchanged, missing search metadata stays excluded, and equivalent counts stay quiet. No application storage, URL parameters or requests are added.
+
+Complete public history must mark its earliest successful feed as a baseline, even after initial failed/quarantined attempts. A comparison cannot invent added or edited events before that baseline. Bounded histories can legitimately omit an older baseline; the generic validator preserves those views. When a newer promotion candidate retains a known public checkpoint, the preparer separately checks new successes chronologically against that checkpoint's nullable success clock: the first success after a null clock requires a baseline, followed by comparisons. Existing archive verification and record/clock replay remain intact. Valid subsequent comparisons, intervening degraded attempts and complete histories with no success retain their original meaning.
+
+Four new actual-script directory regressions first failed against the old implementation. Two complete-history and two bounded-promotion refusal tests also failed as expected, while their valid controls passed. All **37 focused tests** now pass. Fresh local verification reported **290 Node + 60 generated-site checks = 350 tests**, strict TypeScript across all eight changed code/test files, zero diagnostics across 32 Astro files and both 14-page builds. Independent review found no remaining product issue; a home-page browser selector ambiguity was corrected by scoping metadata assertions to the directory. Three new browser cases are registered (**106 root + 13 project-path cases**) for pasted/prefilled/restored multiword searches, quiet counts, literal matching, exact-state exclusion, source-metadata conservation and native park routes. Local Chromium remains unavailable on Ubuntu 26.04; Python behavior is unchanged. Use the PR's current-head receipt to confirm supported execution of both browser suites before integration.
+
+The preceding history-navigation head `a9ca0b731f6f5c669e26a856a7d4395b647a6c78` passed [Verify pilot #192](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36929868267), job `110596200342`: **278 Node + 432 Python + 60 generated-site + 116 Chromium = 886 tests**, zero Astro diagnostics, both builds and all three retained accessibility screenshots. That result verifies the earlier work below; it does not verify this new increment.
+
+Next: obtain the owner's integration/publication decision for PR #6 once its current head passes exact-head verification. The PR retains that receipt and review state. Earlier PR #5 authorization does not authorize this release. Public data and source clocks are unchanged. No collection, promotion, private checkpoint, merge or deployment was performed. Indexing, advertising and recurring operations retain their separate operator decisions.
+
+### Verified history-to-retained-evidence navigation in PR #6
 
 Continue on **`codex/trip-return-state`**, based on integrated `main` commit `c32e6c7762d0677229ddb1102f6abe24e50135bc`. [PR #6](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/6) now connects notice history to public park readiness and matching retained notice articles, alongside the native park menu, notice filtering, source corrections, printing and trip-return work below. It remains unmerged. The PR records its current review state and final exact-head CI receipt; this increment is ordinary development and does not publish a release.
 
