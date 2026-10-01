@@ -1,0 +1,23 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import Layout from '../../../../../src/layouts/Layout.astro';
+import HistoryTimeline from '../../../../../src/components/HistoryTimeline.astro';
+import RetainedNotices from '../../../../../src/components/RetainedNotices.astro';
+import { validateHistory } from '../../../../../scripts/validate-history';
+import fixture from '../../../../fixtures/history-preview.json';
+export function getStaticPaths() {
+  return (['mixed', 'failed'] as const).map((state) => ({ params: { state }, props: { view: fixture.cases[state] } }));
+}
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { view } = Astro.props;
+if (fixture.purpose !== 'SYNTHETIC TEST DATA — NOT PARK CONDITIONS') throw new Error('invalid_synthetic_history_fixture');
+const history = validateHistory(view.history, view.snapshot);
+const noticeContext = { parkCode: view.snapshot.park_code, records: view.snapshot.records, noticeHrefPrefix: '' };
+---
+<Layout title="Synthetic retained-notice history verification">
+  <section class="page-intro"><p class="eyebrow">Isolated verification page</p><h1>Synthetic test data — not park conditions</h1><p>These unchanged generated fixture pairs test navigation between archived comparisons and retained source articles. They do not describe actual park conditions.</p></section>
+  <div class="park-readiness-page" data-fixture-snapshot={JSON.stringify(view.snapshot)}>
+    <RetainedNotices parkCode={view.snapshot.park_code} notices={view.snapshot.records} />
+    <HistoryTimeline history={history} snapshot={view.snapshot} conditionsUrl="https://www.nps.gov/yose/planyourvisit/conditions.htm" noticeContext={noticeContext} />
+  </div>
+</Layout>

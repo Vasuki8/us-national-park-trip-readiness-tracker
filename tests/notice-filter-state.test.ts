@@ -11,11 +11,27 @@ class Element extends EventTarget {
   dataset: Record<string, string> = {};
   textWrites: string[] = [];
   scrollCalls: { block: string }[] = [];
+  focusCalls: { preventScroll: boolean }[] = [];
+  navigationActions: string[] = [];
+  anchor: Anchor | null = null;
   private text = '';
   get textContent() { return this.text; }
   set textContent(value: string) { this.text = value; this.textWrites.push(value); }
   set innerHTML(_value: string) { throw new Error('Notice filtering must not interpret visitor text as HTML.'); }
-  scrollIntoView(options: { block: string }) { this.scrollCalls.push(options); }
+  scrollIntoView(options: { block: string }) { this.scrollCalls.push(options); this.navigationActions.push('scroll'); }
+  focus(options: { preventScroll: boolean }) { this.focusCalls.push(options); this.navigationActions.push('focus'); }
+  closest(selector: string) { assert.equal(selector, 'a[href]'); return this.anchor; }
+}
+
+class Anchor extends Element {
+  private attributes: Record<string, string>;
+  constructor(attributes: Record<string, string>) { super(); this.attributes = attributes; this.anchor = this; }
+  getAttribute(name: string) { return this.attributes[name] ?? null; }
+  hasAttribute(name: string) { return Object.hasOwn(this.attributes, name); }
+}
+interface ActivationOptions {
+  nested?: boolean; detail?: number; button?: number; ctrlKey?: boolean; metaKey?: boolean;
+  shiftKey?: boolean; altKey?: boolean; prevented?: boolean; attributes?: Record<string, string>;
 }
 
 function scriptSource() {
@@ -23,7 +39,7 @@ function scriptSource() {
   catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; return ''; }
 }
 
-function noticePage({ query = '', category = '', hash = '' } = {}) {
+function noticePage({ query = '', category = '', hash = '', duplicateId = false } = {}) {
   const search = new Element(); search.value = query;
   const select = new Element(); select.value = category;
   const clear = new Element();
@@ -35,6 +51,7 @@ function noticePage({ query = '', category = '', hash = '' } = {}) {
     { id: 'alert-yose-B encoded /?&é', text: 'River   access\nCaution for bacteria.', category: 'Caution' },
     { id: 'alert-yose-C', text: 'Angels Landing Pilot Permit Program\nInformation about permits; literal [.*] and <img src=x>.', category: 'Information' },
   ];
+  if (duplicateId) records[2].id = records[0].id;
   const cards = records.map((record) => {
     const card = new Element(); card.id = record.id;
     card.dataset = Object.freeze({ noticeText: record.text, noticeCategory: record.category,
@@ -49,9 +66,11 @@ function noticePage({ query = '', category = '', hash = '' } = {}) {
     querySelector: (selector: string) => { assert.ok(selectors.has(selector), `Unexpected notice selector ${selector}`); return selectors.get(selector); },
     querySelectorAll: (selector: string) => { assert.equal(selector, '[data-retained-notice]'); return cards; },
   });
-  const document = { querySelector: (selector: string) => { assert.equal(selector, '[data-retained-notices]'); return root; } };
+  const document = Object.assign(new EventTarget(), {
+    querySelector: (selector: string) => { assert.equal(selector, '[data-retained-notices]'); return root; },
+  });
   const queuedTasks: (() => void)[] = [];
-  const location = { hash };
+  const location = new URL('http://127.0.0.1:4321/parks/yosemite/?kept=PUBLIC_QUERY'); location.hash = hash;
   const window = Object.assign(new EventTarget(), {
     location,
     setTimeout: (callback: () => void, delay: number) => { assert.equal(delay, 0); queuedTasks.push(callback); },
@@ -63,7 +82,7 @@ function noticePage({ query = '', category = '', hash = '' } = {}) {
   const script = ts.transpileModule(scriptSource(), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, alwaysStrict: true },
   }).outputText;
-  runInNewContext(script, { document, window, fetch: forbidden });
+  runInNewContext(script, { document, window, Element, URL, fetch: forbidden });
   return {
     search, select, clear, controls, count, empty, cards, location, before,
     input: (value: string) => { search.value = value; search.dispatchEvent(new Event('input')); },
@@ -72,6 +91,16 @@ function noticePage({ query = '', category = '', hash = '' } = {}) {
     showPage: () => window.dispatchEvent(new Event('pageshow')),
     flushTasks: () => queuedTasks.splice(0).forEach((callback) => callback()),
     changeHash: (value: string) => { location.hash = value; window.dispatchEvent(new Event('hashchange')); },
+    activate: (href: string, { nested = false, detail = 1, button = 0, ctrlKey = false, metaKey = false,
+      shiftKey = false, altKey = false, prevented = false, attributes = {} }: ActivationOptions = {}) => {
+      const anchor = new Anchor({ href, ...attributes }); const target = nested ? new Element() : anchor;
+      target.anchor = anchor;
+      const event = new Event('click', { cancelable: true });
+      Object.defineProperties(event, Object.fromEntries(Object.entries({ target, detail, button, ctrlKey, metaKey, shiftKey, altKey })
+        .map(([key, value]) => [key, { value }])));
+      if (prevented) event.preventDefault();
+      document.dispatchEvent(event); return event;
+    },
     print: () => { window.dispatchEvent(new Event('beforeprint')); window.dispatchEvent(new Event('afterprint')); },
     metadata: () => JSON.stringify(cards.map(({ id, dataset }) => ({ id, dataset }))),
   };
@@ -137,6 +166,9 @@ test('initial exact encoded notice fragments reveal a target that prefilled filt
   const page = noticePage({ query: 'glacier', category: 'Park Closure', hash: '#alert-yose-B%20encoded%20%2F%3F%26%C3%A9' });
   assert.equal(page.search.value, ''); assert.equal(page.select.value, ''); assert.equal(page.shown().length, 3);
   assert.equal(JSON.stringify(page.cards[1].scrollCalls), '[{"block":"start"}]');
+  assert.equal(JSON.stringify(page.cards[1].focusCalls), '[{"preventScroll":true}]');
+  assert.deepEqual(page.cards[1].navigationActions, ['focus', 'scroll']);
+  assert.equal(page.cards[0].focusCalls.length + page.cards[2].focusCalls.length, 0);
   assert.equal(page.count.textContent, 'Showing 3 of 3 retained notices');
 });
 
@@ -145,6 +177,7 @@ test('hash changes reveal only the exact hidden notice and leave ordinary filter
   page.changeHash('#alert-yose-C');
   assert.equal(page.search.value, ''); assert.equal(page.select.value, '');
   assert.equal(page.cards[2].hidden, false); assert.equal(JSON.stringify(page.cards[2].scrollCalls), '[{"block":"start"}]');
+  assert.equal(JSON.stringify(page.cards[2].focusCalls), '[{"preventScroll":true}]');
   page.input('glacier'); assert.deepEqual(page.shown(), ['alert-yose-A']);
   assert.equal(page.search.value, 'glacier'); assert.equal(page.cards[2].scrollCalls.length, 1);
 });
@@ -155,6 +188,7 @@ test('queued page returns reveal known notice fragments hidden by silently resto
   page.showPage(); page.search.value = 'glacier'; page.select.value = 'Park Closure';
   page.flushTasks(); assert.equal(page.search.value, ''); assert.equal(page.select.value, '');
   assert.equal(page.shown().length, 3); assert.equal(JSON.stringify(page.cards[2].scrollCalls), '[{"block":"start"}]');
+  assert.equal(JSON.stringify(page.cards[2].focusCalls), '[{"preventScroll":true}]');
 });
 
 test('unknown malformed and non-notice fragments retain current filtering and never scroll another section', () => {
@@ -173,6 +207,72 @@ test('already visible fragment targets do not reset useful filters or force scro
   assert.deepEqual(page.shown(), ['alert-yose-B encoded /?&é']); assert.equal(page.search.value, 'river');
   page.changeHash('#alert-yose-B%20encoded%20%2F%3F%26%C3%A9'); page.showPage(); page.flushTasks();
   assert.equal(page.cards[1].scrollCalls.length, 0); assert.equal(page.select.value, 'Caution');
+  assert.equal(page.cards[1].focusCalls.length, 0);
+});
+
+test('repeated same-hash native anchor activation reveals a filtered notice before default navigation', () => {
+  const page = noticePage({ hash: '#alert-yose-C' }); page.input('glacier'); page.category('Park Closure');
+  const originalUrl = page.location.href;
+  const first = page.activate('#alert-yose-C');
+  assert.equal(page.cards[2].hidden, false); assert.equal(page.search.value, ''); assert.equal(page.select.value, '');
+  assert.equal(first.defaultPrevented, false); assert.equal(page.location.href, originalUrl);
+  page.input('glacier'); const second = page.activate('#alert-yose-C');
+  assert.equal(page.cards[2].hidden, false); assert.equal(second.defaultPrevented, false);
+  assert.equal(page.cards[2].focusCalls.length, 0); assert.equal(page.cards[2].scrollCalls.length, 0);
+  assert.equal(page.metadata(), page.before); assert.equal(page.location.href, originalUrl);
+});
+
+test('nested and keyboard-generated primary activations reveal exact same-document encoded notice links', () => {
+  for (const options of [{ nested: true }, { detail: 0 }, { attributes: { target: '_self' } }]) {
+    const page = noticePage({ query: 'glacier', category: 'Park Closure' });
+    const originalUrl = page.location.href;
+    const event = page.activate('./?kept=PUBLIC_QUERY#alert-yose-B%20encoded%20%2F%3F%26%C3%A9', options);
+    assert.equal(page.cards[1].hidden, false); assert.equal(page.search.value, ''); assert.equal(page.select.value, '');
+    assert.equal(event.defaultPrevented, false); assert.equal(page.location.href, originalUrl);
+    assert.equal(page.cards[1].focusCalls.length, 0); assert.equal(page.cards[1].scrollCalls.length, 0);
+  }
+});
+
+test('native notice anchor activation preserves useful filters when its target is already visible', () => {
+  const page = noticePage({ query: 'river', category: 'Caution' });
+  const event = page.activate('#alert-yose-B%20encoded%20%2F%3F%26%C3%A9', { nested: true });
+  assert.equal(page.search.value, 'river'); assert.equal(page.select.value, 'Caution');
+  assert.deepEqual(page.shown(), ['alert-yose-B encoded /?&é']); assert.equal(event.defaultPrevented, false);
+  assert.equal(page.cards[1].focusCalls.length, 0); assert.equal(page.cards[1].scrollCalls.length, 0);
+});
+
+test('cross-document query changes malformed unknown and non-notice links leave filtering untouched', () => {
+  for (const href of ['https://external.example/parks/yosemite/?kept=PUBLIC_QUERY#alert-yose-C',
+    '/parks/yellowstone/?kept=PUBLIC_QUERY#alert-yose-C', '/parks/yosemite/?changed=PUBLIC_QUERY#alert-yose-C',
+    '/parks/yosemite/#alert-yose-C', 'http://[', '#alert-yose-C%ZZ', '#alert-yose-C%E0%A4%A',
+    '#alert-yose-C-extra', '#removed-notice', '#entry-rule-yose', '#guidance-title', '#']) {
+    const page = noticePage({ query: 'glacier', category: 'Park Closure' }); const originalUrl = page.location.href;
+    const event = page.activate(href, { nested: true });
+    assert.deepEqual(page.shown(), ['alert-yose-A'], href); assert.equal(page.search.value, 'glacier');
+    assert.equal(page.select.value, 'Park Closure'); assert.equal(event.defaultPrevented, false);
+    assert.equal(page.location.href, originalUrl); assert.equal(page.metadata(), page.before);
+  }
+});
+
+test('modified nonprimary prevented download and non-self anchor activations preserve filtering', () => {
+  const activations: ActivationOptions[] = [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 },
+    { button: 2 }, { prevented: true }, { attributes: { download: '' } }, { attributes: { target: '_blank' } },
+    { attributes: { target: '_parent' } }, { attributes: { target: '_top' } }, { attributes: { target: 'named-window' } }];
+  for (const options of activations) {
+    const page = noticePage({ query: 'glacier', category: 'Park Closure' });
+    const event = page.activate('#alert-yose-C', options);
+    assert.deepEqual(page.shown(), ['alert-yose-A'], JSON.stringify(options));
+    assert.equal(page.search.value, 'glacier'); assert.equal(page.select.value, 'Park Closure');
+    assert.equal(event.defaultPrevented, Boolean(options.prevented));
+  }
+});
+
+test('ambiguous notice IDs cannot reveal or focus a guessed source through fragments or clicks', () => {
+  const page = noticePage({ query: 'river', category: 'Caution', hash: '#alert-yose-A', duplicateId: true });
+  assert.deepEqual(page.shown(), ['alert-yose-B encoded /?&é']);
+  page.activate('#alert-yose-A'); page.changeHash('#alert-yose-A'); page.showPage(); page.flushTasks();
+  assert.equal(page.search.value, 'river'); assert.equal(page.select.value, 'Caution');
+  assert.equal(page.cards.reduce((count, card) => count + card.focusCalls.length + card.scrollCalls.length, 0), 0);
 });
 
 test('filtering and print events preserve public source IDs/data/clocks and page-only choices', () => {

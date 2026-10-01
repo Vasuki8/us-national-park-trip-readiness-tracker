@@ -42,7 +42,7 @@ const notice = describeAlerts(snapshot, new Date());
     {!parkRules.length && !parkNotes.length && <div class="empty-state"><h3>No entry source has been reviewed for this park yet.</h3><p>No reservation conclusion is being made. Use the official planning page to check entry and activity requirements.</p><a class="text-link" href={park.entry_url}>Open official planning guidance <span aria-hidden="true">↗</span></a></div>}
     <p class="note">A source review does not confirm that roads, facilities or parking are available. This pilot does not yet monitor source changes automatically.</p>
   </section>
-  <HistoryTimeline history={historyFor(park.code)} snapshot={snapshot} conditionsUrl={park.conditions_url} />
+  <HistoryTimeline history={historyFor(park.code)} snapshot={snapshot} conditionsUrl={park.conditions_url} noticeContext={{ parkCode: park.code, records: snapshot.records, noticeHrefPrefix: '' }} />
   <PlanningResources parkName={park.name} resources={planningResourcesFor(park.code)} />
   <p class="build-note small muted">Data snapshot: <code>{buildInfo.snapshot_id}</code>. Build created: <time datetime={buildInfo.built_at}>{buildInfo.built_at}</time>. This is not a source-check or publication time.</p>
   </div>

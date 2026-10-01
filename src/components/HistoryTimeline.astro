@@ -1,7 +1,8 @@
 ---
 import { changeLabels, describeHistory, type History, type HistoryMetadata, type HistoryObservation } from '../lib/history';
-interface Props { history: History; snapshot: HistoryMetadata; conditionsUrl: string; title?: string }
-const { history, snapshot, conditionsUrl, title = 'Notice history' } = Astro.props;
+import { retainedNoticeHref, type HistoryNoticeContext } from '../lib/history-navigation';
+interface Props { history: History; snapshot: HistoryMetadata; conditionsUrl: string; title?: string; noticeContext?: HistoryNoticeContext }
+const { history, snapshot, conditionsUrl, title = 'Notice history', noticeContext } = Astro.props;
 const status = describeHistory(snapshot, new Date());
 const metadata: HistoryMetadata = { collection_status: snapshot.collection_status, last_checked_at: snapshot.last_checked_at, last_successful_fetch_at: snapshot.last_successful_fetch_at };
 const headingId = `history-title-${history.park_code}`;
@@ -16,6 +17,7 @@ const observationTitle = (item: HistoryObservation) => item.collection_status ==
   <div class="history-status" role="status" aria-live="polite"><strong data-history-status>{status.title}</strong><p data-history-detail>{status.detail}</p></div>
   <p class="small muted">Last successful feed check: {snapshot.last_successful_fetch_at ? <time datetime={snapshot.last_successful_fetch_at}>{snapshot.last_successful_fetch_at}</time> : 'Never'}. These are our observation times, not NPS update times or the start of a restriction.</p>
   <p class="small"><a href={conditionsUrl}>Check official conditions <span aria-hidden="true">↗</span></a></p>
+  {noticeContext?.parkCode === history.park_code && noticeContext.parkHref && <p class="small"><a href={noticeContext.parkHref} data-history-park-link>Open this park’s trip readiness</a></p>}
   {history.observations.length > 0 && <>
     <p class="small muted">Showing {history.observations.length} of {history.total_observations} recorded checks, newest first.</p>
     <ol class="history-list">
@@ -25,15 +27,19 @@ const observationTitle = (item: HistoryObservation) => item.collection_status ==
         {observation.comparison === 'baseline' && <p class="small muted">This first accepted feed is a starting point, not evidence that its restrictions began at this time.</p>}
         {observation.comparison === 'not_compared' && <p class="small muted">No notice comparison was made. Earlier accepted evidence, when available, is retained with its original successful-check time.</p>}
         {observation.comparison === 'compared' && observation.change_count === 0 && <p class="small muted">No differences were found between these accepted feeds. This does not establish that conditions at the park were unchanged.</p>}
-        {observation.changes.map((change) => <article class="history-change">
+        {observation.changes.map((change) => {
+          const noticeHref = retainedNoticeHref(noticeContext, history.park_code, change.record_id);
+          return <article class="history-change">
           <h4>{changeLabels[change.kind]}</h4><p class="change-title">{(change.after ?? change.before)!.title}</p>
           {change.kind === 'removed' && <p class="small muted">A notice disappearing is not a confirmed reopening. Verify the official conditions before travel.</p>}
+          {noticeContext && (noticeHref ? <><p class="small"><a href={noticeHref} data-history-notice-link>View retained notice with this ID</a></p><p class="small muted">Retained wording may differ from this comparison. This is stored evidence, not live conditions.</p></> : <p class="small muted">A unique retained notice could not be identified for this comparison. This does not establish reopening.</p>)}
           <details><summary>View before and after evidence</summary><div class="history-evidence">
             {(['before', 'after'] as const).map((side) => <div class="evidence-side"><h5>{side === 'before' ? 'Before this comparison' : 'After this comparison'}</h5>
               {change[side] ? <><p class="small"><strong>{change[side]!.title}</strong></p><p class="small muted">{change[side]!.category} · Area scope unclassified</p><blockquote>{change[side]!.description || 'The checked feed supplied no description.'}</blockquote>{change[side]!.url ? <p><a href={change[side]!.url} rel="noopener noreferrer" referrerpolicy="no-referrer">More information link supplied by NPS <span aria-hidden="true">↗</span></a></p> : <p class="small muted">NPS did not supply a direct link for this alert.</p>}<p class="small muted">Normalized-record SHA-256: <code>{change[side]!.content_hash}</code></p></> : <p class="small muted">Not present in this side of the accepted feed comparison. No access or safety conclusion follows.</p>}
             </div>)}
           </div><p class="small muted">Stored source text may differ from the page currently at that link. Applicability to your dates or planned area is not confirmed.</p></details>
-        </article>)}
+        </article>;
+        })}
         {observation.omitted_changes > 0 && <p class="note small">{observation.omitted_changes} additional notice changes from this recorded check are not shown in this bounded view.</p>}
       </li>)}
     </ol>

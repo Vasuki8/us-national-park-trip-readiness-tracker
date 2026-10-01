@@ -21,23 +21,49 @@ if (noticeRoot) {
     empty.hidden = shown !== 0;
   };
   const reset = () => { search.value = ''; category.value = ''; update(); };
-  const synchronize = () => {
-    let target: HTMLElement | undefined;
+  const targetFor = (hash: string): HTMLElement | undefined => {
+    if (!hash.startsWith('#') || hash.length === 1) return undefined;
     try {
-      const id = decodeURIComponent(window.location.hash.slice(1));
-      target = cards.find((card) => card.id === id);
-    } catch { /* Malformed fragments do not identify a stored notice. */ }
+      const id = decodeURIComponent(hash.slice(1));
+      const matching = cards.filter((card) => card.id === id);
+      return matching.length === 1 ? matching[0] : undefined;
+    } catch { return undefined; }
+  };
+  const synchronize = () => {
+    const target = targetFor(window.location.hash);
     const excluded = Boolean(target && !matches(target));
     const reveal = Boolean(target && (target.hidden || excluded));
     if (excluded) reset();
     else update();
     // Native fragment navigation already handles visible targets. Hidden targets
     // need their position restored after conflicting filters have been cleared.
-    if (reveal) target!.scrollIntoView({ block: 'start' });
+    if (reveal) {
+      target!.focus({ preventScroll: true });
+      target!.scrollIntoView({ block: 'start' });
+    }
   };
   search.addEventListener('input', update);
   category.addEventListener('change', update);
   clear.addEventListener('click', reset);
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey
+      || !(event.target instanceof Element)) return;
+    const anchor = event.target.closest<HTMLAnchorElement>('a[href]');
+    if (!anchor || anchor.hasAttribute('download')) return;
+    const browsingTarget = anchor.getAttribute('target');
+    if (browsingTarget && browsingTarget.toLowerCase() !== '_self') return;
+    let destination: URL;
+    try { destination = new URL(anchor.getAttribute('href')!, window.location.href); }
+    catch { return; }
+    if (destination.origin !== window.location.origin || destination.pathname !== window.location.pathname
+      || destination.search !== window.location.search) return;
+    const target = targetFor(destination.hash);
+    if (!target) return;
+    // A second activation of the same fragment need not fire hashchange. Reveal
+    // before the native link action; the browser retains navigation and focus.
+    if (!matches(target)) reset();
+    else if (target.hidden) update();
+  });
   window.addEventListener('hashchange', synchronize);
   // Browser restoration can apply control values after pageshow has fired.
   window.addEventListener('pageshow', () => { window.setTimeout(synchronize, 0); });

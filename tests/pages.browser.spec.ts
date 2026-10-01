@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { guidanceScenarioTime, PUBLIC_PILOT_STALE_TIME, publicRules, publicParks, publicParkSnapshots } from './pilot-clock.ts';
+import { guidanceScenarioTime, PUBLIC_PILOT_STALE_TIME, publicRules, publicParks, publicParkSnapshots, publicHistories } from './pilot-clock.ts';
 import { describeHistory } from '../src/lib/history.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
 
@@ -352,4 +352,58 @@ test('project-path section jumps focus native targets and preserve choices and e
   await expect(page.locator('#alert-status')).toHaveAttribute('data-snapshot', snapshotText!);
   await expect(page.locator('[data-history]')).toHaveAttribute('data-history-metadata', historyText!);
   expect(await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => element.getAttribute('datetime')))).toEqual(clocks);
+});
+
+test('project-path history opens each park readiness target and preserves paired source clocks and notice destinations', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_STALE_TIME));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const park of publicParks) {
+    const snapshot = publicParkSnapshots.find(snapshot => snapshot.park_code === park.code)!;
+    const history = publicHistories.find(history => history.park_code === park.code)!;
+    await page.goto(`${base}changes/`);
+    const overview = page.locator(`[id="history-${park.code}"]`);
+    const metadata = await overview.getAttribute('data-history-metadata');
+    const clocks = await overview.locator('time').evaluateAll(elements => elements.map(element => ({
+      datetime: element.getAttribute('datetime'), text: element.textContent,
+    })));
+    const route = `${base}parks/${park.slug}/`;
+    const changes = history.observations.flatMap(observation => observation.changes);
+    let matched = 0;
+    for (const [index, change] of changes.entries()) {
+      const comparison = overview.locator('.history-change').nth(index);
+      const matches = snapshot.records.filter(record => record.id === change.record_id);
+      if (matches.length === 1) {
+        matched += 1;
+        await expect(comparison.locator('[data-history-notice-link]')).toHaveAttribute('href', `${route}#${encodeURIComponent(`alert-${park.code}-${change.record_id}`)}`);
+      } else {
+        await expect(comparison.locator('[data-history-notice-link]')).toHaveCount(0);
+        await expect(comparison).toContainText('This does not establish reopening.');
+      }
+    }
+    await expect(overview.locator('[data-history-notice-link]')).toHaveCount(matched);
+    const returnLink = overview.getByRole('link', { name: 'Open this park’s trip readiness', exact: true });
+    await expect(returnLink).toHaveAttribute('data-history-park-link', '');
+    await expect(returnLink).toHaveAttribute('href', `${route}#trip-context`);
+    await returnLink.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#trip-context`);
+    await expect(page.locator('#trip-context')).toBeFocused();
+    await expect(page.locator('#trip-context')).toBeInViewport();
+    await page.keyboard.press('Tab');
+    await expect(page.getByLabel('Visit date', { exact: true })).toBeFocused();
+    await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+    const parkHistory = page.locator('[data-history]');
+    await expect(parkHistory.locator('[data-history-park-link]')).toHaveCount(0);
+    await expect(parkHistory).toHaveAttribute('data-history-metadata', metadata!);
+    expect(await parkHistory.locator('time').evaluateAll(elements => elements.map(element => ({
+      datetime: element.getAttribute('datetime'), text: element.textContent,
+    })))).toEqual(clocks);
+    expect(JSON.parse((await page.locator('#alert-status').getAttribute('data-snapshot'))!)).toEqual(snapshot);
+    for (const [index, change] of changes.entries()) {
+      if (snapshot.records.filter(record => record.id === change.record_id).length === 1) {
+        await expect(parkHistory.locator('.history-change').nth(index).locator('[data-history-notice-link]'))
+          .toHaveAttribute('href', `#${encodeURIComponent(`alert-${park.code}-${change.record_id}`)}`);
+      }
+    }
+  }
 });

@@ -21,7 +21,7 @@ const searchableText = (notice: Notice) => `${notice.title} ${notice.description
   </div>
   <noscript><p class="small muted">All retained notices are shown. Search and category filters require JavaScript.</p></noscript>
   <p class="small print-only">All {notices.length} retained notices are included in this page copy. Search and category selections do not limit it.</p>
-  {notices.map((item) => <article class="source-item" id={correctionAnchor('alert', parkCode, item.id)} data-retained-notice data-notice-text={searchableText(item)} data-notice-category={item.category}>
+  {notices.map((item) => <article class="source-item" id={correctionAnchor('alert', parkCode, item.id)} tabindex="-1" data-retained-notice data-notice-text={searchableText(item)} data-notice-category={item.category}>
     <p class="eyebrow">{item.category} · Scope unclassified</p><h3>{item.title}</h3><p>{item.description}</p>
     {item.url ? <a href={item.url} rel="noopener noreferrer" referrerpolicy="no-referrer">More information link supplied by NPS</a> : <p class="small muted">NPS did not supply a direct link for this alert.</p>}
     <p class="small"><a class="text-link" data-correction-link href={correctionHref('alert', parkCode, item.id, import.meta.env.BASE_URL)}>Report a correction about this source</a></p>

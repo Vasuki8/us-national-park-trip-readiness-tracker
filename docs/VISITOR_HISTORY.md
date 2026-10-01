@@ -18,6 +18,12 @@ Evidence panels retain the before/after title, description, category, source URL
 
 The browser recalculates age using the existing four-hour alert threshold every minute and when the page becomes visible. Static HTML always includes absolute check times and a no-JavaScript warning that age labels reflect the build. Historical evidence is not deleted when a freshness label expires.
 
+## Public evidence navigation
+
+The changes overview links each park's timeline to its public trip-readiness section, including baseline-only timelines. Public callers explicitly supply the current validated paired snapshot's retained IDs and base-aware park route. A comparison links to a retained notice only when the same park and exact ID identify one article. Matching uses neither titles, provider URLs nor archived wording. An older change can refer to different retained wording, and a removed ID can later reappear; the original before/after evidence and removal warning stay intact. Missing or ambiguous matches establish no reopening.
+
+Park-page links use native local fragments so trip choices and page-only checks remain on the current document. Retained notice articles accept fragment focus without entering the normal Tab order. Exact same-document notice activations reveal excluded articles before native navigation, including repeated activation of an unchanged fragment; modifier clicks and different documents keep normal browser handling. Initialization, hash changes and page returns focus and scroll only a notice that needs revealing. Subsequent filtering stays usable and does not rewrite clocks or URLs. Shared timelines without an explicit public navigation context, including private candidate previews and isolated archive-only fixture pages, add no public destinations or matching claims.
+
 ## Bounds and omission
 
 A projection contains at most 20 recent observations and 100 displayed changes per observation. `limit` may be lowered from 20 but not raised. Total and omitted observation/change counts are explicit. A history payload exceeding 2 MiB is refused, rather than silently truncating notice text. The returned current snapshot retains the archive's existing independent size bounds. The full archive is still subject to its disk/observation/reconstruction limits.

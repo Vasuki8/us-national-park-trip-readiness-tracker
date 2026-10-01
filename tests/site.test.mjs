@@ -215,6 +215,35 @@ test('all park pages and changes overview retain exact paired history and observ
     }
   }
 });
+test('each overview history returns to its own focusable public readiness page under the hosting base', () => {
+  const overview = readFileSync(`${output}/changes/index.html`, 'utf8');
+  for (const park of parks) {
+    const panel = overview.match(new RegExp(`<section[^>]*id="history-${park.code}"[^>]*>[\\s\\S]*?</section>`))?.[0];
+    assert.ok(panel, `${park.code}: overview history panel exists`);
+    const links = [...panel.matchAll(/<a\b[^>]*href="([^"]*)"[^>]*>Open this park’s trip readiness<\/a>/g)];
+    assert.equal(links.length, 1, `${park.code}: one native readiness return link`);
+    assert.equal(decodeHtml(links[0][1]), `${base}parks/${park.slug}/#trip-context`);
+    const parkHtml = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    assert.match(parkHtml, /<section\b[^>]*id="trip-context"[^>]*tabindex="-1"/);
+    assert.doesNotMatch(parkHtml, />Open this park’s trip readiness<\/a>/, 'park histories do not repeat an overview return link');
+  }
+});
+
+test('each retained notice is a unique native keyboard destination with its original public identity', () => {
+  for (const park of parks) {
+    const snapshot = snapshots.find((item) => item.park_code === park.code);
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const targets = [...html.matchAll(/<article\b[^>]*\bdata-retained-notice\b[^>]*>/g)].map((match) => match[0]);
+    assert.equal(targets.length, snapshot.records.length);
+    for (const record of snapshot.records) {
+      const matching = targets.filter((tag) => decodeHtml(tag.match(/\bid="([^"]*)"/)[1]) === `alert-${park.code}-${record.id}`);
+      assert.equal(matching.length, 1, `${park.code}: unique exact notice ${record.id}`);
+      assert.match(matching[0], /\btabindex="-1"/, 'native notice navigation moves keyboard focus to the evidence');
+    }
+    assert.deepEqual(embeddedJson(html, 'data-snapshot'), snapshot);
+  }
+});
+
 test('internal page links and bundled assets stay under the base and resolve', () => {
   const result = spawnSync('python3', ['tests/site_links.py', '--output', output, '--base', base], { encoding: 'utf8', timeout: 30_000 });
   assert.equal(result.status, 0, result.error?.message || result.stdout + result.stderr);
