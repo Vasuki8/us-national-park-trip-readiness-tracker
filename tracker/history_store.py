@@ -20,6 +20,18 @@ MAX_RECONSTRUCTED_BYTES = 64 * 1024 * 1024
 BUNDLE_FIELDS = {'schema_version', 'sequence', 'previous_id', 'header', 'record_refs', 'comparison', 'changes'}
 REF_FIELDS = {'content_hash', 'observed_first_at', 'observed_changed_at'}
 _UNSET_HEAD = object()
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def private_storage_destination(root: Path, *, reason: str) -> Path:
+    """Refuse ambiguous or checkout-backed private storage before any operation."""
+    destination = Path(root)
+    require(destination.is_absolute() and '..' not in destination.parts, reason)
+    require(not any(part.is_symlink() for part in (destination, *destination.parents)), reason)
+    destination = destination.resolve()
+    require(destination != PROJECT_ROOT and PROJECT_ROOT not in destination.parents
+            and destination not in PROJECT_ROOT.parents, reason)
+    return destination
 
 def _identifier(value: object) -> str:
     require(isinstance(value, str) and re.fullmatch('[a-f0-9]{64}', value) is not None, 'invalid_object_id')
@@ -31,7 +43,7 @@ class HistoryStore:
         require(type(max_bytes) is int and 0 < max_bytes <= MAX_ARCHIVE_BYTES, 'invalid_limit')
         require(type(max_reconstructed_bytes) is int and 0 < max_reconstructed_bytes <= MAX_RECONSTRUCTED_BYTES, 'invalid_limit')
         self.max_reconstructed_bytes = max_reconstructed_bytes
-        self.root = Path(root).absolute()
+        self.root = private_storage_destination(root, reason='unsafe_archive_destination')
         self.max_observations, self.max_bytes = max_observations, max_bytes
 
     def _safe(self, path: Path) -> Path:

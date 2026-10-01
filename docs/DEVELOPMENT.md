@@ -12,6 +12,8 @@
 
 The browser recalculates freshness every minute and when the tab becomes visible. Entry review expiration is 168 hours; alert expiration is four hours. Stale guidance remains readable as historical evidence but cannot grant a current exemption. Trip dates/times are wall-clock values at the park, not UTC conversions from the browser timezone.
 
+Trip decisions replace live-region text only when the displayed title or detail changes. Minute and visibility refreshes still recalculate freshness, including the seven-day expiry transition, without repeatedly rewriting an unchanged result. Trip edits retain the existing checklist reset behavior.
+
 Production verification follows the current paired histories, including later observations and bounded views whose original baseline is no longer visible. Exact metadata, clocks, observation/baseline counts and omission disclosures remain checked. The generated-history regression builds the real component with the isolated archive fixtures and checks both valid views and corrupted output. The generated-site release suite still requires successful public snapshots; accepting degraded synthetic history rendering is not release approval.
 
 `tests/pilot-clock.ts` provides a reference after every known review and attempted/successful feed check. That clock avoids future evidence without making every source fresh. Browser coverage checks preserve each source's independent age; deliberate annual-guidance scenarios use the selected reviews' own clocks and explicit visit dates. Historical/synthetic cases keep independent fixed clocks.
@@ -21,6 +23,8 @@ Production verification follows the current paired histories, including later ob
 The collector uses only a fixed NPS HTTPS endpoint. Its private key is in a request header, and redirects are disabled. It permits three attempts with bounded waits, 100 pages and 5,000 total records. Pagination counts must remain stable and IDs unique. A drop of more than half the last-good records is quarantined for review. This conservative threshold intentionally favors retaining notices over implying reopening; a later operator workflow must resolve legitimate mass removals.
 
 The private collector/archive/staging path retains normalized evidence and immutable history receipts, excluding API headers and raw HTTP responses; see `docs/STAGING_COLLECTION.md`. Detailed operator captures, checkpoint metadata and recovery receipts belong in the private handoff outside the website checkout. Public alert updates require deliberate reviewed promotion. Astro escapes notice strings and browser scripts use textContent, not untrusted innerHTML. `parkCode` determines alert scope; a provider URL can be absent, or a validated provider-supplied HTTPS destination. Nullable URLs and safe external links are covered by the tested normalization contract documented in `docs/NPS_PREFLIGHT.md`.
+
+The alert archive and staging APIs share a destination guard before storage operations or requests. It requires an absolute path, rejects raw traversal and symlink ancestry, then checks canonical containment outside the entire checkout and its ancestors. This also rejects Linux doubled-leading-slash checkout aliases and ignored/unlisted checkout folders. Existing private stores are not automatically migrated or repaired; owner-only WSL setup and backup remain deliberate operator responsibilities.
 
 ## Release boundaries
 

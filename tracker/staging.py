@@ -10,11 +10,9 @@ from typing import Callable
 from .alerts import collect, initial_snapshot
 from .history_model import (HistoryError, MAX_OBJECT_BYTES, canonical, compare,
                             digest, instant, parse_json, require, validate_snapshot)
-from .history_store import HistoryStore
+from .history_store import HistoryStore, private_storage_destination
 
 PILOT_CODES = ('yose', 'romo', 'yell', 'zion', 'grca')
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROTECTED_DIRS = ('data', 'public', 'src', 'dist', 'dist-pages', 'tracker', 'tests', 'docs', '.git', '.github')
 MAX_PENDING_BYTES = 6 * MAX_OBJECT_BYTES
 MAX_PENDING_FILES = 32
 
@@ -35,12 +33,7 @@ class StagingCollector:
     publish, and its digest is an integrity check, not a cryptographic signature.
     """
     def __init__(self, root: Path):
-        require('..' not in Path(root).parts, 'unsafe_staging_destination')
-        self.root = Path(root).absolute()
-        require(self.root != PROJECT_ROOT and self.root not in PROJECT_ROOT.parents,
-                'unsafe_staging_destination')
-        require(not any(self.root == PROJECT_ROOT / folder or PROJECT_ROOT / folder in self.root.parents
-                        for folder in PROTECTED_DIRS), 'unsafe_staging_destination')
+        self.root = private_storage_destination(root, reason='unsafe_staging_destination')
         self.archive = HistoryStore(self.root / 'archive')
 
     def _safe(self, path: Path) -> Path:

@@ -1,26 +1,28 @@
 # Private alert evidence and observation history
 
-This increment adds **offline archival capability**, not live NPS integration or a public change feed. No actual park alert observations are included in the repository. Tests use explicitly synthetic notices. The date evaluator, human entry reviews and current site snapshots are unchanged.
+The private archive retains normalized alert evidence and immutable observation history. Its full chain is separate from the reviewed bounded snapshots/history published by the pilot. Offline import is not source collection, human review or permission to publish. Development tests use explicitly synthetic notices.
 
 ## Operator commands
 
-Use Python 3.12+ through the existing uv environment. Import a normalized schema-v1 snapshot produced by `tracker.alerts.collect`, not raw NPS response JSON:
+Use Python 3.12+ through the existing uv environment. Import a normalized schema-v1 snapshot produced by `tracker.alerts.collect`, not raw NPS response JSON. Use absolute paths outside the entire checkout for private inputs and archives; real Windows operator sessions use the WSL Linux filesystem and the owner-only setup in `docs/DURABLE_COLLECTION_SESSION.md`:
 
 ```sh
-uv run --frozen python -m tracker.history record --snapshot state/candidate-alerts/yose.json --archive-dir state/alert-history
-uv run --frozen python -m tracker.history report --park yose --archive-dir state/alert-history --limit 20
+uv run --frozen python -m tracker.history record --snapshot /absolute/private/candidate-alerts/yose.json --archive-dir /absolute/private/alert-history
+uv run --frozen python -m tracker.history report --park yose --archive-dir /absolute/private/alert-history --limit 20
 ```
 
 These commands do not need or read an API key, make network requests, change the input snapshot, update `data/alerts`, or publish a website. `record` returning zero means the observation was archived, **not** that its source check succeeded. Inspect `source_collection_status` or the report's separate status and success clock. The report omits notice titles, descriptions and input exception text.
 
-Collection remains the existing explicit operation. It must first be validated with an owner-controlled NPS key. A future producer integration should archive every resulting attempt in order, including failures, before considering publication. Do not chain archival after collection only with `&&`: collection deliberately exits nonzero for a failed/quarantined response. Do not enable a schedule merely because these synthetic tests pass.
+Collection remains the existing explicit operation. The private staging command connects collection to archival and retains attempts in order, including failures; see `docs/STAGING_COLLECTION.md`. An independent offline import must preserve the same attempt ordering. Do not chain archival after collection only with `&&`: collection deliberately exits nonzero for a failed/quarantined response. Do not enable a schedule merely because synthetic tests pass.
 
-`state/` is ignored by Git. The CLI rejects archive destinations in this repository's website, data, source, documentation and Git directories, including both `dist/` and `dist-pages/` and their descendants. Destination checks happen before importing a snapshot or writing an archive. Choose an owner-controlled private local directory. Do not upload the archive as an Actions artifact or add it to static assets without a separate source-use and publication review.
+The archive API and CLI require an explicit absolute destination outside the entire checkout and its ancestors. Relative roots, traversal paths and symlink ancestry are refused, including ignored `state/` and `.superpowers/` paths. Destination checks happen before importing a snapshot or writing an archive. Existing permissions and backup remain operator responsibilities. Private archives must stay outside static assets and public Actions artifacts.
+
+Older in-checkout archives are refused for both import and reporting. This repair does not read, move, delete, chmod or recover them automatically. Use the existing backup/recovery procedure to deliberately prepare an external private copy before continuing.
 
 ## Evidence and commit structure
 
 ```text
-state/alert-history/
+/absolute/private/alert-history/
   evidence/<normalized-record-sha256>.json
   parks/yose/head.json
   parks/yose/observations/<observation-sha256>.json

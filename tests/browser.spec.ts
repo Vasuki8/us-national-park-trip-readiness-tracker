@@ -129,3 +129,38 @@ test('paired feed evidence retains notices and its independently aged limitation
     await page.clock.setFixedTime(new Date(PUBLIC_PILOT_REFERENCE_TIME));
   }
 });
+
+test('entry live-region text changes only when the displayed decision changes', async ({ page }) => {
+  const rule = publicRules.find((item) => item.park_code === 'yose')!;
+  await page.clock.install({ time: new Date(guidanceScenarioTime([rule])) });
+  await page.goto('/parks/yosemite/');
+  await page.getByLabel('Visit date').fill(rule.effective_from);
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  const decision = page.locator('#entry-decision');
+  await expect(decision).toHaveAttribute('role', 'status');
+  await expect(decision).toHaveAttribute('aria-live', 'polite');
+  await expect(decision).toHaveAttribute('data-state', 'not-required-under-rule');
+  await decision.evaluate((element) => {
+    element.setAttribute('data-text-changes', '0');
+    new MutationObserver((records) => {
+      element.setAttribute('data-text-changes', String(Number(element.getAttribute('data-text-changes')) + records.length));
+    }).observe(element, { childList: true, characterData: true, subtree: true });
+  });
+  await page.clock.fastForward(60_000);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(decision).toHaveAttribute('data-text-changes', '0');
+  const expiry = Date.parse(rule.reviewed_at) + 168 * 3_600_000;
+  await page.clock.setFixedTime(new Date(expiry));
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(decision).toHaveAttribute('data-state', 'not-required-under-rule');
+  await expect(decision).toHaveAttribute('data-text-changes', '0');
+  await page.clock.setFixedTime(new Date(expiry + 1));
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(decision).toHaveAttribute('data-state', 'stale');
+  await expect(page.locator('#decision-title')).toHaveText('Entry guidance needs a fresh review');
+  await expect.poll(async () => Number(await decision.getAttribute('data-text-changes'))).toBeGreaterThan(0);
+  const changed = await decision.getAttribute('data-text-changes');
+  await page.clock.fastForward(60_000);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await expect(decision).toHaveAttribute('data-text-changes', changed!);
+});

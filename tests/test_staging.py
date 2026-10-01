@@ -155,6 +155,20 @@ class StagingTests(unittest.TestCase):
         for folder in ('', 'data/new-stage', 'public/new-stage', 'src/new-stage', '.git/new-stage'):
             with self.subTest(folder=folder), self.assertRaises(HistoryError): StagingCollector(project/folder)
 
+    def test_staging_destination_requires_absolute_storage_outside_the_whole_checkout(self):
+        project = Path(__file__).resolve().parents[1]
+        destinations = [Path('state/staging'), Path('../staging'), project.parent,
+                        project/'state/staging', project/'.superpowers/private-staging',
+                        project/'unlisted-private-staging', self.root/'..'/'other-stage']
+        if project.anchor == '/':
+            destinations.extend([Path('/' + str(project))/'state/staging',
+                                 Path('/' + str(project.parent))])
+        for destination in destinations:
+            with self.subTest(destination=str(destination)):
+                with self.assertRaisesRegex(HistoryError, 'unsafe_staging_destination'):
+                    StagingCollector(destination)
+        self.assertFalse(self.root.exists())
+
     def test_receipt_size_limit_refuses_oversize_without_reading_all_bytes(self):
         (self.root/'pending').mkdir(parents=True)
         path = self.root/'pending/yose.json'; path.write_bytes(b' '*(10*1024*1024+1))
