@@ -82,7 +82,10 @@ test('without JavaScript exact dated and undated fragments focus their native su
       await expect(article.locator('time').first()).toHaveAttribute('datetime', record.reviewed_at);
       await expect(article.locator('time').first()).toHaveText(record.reviewed_at);
       if ('limitation' in record) await expect(article).toContainText(record.limitation);
-      await expect(page.locator('#trip-context noscript')).toContainText('Interactive date checking requires JavaScript');
+      // Playwright skips NOSCRIPT text; assert the rendered fallback paragraph directly.
+      const fallback = page.locator('#trip-context noscript p');
+      await expect(fallback).toBeVisible();
+      await expect(fallback).toContainText('Interactive date checking requires JavaScript');
       await expect(page.getByRole('button', { name: 'Check entry guidance', exact: true })).toBeDisabled();
       await expect(page.locator('#decision-title')).toHaveText('Start with your visit date');
       await expect(page.locator('#decision-evidence')).toBeHidden();
