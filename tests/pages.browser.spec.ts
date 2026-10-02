@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { guidanceScenarioTime, PUBLIC_PILOT_REFERENCE_TIME, PUBLIC_PILOT_STALE_TIME, publicRules, publicParks, publicParkSnapshots, publicHistories } from './pilot-clock.ts';
+import { guidanceScenarioTime, PUBLIC_PILOT_REFERENCE_TIME, PUBLIC_PILOT_STALE_TIME, publicRules, publicNotes, publicParks, publicParkSnapshots, publicHistories } from './pilot-clock.ts';
 import { describeHistory } from '../src/lib/history.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
 
@@ -77,10 +77,18 @@ test('project-path evidence follows restored areas and retains the original revi
   });
   await expect(page.locator('#entry-decision')).toHaveText(decisionText, { useInnerText: true });
   await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(rest.id)}`);
-  await evidence.click();
+  await evidence.focus();
+  await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`http://127.0.0.1:4324${base}parks/rocky-mountain/#entry-rule-${encodeURIComponent(rest.id)}`);
   const matched = page.locator(`[id="entry-rule-${rest.id}"]`);
+  await expect(matched).toBeFocused();
   await expect(matched.getByRole('heading', { name: 'Rest of park', exact: true })).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(matched.locator('summary')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(matched.locator('details')).toHaveAttribute('open', '');
+  await expect(matched.locator('blockquote')).toBeVisible();
+  await expect(matched.locator('blockquote')).toHaveText(rest.evidence.excerpt);
   await expect(matched.getByRole('link', { name: 'Read the official source', exact: true })).toHaveAttribute('href', rest.evidence.url);
   await page.clock.setFixedTime(new Date(Date.parse(rest.reviewed_at) + 168 * 3_600_000 + 1));
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
@@ -216,6 +224,94 @@ test('project-path corrections retain source identity and return to the exact no
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`http://127.0.0.1:4324${base}parks/yosemite/#${encodeURIComponent(anchor!)}`);
   await expect(page.locator(`[id="${anchor}"] h3`)).toBeInViewport();
+});
+
+test('project-path guidance corrections return native keyboard focus to every exact stored source', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_STALE_TIME));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const external: string[] = [];
+  page.on('request', request => {
+    if (new URL(request.url()).origin !== 'http://127.0.0.1:4324') external.push(request.url());
+  });
+  const inventory = [
+    ...publicRules.map(record => ({ kind: 'rule' as const, record, limitation: record.exception_note })),
+    ...publicNotes.map(record => ({ kind: 'note' as const, record, limitation: record.limitation })),
+  ];
+  expect(publicRules.length).toBeGreaterThan(0);
+  expect(publicNotes.length).toBeGreaterThan(0);
+  for (const { kind, record, limitation } of inventory) {
+    const parks = publicParks.filter(park => park.code === record.park_code);
+    expect(parks).toHaveLength(1);
+    const route = `${base}parks/${parks[0].slug}/`;
+    const anchor = `entry-${kind}-${record.id}`;
+    const selector = `[id="${anchor}"]`;
+    await page.goto(route);
+    const source = page.locator(selector);
+    await expect(source).toHaveCount(1);
+    const sourceClocks = await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => ({
+      datetime: element.getAttribute('datetime'), text: element.textContent,
+    })));
+    const snapshotText = await page.locator('#alert-status').getAttribute('data-snapshot');
+    const historyText = await page.locator('[data-history]').getAttribute('data-history-metadata');
+    const correction = source.locator('[data-correction-link]');
+    const destination = `${base}corrections/?source=${encodeURIComponent(`${kind}:${record.park_code}:${record.id}`)}`;
+    await expect(correction).toHaveAttribute('href', destination);
+    await correction.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(`http://127.0.0.1:4324${destination}`);
+    await expect(page.locator('#correction-source')).toBeVisible();
+    await expect(page.locator('#correction-source-id')).toHaveText(record.id);
+    await expect(page.locator('#correction-wording')).toHaveText(`${record.summary}\n\n${limitation}`);
+    await expect(page.locator('#correction-facts')).toContainText(record.reviewed_at);
+    if (kind === 'rule') {
+      await expect(page.locator('#correction-facts')).toContainText(record.effective_from);
+      await expect(page.locator('#correction-facts')).toContainText(record.effective_to);
+    } else {
+      await expect(page.locator('#correction-facts')).not.toContainText('Effective from');
+      await expect(page.locator('#correction-facts')).not.toContainText('Effective through');
+    }
+    await expect(page.locator('#correction-official-source')).toHaveAttribute('href', record.evidence.url);
+    const returnLink = page.locator('#correction-return');
+    await expect(returnLink).toHaveAttribute('href', `${route}#${encodeURIComponent(anchor)}`);
+    await returnLink.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#${encodeURIComponent(anchor)}`);
+    await expect(source).toHaveCount(1);
+    await expect(source).toBeFocused();
+    await expect(source.locator('h3')).toBeInViewport();
+    await page.keyboard.press('Tab');
+    await expect(source.locator('summary')).toBeFocused();
+    await expect(source.locator('summary')).toHaveText('View supporting text and evidence');
+    await expect(source.locator('details')).not.toHaveAttribute('open', '');
+    await page.keyboard.press('Enter');
+    await expect(source.locator('details')).toHaveAttribute('open', '');
+    await expect(source.locator('blockquote')).toBeVisible();
+    await expect(source.locator('blockquote')).toHaveText(record.evidence.excerpt);
+    await expect(source.locator('code')).toHaveText(record.evidence.content_hash);
+    await expect(source).toContainText(record.summary);
+    await expect(source).toContainText(limitation);
+    await expect(source.locator('time').first()).toHaveAttribute('datetime', record.reviewed_at);
+    await expect(source.locator('time').first()).toHaveText(record.reviewed_at);
+    await expect(source.locator('time').nth(1)).toHaveAttribute('datetime', new Date(Date.parse(record.reviewed_at) + 168 * 3_600_000).toISOString());
+    await expect(source.locator('[data-reviewed]')).toHaveAttribute('data-reviewed', record.reviewed_at);
+    await expect(source.locator('[data-reviewed]')).toContainText('Needs a fresh review');
+    if (kind === 'note') {
+      await expect(source.locator('.eyebrow')).toHaveText('Dates not published');
+      await expect(source.locator('details')).toContainText('No effective date range or publisher-update time is inferred.');
+    }
+    const official = source.getByRole('link', { name: 'Read the official source', exact: true });
+    await expect(official).toHaveAttribute('href', record.evidence.url);
+    await page.keyboard.press('Tab');
+    await expect(official).toBeFocused();
+    await expect(source.locator('[data-correction-link]')).toHaveAttribute('href', destination);
+    await expect(page.locator('#alert-status')).toHaveAttribute('data-snapshot', snapshotText!);
+    await expect(page.locator('[data-history]')).toHaveAttribute('data-history-metadata', historyText!);
+    expect(await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => ({
+      datetime: element.getAttribute('datetime'), text: element.textContent,
+    })))).toEqual(sourceClocks);
+    expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+  }
+  expect(external).toEqual([]);
 });
 
 test('project-path notice filters reveal an exact native fragment without changing correction destinations', async ({ page }) => {

@@ -204,6 +204,34 @@ test('corrections context catalog retains exactly current public source identiti
   assert.deepEqual(catalog.map(identity).sort(byKey), expected.sort(byKey));
 });
 
+test('exact dated and undated guidance destinations accept native focus and retain their source evidence', () => {
+  const catalog = embeddedJson(readFileSync(`${output}/corrections/index.html`, 'utf8'), 'data-correction-sources');
+  const guidance = [...rules.map(record => ({kind: 'rule', record})), ...notes.map(record => ({kind: 'note', record}))];
+  assert.ok(guidance.length > 0, 'the public inventory supplies guidance destinations');
+  for (const {kind, record} of guidance) {
+    const park = parks.find(item => item.code === record.park_code);
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const id = `entry-${kind}-${record.id}`;
+    const matches = [...html.matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/g)]
+      .filter(match => decodeHtml(match[1].match(/\bid="([^"]*)"/)?.[1] ?? '') === id);
+    assert.equal(matches.length, 1, `${id}: native destination identifies exactly one article`);
+    const [, attributes, contents] = matches[0];
+    assert.match(attributes, /\btabindex="-1"/, `${id}: focus the source without adding a Tab stop`);
+    assert.doesNotMatch(attributes, /\b(?:hidden|inert|aria-hidden)\b/, `${id}: source stays available`);
+    const text = decodeHtml(contents);
+    assert.ok(text.includes(record.summary), `${id}: original guidance wording`);
+    assert.ok(text.includes(record.evidence.excerpt), `${id}: original supporting excerpt`);
+    assert.ok(text.includes(record.evidence.content_hash), `${id}: original evidence hash`);
+    assert.ok(text.includes(`datetime="${record.reviewed_at}"`), `${id}: original review clock`);
+    assert.ok(text.includes(`href="${record.evidence.url}"`), `${id}: original official source`);
+    if (kind === 'note') assert.ok(text.includes(record.limitation), `${id}: undated limitation stays explicit`);
+    assert.match(text, /<details><summary>View supporting text and evidence<\/summary>/);
+    const source = catalog.filter(item => item.key === `${kind}:${park.code}:${record.id}`);
+    assert.equal(source.length, 1, `${id}: unique correction identity`);
+    assert.equal(source[0].returnHref, `${base}parks/${park.slug}/#${encodeURIComponent(id)}`);
+  }
+});
+
 test('all park pages and changes overview retain exact paired history and observation clocks', () => {
   const overview = readFileSync(`${output}/changes/index.html`, 'utf8');
   assertHistoryCounts(overview, histories);

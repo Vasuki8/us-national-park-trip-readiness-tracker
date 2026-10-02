@@ -70,19 +70,35 @@ test('Rocky Mountain decisions link to the exact stored rule even when result wo
   await expect(page.locator('#entry-decision')).toHaveText(decisionText, { useInnerText: true });
   await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(bearLake.id)}`);
   await expect(evidence).toHaveText('View the stored rule used for this result');
+  await page.locator('[data-check]').first().check();
+  const progress = await page.locator('#checklist-progress').innerText();
+  const originalClocks = await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => ({
+    datetime: element.getAttribute('datetime'), text: element.textContent,
+  })));
   await evidence.focus();
   await expect(evidence).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`http://127.0.0.1:4321/parks/rocky-mountain/#entry-rule-${encodeURIComponent(bearLake.id)}`);
   const matched = page.locator(`[id="entry-rule-${bearLake.id}"]`);
+  await expect(matched).toBeFocused();
   await expect(matched.getByRole('heading', { name: 'Bear Lake Road Corridor', exact: true })).toBeVisible();
   await expect(matched.getByRole('heading', { name: 'Bear Lake Road Corridor', exact: true })).toBeInViewport();
   const supportingText = matched.locator('summary');
-  await supportingText.focus();
+  await page.keyboard.press('Tab');
+  await expect(supportingText).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(matched.locator('blockquote')).toBeVisible();
   await expect(matched.locator('blockquote')).toHaveText(bearLake.evidence.excerpt);
   await expect(matched.getByRole('link', { name: 'Read the official source', exact: true })).toHaveAttribute('href', bearLake.evidence.url);
+  await expect(page.getByLabel('Visit date')).toHaveValue('2026-09-30');
+  await expect(page.getByLabel('Planned area')).toHaveValue('bear-lake');
+  await expect(page.locator('#special-case')).toBeChecked();
+  await expect(page.locator('[data-check]:checked')).toHaveCount(1);
+  await expect(page.locator('#checklist-progress')).toHaveText(progress);
+  await expect(page.locator('#entry-decision')).toHaveText(decisionText, { useInnerText: true });
+  expect(await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => ({
+    datetime: element.getAttribute('datetime'), text: element.textContent,
+  })))).toEqual(originalClocks);
   await page.getByLabel('Visit date').fill('2027-06-01');
   await expect(page.locator('#decision-title')).toHaveText('Entry requirements not verified for this date');
   await expect(evidence).toHaveAttribute('href', '#guidance-title');

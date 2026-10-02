@@ -1,5 +1,96 @@
 import { test, expect } from '@playwright/test';
-import { publicRules, publicNotes, publicParkSnapshots } from './pilot-clock.ts';
+import { PUBLIC_PILOT_STALE_TIME, publicRules, publicNotes, publicParks, publicParkSnapshots } from './pilot-clock.ts';
+
+const storedGuidance = [
+  ...publicRules.map(record => ({ kind: 'rule' as const, record })),
+  ...publicNotes.map(record => ({ kind: 'note' as const, record })),
+];
+
+test('keyboard correction returns focus every stored guidance article without refreshing its evidence', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(PUBLIC_PILOT_STALE_TIME));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const external: string[] = [];
+  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:4321/')) external.push(request.url()); });
+  for (const { kind, record } of storedGuidance) {
+    const park = publicParks.find(park => park.code === record.park_code)!;
+    const anchor = `entry-${kind}-${record.id}`;
+    await page.goto(`/parks/${park.slug}/`);
+    const article = page.locator(`[id="${anchor}"]`);
+    await expect(article).toHaveCount(1);
+    await expect(article.locator('time').first()).toHaveAttribute('datetime', record.reviewed_at);
+    await expect(article.locator('.review-status')).toContainText('Needs a fresh review');
+    await article.locator('[data-correction-link]').focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(`/corrections/?source=${encodeURIComponent(`${kind}:${park.code}:${record.id}`)}`);
+    await expect(page.locator('#correction-source')).toBeVisible();
+    await expect(page.locator('#correction-wording')).toContainText(record.summary);
+    await expect(page.locator('#correction-facts')).toContainText(record.reviewed_at);
+    if ('limitation' in record) {
+      await expect(page.locator('#correction-wording')).toContainText(record.limitation);
+      await expect(page.locator('#correction-facts')).not.toContainText('Effective from');
+    }
+    const returnLink = page.locator('#correction-return');
+    await expect(returnLink).toHaveAttribute('href', `/parks/${park.slug}/#${encodeURIComponent(anchor)}`);
+    await returnLink.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(`/parks/${park.slug}/#${encodeURIComponent(anchor)}`);
+    await expect(article).toHaveCount(1);
+    await expect(article).toBeFocused();
+    await expect(article).toBeInViewport();
+    await expect(article.locator('details')).not.toHaveAttribute('open', '');
+    await page.keyboard.press('Tab');
+    await expect(article.locator('summary')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(article.locator('blockquote')).toBeVisible();
+    await expect(article.locator('blockquote')).toHaveText(record.evidence.excerpt);
+    await expect(article.locator('code')).toHaveText(record.evidence.content_hash);
+    await expect(article.getByRole('link', { name: 'Read the official source', exact: true })).toHaveAttribute('href', record.evidence.url);
+    await expect(article.locator('time').first()).toHaveAttribute('datetime', record.reviewed_at);
+    await expect(article.locator('time').first()).toHaveText(record.reviewed_at);
+    await expect(article.locator('.review-status')).toContainText('Needs a fresh review');
+    if ('limitation' in record) await expect(article).toContainText(record.limitation);
+    await expect(page.locator('#decision-evidence')).toBeHidden();
+    await expect(page.locator('#decision-title')).toHaveText('Start with your visit date');
+    await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+    expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+  }
+  expect(external).toEqual([]);
+});
+
+test('without JavaScript exact dated and undated fragments focus their native supporting evidence', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, reducedMotion: 'reduce', baseURL: 'http://127.0.0.1:4321' });
+  try {
+    const page = await context.newPage();
+    const external: string[] = [];
+    page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:4321/')) external.push(request.url()); });
+    for (const { kind, record } of storedGuidance) {
+      const park = publicParks.find(park => park.code === record.park_code)!;
+      const anchor = `entry-${kind}-${record.id}`;
+      await page.goto(`/parks/${park.slug}/#${encodeURIComponent(anchor)}`);
+      await expect(page).toHaveURL(`/parks/${park.slug}/#${encodeURIComponent(anchor)}`);
+      const article = page.locator(`[id="${anchor}"]`);
+      await expect(article).toHaveCount(1);
+      await expect(article).toBeFocused();
+      await expect(article).toBeInViewport();
+      await page.keyboard.press('Tab');
+      await expect(article.locator('summary')).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(article.locator('blockquote')).toBeVisible();
+      await expect(article.locator('blockquote')).toHaveText(record.evidence.excerpt);
+      await expect(article.locator('code')).toHaveText(record.evidence.content_hash);
+      await expect(article.getByRole('link', { name: 'Read the official source', exact: true })).toHaveAttribute('href', record.evidence.url);
+      await expect(article.locator('time').first()).toHaveAttribute('datetime', record.reviewed_at);
+      await expect(article.locator('time').first()).toHaveText(record.reviewed_at);
+      if ('limitation' in record) await expect(article).toContainText(record.limitation);
+      await expect(page.locator('#trip-context noscript')).toContainText('Interactive date checking requires JavaScript');
+      await expect(page.getByRole('button', { name: 'Check entry guidance', exact: true })).toBeDisabled();
+      await expect(page.locator('#decision-title')).toHaveText('Start with your visit date');
+      await expect(page.locator('#decision-evidence')).toBeHidden();
+      await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+    }
+    expect(external).toEqual([]);
+  } finally { await context.close(); }
+});
 
 test('source-specific correction navigation keeps exact public guidance and original clocks', async ({ page }) => {
   const rule = publicRules.find(rule => rule.park_code === 'romo' && rule.areas.includes('bear-lake'))!;

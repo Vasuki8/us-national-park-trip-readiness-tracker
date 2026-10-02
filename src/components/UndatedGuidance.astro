@@ -4,7 +4,7 @@ import { correctionAnchor, correctionHref } from '../lib/corrections';
 interface Props { notes: EntryNote[] }
 const { notes } = Astro.props;
 ---
-{notes.map((note) => <article class="source-item" id={correctionAnchor('note', note.park_code, note.id)} data-undated-guidance>
+{notes.map((note) => <article class="source-item" id={correctionAnchor('note', note.park_code, note.id)} tabindex="-1" data-undated-guidance>
   <p class="eyebrow">Dates not published</p>
   <h3>General-entry source observation</h3>
   <p>{note.summary}</p>

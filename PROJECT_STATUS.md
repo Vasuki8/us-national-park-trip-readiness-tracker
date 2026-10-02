@@ -1,8 +1,20 @@
 # Project status and handoff
 
-Updated: **October 1, 2026 (Toronto time), during directory search and first-success history validation development**.
+Updated: **October 2, 2026 (Toronto time), during native stored-guidance focus development**.
 
 ## Current development handoff
+
+Continue on **`codex/trip-return-state`**, based on integrated `main` commit `c32e6c7762d0677229ddb1102f6abe24e50135bc`. [PR #6](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/6) now adds native keyboard focus for exact stored-guidance destinations, alongside the search, history, corrections and readiness work below. It remains unmerged. The PR records its current review state and final exact-head CI receipt; this increment is ordinary development and does not publish a release.
+
+All dated-rule and undated-observation articles accept native fragment focus with `tabindex="-1"`. Exact decision evidence and source-specific correction returns can focus the matched article; Tab continues to its supporting-text disclosure, and Enter opens the original excerpt. Direct article fragments also work without JavaScript. Articles stay outside the normal Tab order. The repair adds two markup attributes and uses the existing focus styling and scroll margin; no script is added. Source IDs, wording, hashes, review/source clocks and link destinations remain unchanged. Same-page decision evidence preserves trip choices, checklist marks and decision wording; native correction returns load the park page with its normal initial state.
+
+The new emitted-page regression first failed on both old hosting-path outputs because guidance articles lacked focus support. Fresh local verification passed **290 Node + 62 generated-site checks = 352 tests**, strict TypeScript for the four changed browser/site test files, zero diagnostics across 32 Astro files and both 14-page builds. Independent review found no actionable issue and independently checked the new emitted assertion under both bases. Existing exact-rule browser cases now require article focus and immediate Tab continuation instead of manually focusing the disclosure. Three new browser cases are registered (**108 root + 14 project-path cases**) for all six public guidance records: keyboard correction returns under both bases and direct no-JavaScript fragments, with exact excerpt/hash/source links, undated limitations, stale original reviews and unchanged metadata. Local Chromium remains unavailable on Ubuntu 26.04; Python behavior is unchanged. Use the PR's current-head receipt to confirm supported browser execution before integration.
+
+The preceding search/history-validation head `7bef92706a1b98ec0f5af57e5a009091fe6bed3f` passed [Verify pilot #193](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/36932662201), job `110605519519`: **290 Node + 432 Python + 60 generated-site + 119 Chromium = 901 tests**, zero Astro diagnostics, both 14-page builds and all three retained accessibility screenshots. All **106 root + 13 project-path browser cases** passed. This records the completed preceding increment's receipt; the PR carries the final current-head receipt for the additional guidance-focus change.
+
+Next: obtain the owner's integration/publication decision for PR #6 once its current head passes exact-head verification. The PR retains that receipt and review state. Earlier PR #5 authorization does not authorize this release. Public data and source clocks are unchanged. No collection, promotion, private checkpoint, merge or deployment was performed. Indexing, advertising and recurring operations retain their separate operator decisions.
+
+### Verified directory search and first-success history validation in PR #6
 
 Continue on **`codex/trip-return-state`**, based on integrated `main` commit `c32e6c7762d0677229ddb1102f6abe24e50135bc`. [PR #6](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/6) now repairs pasted directory searches and first-success history validation, alongside the history, navigation and readiness work below. It remains unmerged. The PR records its current review state and final exact-head CI receipt; this increment is ordinary development and does not publish a release.
 
