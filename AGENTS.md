@@ -39,3 +39,10 @@ at the top takes precedence.
 Update the current handoff when behavior or the next milestone changes. Record
 what was verified and what remains pending. Follow the user's instructions for
 branch integration and publishing; do not infer authorization from old history.
+
+## Owner workflow preferences
+
+- The owner authorizes merging future pull requests after required checks and
+  review pass. Do not ask for merge permission again.
+- Include the next concrete step in chat progress updates and final responses.
+- Keep the current handoff updated with verified results and remaining work.
