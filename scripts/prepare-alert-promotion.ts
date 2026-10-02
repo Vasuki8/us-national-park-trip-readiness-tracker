@@ -91,6 +91,14 @@ function buildPatch(input: unknown, current: PublicFile[], archive?: string) {
       const lastNewSuccess = newer.find(o => o.collection_status === 'success');
       requireValue(view.snapshot.last_successful_fetch_at
         === (lastNewSuccess?.checked_at ?? snapshots[i].last_successful_fetch_at));
+      // The public checkpoint establishes whether a successful baseline exists,
+      // even when older attempts are omitted from the visible projection.
+      let successfulBefore = snapshots[i].last_successful_fetch_at !== null;
+      for (const observation of newer.toReversed()) {
+        if (observation.collection_status !== 'success') continue;
+        requireValue(observation.comparison === (successfulBefore ? 'compared' : 'baseline'));
+        successfulBefore = true;
+      }
       if (snapshots[i].last_successful_fetch_at !== null) {
         const state = new Map<string, RecordState>(snapshots[i].records.map((r: any) => [r.id, recordState(r)]));
         for (const observation of newer.toReversed()) {

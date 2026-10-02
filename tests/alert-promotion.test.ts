@@ -39,6 +39,103 @@ function publicCheckpoint(view: any) {
   return files;
 }
 
+function initialFailureCheckpoint(status: 'failed' | 'quarantined', bounded: boolean) {
+  const view = structuredClone(fixtures.empty);
+  Object.assign(view.snapshot, {collection_status: status, coverage_status: 'incomplete',
+    error_code: status === 'failed' ? 'provider_request_failed' : 'response_requires_review',
+    last_checked_at: '2026-09-28T09:00:00Z'});
+  const observation = {observation_id: 'd'.repeat(64), sequence: bounded ? 2 : 1,
+    checked_at: view.snapshot.last_checked_at, collection_status: status, comparison: 'not_compared',
+    change_count: 0, omitted_changes: 0, changes: []};
+  Object.assign(view.history, {head_observation_id: observation.observation_id,
+    snapshot_hash: historyDigest(view.snapshot), total_observations: observation.sequence,
+    omitted_observations: bounded ? 1 : 0, observations: [observation]});
+  return view;
+}
+
+function firstSuccessView(checkpoint: any, comparison: 'baseline' | 'compared', change: 'none' | 'added' | 'edited' = 'none') {
+  const view = structuredClone(fixtures.baseline), head = view.history.observations[0];
+  head.sequence = checkpoint.history.total_observations + 1; head.comparison = comparison;
+  const semanticFields = ['category', 'description', 'id', 'title', 'url'];
+  const evidence = (record: any) => Object.fromEntries([...semanticFields, 'content_hash'].map(key => [key, record[key]]));
+  if (change === 'added') {
+    head.changes = view.snapshot.records.map((record: any) => ({kind: 'added', record_id: record.id, before: null, after: evidence(record)}));
+  } else if (change === 'edited') {
+    const after = evidence(view.snapshot.records[0]);
+    const before: Record<string, unknown> = {...after, title: 'Synthetic unobserved earlier title'};
+    before.content_hash = historyDigest(Object.fromEntries(semanticFields.map(key => [key, before[key]])));
+    head.changes = [{kind: 'edited', record_id: after.id, before, after}];
+  }
+  head.change_count = head.changes.length;
+  Object.assign(view.history, {total_observations: head.sequence, total_changes: head.change_count,
+    omitted_observations: checkpoint.history.omitted_observations,
+    observations: [head, ...structuredClone(checkpoint.history.observations)]});
+  return view;
+}
+
+test('first-success promotion accepts baseline controls after initial failed and quarantined checkpoints', () => {
+  for (const bounded of [true, false]) for (const status of ['failed', 'quarantined'] as const) {
+    const checkpoint = initialFailureCheckpoint(status, bounded), view = firstSuccessView(checkpoint, 'baseline');
+    const bundle = withView(view), files = publicCheckpoint(checkpoint), before = structuredClone({bundle, files});
+    const result = buildAlertPromotionPatch(bundle, files);
+    assert.equal(result.report.changed_files, 2);
+    assert.equal(result.report.publication_performed, false);
+    assert.equal(result.report.production_data_written, false);
+    assert.ok(result.patch.includes('+  "last_successful_fetch_at": "2026-09-28T10:00:00Z"'));
+    assert.deepEqual({bundle, files}, before);
+  }
+});
+
+test('first-success promotion refuses zero-change comparisons against known-null checkpoints', () => {
+  for (const bounded of [true, false]) for (const status of ['failed', 'quarantined'] as const) {
+    const checkpoint = initialFailureCheckpoint(status, bounded);
+    assert.throws(() => buildAlertPromotionPatch(withView(firstSuccessView(checkpoint, 'compared')), publicCheckpoint(checkpoint)),
+      `${status}, bounded=${bounded}`);
+  }
+});
+
+test('first-success promotion refuses fabricated added and edited comparisons against known-null checkpoints', () => {
+  for (const bounded of [true, false]) for (const status of ['failed', 'quarantined'] as const) for (const change of ['added', 'edited'] as const) {
+    const checkpoint = initialFailureCheckpoint(status, bounded);
+    assert.throws(() => buildAlertPromotionPatch(withView(firstSuccessView(checkpoint, 'compared', change)), publicCheckpoint(checkpoint)),
+      `${status}, bounded=${bounded}, ${change}`);
+  }
+});
+
+for (const changed of [false, true]) test(`first-success promotion accepts subsequent ${changed ? 'changed' : 'unchanged'} comparisons and retained clocks`, () => {
+  for (const bounded of [true, false]) for (const status of ['failed', 'quarantined'] as const) {
+    const checkpoint = initialFailureCheckpoint(status, bounded);
+    const view = structuredClone(changed ? fixtures.failed : fixtures.baseline);
+    if (!changed) {
+      view.snapshot.collection_status = 'failed'; view.snapshot.coverage_status = 'incomplete';
+      view.snapshot.error_code = 'provider_request_failed'; view.snapshot.last_checked_at = '2026-09-28T14:00:00Z';
+      view.snapshot.last_successful_fetch_at = '2026-09-28T12:00:00Z';
+      const baseline = view.history.observations[0];
+      const compared = {...structuredClone(baseline), observation_id: 'b'.repeat(64),
+        checked_at: view.snapshot.last_successful_fetch_at, comparison: 'compared'};
+      const failed = {...structuredClone(baseline), observation_id: 'a'.repeat(64),
+        checked_at: view.snapshot.last_checked_at, collection_status: 'failed', comparison: 'not_compared'};
+      view.history.observations = [failed, compared, baseline];
+      view.history.head_observation_id = failed.observation_id;
+    }
+    const between = {...structuredClone(checkpoint.history.observations[0]), observation_id: 'e'.repeat(64),
+      checked_at: '2026-09-28T11:00:00Z'};
+    view.history.observations.splice(2, 0, between);
+    view.history.observations.push(...structuredClone(checkpoint.history.observations));
+    view.history.total_observations = checkpoint.history.total_observations + 4;
+    view.history.omitted_observations = checkpoint.history.omitted_observations;
+    view.history.observations.forEach((observation: any, index: number) => { observation.sequence = view.history.total_observations - index; });
+    view.history.snapshot_hash = historyDigest(view.snapshot);
+    const bundle = withView(view), files = publicCheckpoint(checkpoint), before = structuredClone({bundle, files});
+    const result = buildAlertPromotionPatch(bundle, files);
+    assert.equal(result.report.failed_parks, 1);
+    assert.ok(result.patch.includes('+  "last_successful_fetch_at": "2026-09-28T12:00:00Z"'));
+    assert.ok(result.patch.includes('"observed_first_at": "2026-09-28T10:00:00Z"'));
+    assert.ok(result.patch.includes(`"observed_changed_at": "2026-09-28T${changed ? '12' : '10'}:00:00Z"`));
+    assert.deepEqual({bundle, files}, before);
+  }
+});
+
 test('offline CLI creates a private patch that applies matching snapshots and histories together', () => temporary(dir => {
   const project = createSyntheticPromotionProject(dir);
   const bundle = join(dir, 'bundle.json'), output = join(dir, 'candidate.patch');

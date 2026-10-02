@@ -1,0 +1,42 @@
+---
+import type { Notice } from '../lib/data';
+import { correctionAnchor, correctionHref } from '../lib/corrections';
+interface Props { parkCode: string; notices: Notice[] }
+const { parkCode, notices } = Astro.props;
+const categories = [...new Set(notices.map((notice) => notice.category))].sort();
+const searchableText = (notice: Notice) => `${notice.title} ${notice.description}`.toLowerCase().replace(/\s+/g, ' ').trim();
+---
+<section class="panel retained-notices" id="retained-notices" tabindex="-1" aria-labelledby="retained-notices-title" data-retained-notices>
+  <h2 id="retained-notices-title">Notices retained from the checked feed</h2>
+  <p>Area scope is not classified. These notices are not filtered to your travel date; applicability remains unconfirmed.</p>
+  <p id="notice-filter-summary" class="small muted">{notices.length} {notices.length === 1 ? 'notice' : 'notices'} retained from the checked feed.</p>
+  <div class="notice-controls" data-notice-controls hidden>
+    <div class="notice-fields">
+      <div class="field"><label for="notice-search">Search retained notices</label><input id="notice-search" type="search" data-notice-search placeholder="Title or description" autocomplete="off" aria-describedby="notice-filter-summary" /></div>
+      <div class="field"><label for="notice-category">Notice category</label><select id="notice-category" data-notice-category aria-describedby="notice-filter-summary"><option value="">All categories</option>{categories.map((category) => <option value={category}>{category}</option>)}</select></div>
+      <button class="button secondary" type="button" data-notice-clear>Clear notice filters</button>
+    </div>
+    <p class="small muted" data-notice-count role="status" aria-live="polite">Showing {notices.length} of {notices.length} retained notices</p>
+    <p class="note" data-notice-empty hidden>No retained notices match these filters. Clear the search or category filter to see all retained notices. This does not establish that conditions are clear.</p>
+  </div>
+  <noscript><p class="small muted">All retained notices are shown. Search and category filters require JavaScript.</p></noscript>
+  <p class="small print-only">All {notices.length} retained notices are included in this page copy. Search and category selections do not limit it.</p>
+  {notices.map((item) => <article class="source-item" id={correctionAnchor('alert', parkCode, item.id)} tabindex="-1" data-retained-notice data-notice-text={searchableText(item)} data-notice-category={item.category}>
+    <p class="eyebrow">{item.category} · Scope unclassified</p><h3>{item.title}</h3><p>{item.description}</p>
+    {item.url ? <a href={item.url} rel="noopener noreferrer" referrerpolicy="no-referrer">More information link supplied by NPS</a> : <p class="small muted">NPS did not supply a direct link for this alert.</p>}
+    <p class="small"><a class="text-link" data-correction-link href={correctionHref('alert', parkCode, item.id, import.meta.env.BASE_URL)}>Report a correction about this source</a></p>
+  </article>)}
+</section>
+<script>import '../scripts/notices';</script>
+<style>
+  .retained-notices{overflow-wrap:anywhere}
+  .notice-fields{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto;align-items:end;gap:16px;margin:20px 0}
+  .notice-fields .field{min-width:0}.notice-fields input,.notice-fields select{min-width:0;max-width:100%}
+  .notice-fields button{max-width:100%;white-space:normal}
+  [data-retained-notice]{scroll-margin-top:24px}
+  @media(max-width:620px){.notice-fields{grid-template-columns:minmax(0,1fr)}}
+  @media print{
+    .retained-notices [data-retained-notice][hidden]{display:block!important}
+    .retained-notices [data-notice-controls],.retained-notices noscript{display:none!important}
+  }
+</style>

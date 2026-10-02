@@ -55,7 +55,7 @@ for (const route of routes) {
       await expect(skip).toBeFocused(); await expect(skip).toBeInViewport();
       await page.keyboard.press('Enter');
       await expect(page.locator('main')).toBeFocused();
-      const mainStops = page.locator('main a[href],main input:not(:disabled),main select:not(:disabled),main button:not(:disabled),main summary');
+      const mainStops = page.locator('main a[href]:visible,main input:not(:disabled):visible,main select:not(:disabled):visible,main button:not(:disabled):visible,main summary:visible');
       const next = await mainStops.count() ? mainStops.first() : page.locator('.site-footer a').first();
       await page.keyboard.press('Tab');
       await expect(next).toBeFocused();

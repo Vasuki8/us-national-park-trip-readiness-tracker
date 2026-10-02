@@ -127,8 +127,9 @@ export function validateHistory(value: unknown, currentSnapshot: unknown): Histo
     requireValue(Array.isArray(o.changes) && o.changes.length === Math.min(100, o.change_count));
     requireValue(o.omitted_changes === o.change_count - o.changes.length);
     if (o.comparison !== 'compared') requireValue(o.change_count === 0);
-    if (o.comparison === 'baseline') requireValue(!h.observations.slice(index + 1).some((prior: any) => prior.collection_status === 'success'));
-    if (o.sequence === 1 && o.collection_status === 'success') requireValue(o.comparison === 'baseline');
+    const hasOlderSuccess = h.observations.slice(index + 1).some((prior: any) => prior.collection_status === 'success');
+    if (o.comparison === 'baseline') requireValue(!hasOlderSuccess);
+    if (!h.omitted_observations && o.collection_status === 'success' && !hasOlderSuccess) requireValue(o.comparison === 'baseline');
     const eventIds = new Set();
     for (const value of o.changes) {
       const c = shape(value, 'kind record_id before after'); text(c.record_id);

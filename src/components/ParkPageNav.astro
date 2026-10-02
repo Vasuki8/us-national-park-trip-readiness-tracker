@@ -1,0 +1,26 @@
+---
+interface Props { parkCode: string; hasRetainedNotices: boolean }
+const { parkCode, hasRetainedNotices } = Astro.props;
+const sections = [
+  { href: '#alert-status', label: 'Conditions snapshot' },
+  ...(hasRetainedNotices ? [{ href: '#retained-notices', label: 'Retained notices' }] : []),
+  { href: '#trip-context', label: 'Entry guidance check' },
+  { href: '#checklist-title', label: 'Before-you-go checklist' },
+  { href: '#guidance-title', label: 'Stored entry guidance' },
+  { href: `#history-${parkCode}`, label: 'Notice history' },
+  { href: '#official-checks', label: 'Official planning checks' },
+];
+---
+<nav class="park-page-nav" aria-label="On this page" data-park-page-nav>
+  <p class="eyebrow">On this page</p>
+  <ul>{sections.map((section) => <li><a href={section.href}>{section.label}</a></li>)}</ul>
+</nav>
+<style>
+  .park-page-nav{margin:0 0 28px;padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--soft);min-width:0}
+  .park-page-nav .eyebrow{margin-bottom:8px}
+  .park-page-nav ul{display:flex;flex-wrap:wrap;gap:4px 18px;list-style:none;margin:0;padding:0}
+  .park-page-nav li{min-width:0;max-width:100%}
+  .park-page-nav a{display:flex;align-items:center;min-height:44px;padding:6px 0;font-size:.83rem;line-height:1.6;overflow-wrap:anywhere}
+  :global(.park-readiness-page [tabindex="-1"]){scroll-margin-top:24px}
+  @media print{.park-page-nav{display:none}}
+</style>

@@ -27,4 +27,5 @@ if (roots.length) {
   refresh();
   window.setInterval(refresh, 60_000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  window.addEventListener('pageshow', refresh);
 }

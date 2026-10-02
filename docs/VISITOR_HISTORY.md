@@ -1,6 +1,6 @@
 # Visitor-facing notice history
 
-This capability converts verified committed archive observations into a bounded visitor timeline. It is not an automatic publisher, a real-world event log or source-content permission. Production history is initially empty for all five parks. Synthetic populated histories exist only under `tests/` and the separate test-site output under `.superpowers/`.
+This capability converts verified committed archive observations into a bounded visitor timeline. It is not an automatic publisher, a real-world event log or source-content permission. Production loads only reviewed paired public snapshots/history. Synthetic populated histories exist only under `tests/` and the separate test-site output under `.superpowers/`.
 
 ## Data path and consistency
 
@@ -12,11 +12,17 @@ A snapshot digest binds the displayed records and clocks, not the publisher's au
 
 ## Observation semantics
 
-The first successful check is a baseline, not a batch of new closures. A later added/edited/removed item describes a difference between successful accepted feeds. Removed means **no longer present in the checked feed**, not a confirmed reopening. Failed and quarantined checks remain visible but generate no notice differences. An empty timeline does not mean that nothing changed; an unchanged comparison concerns only the checked feed.
+The first successful check is a baseline, not a batch of new closures. A complete projection requires its earliest success to be a baseline even after initial failed or quarantined attempts. A bounded projection can omit an older baseline; absence from the visible window alone does not establish a first success. Promotion additionally checks new comparison semantics against the public checkpoint's nullable successful-fetch clock. A later added/edited/removed item describes a difference between successful accepted feeds. Removed means **no longer present in the checked feed**, not a confirmed reopening. Failed and quarantined checks remain visible but generate no notice differences. An empty timeline does not mean that nothing changed; an unchanged comparison concerns only the checked feed.
 
 Evidence panels retain the before/after title, description, category, source URL and normalized-record digest. Source text is ordinary escaped Astro text, never `set:html`. A currently reachable official link may have changed since the archived observation. Observation times are not NPS update times, effective dates or publication times. Date/area applicability is not inferred.
 
 The browser recalculates age using the existing four-hour alert threshold every minute and when the page becomes visible. Static HTML always includes absolute check times and a no-JavaScript warning that age labels reflect the build. Historical evidence is not deleted when a freshness label expires.
+
+## Public evidence navigation
+
+The changes overview links each park's timeline to its public trip-readiness section, including baseline-only timelines. Public callers explicitly supply the current validated paired snapshot's retained IDs and base-aware park route. A comparison links to a retained notice only when the same park and exact ID identify one article. Matching uses neither titles, provider URLs nor archived wording. An older change can refer to different retained wording, and a removed ID can later reappear; the original before/after evidence and removal warning stay intact. Missing or ambiguous matches establish no reopening.
+
+Park-page links use native local fragments so trip choices and page-only checks remain on the current document. Retained notice articles accept fragment focus without entering the normal Tab order. Exact same-document notice activations reveal excluded articles before native navigation, including repeated activation of an unchanged fragment; modifier clicks and different documents keep normal browser handling. Initialization, hash changes and page returns focus and scroll only a notice that needs revealing. Subsequent filtering stays usable and does not rewrite clocks or URLs. Shared timelines without an explicit public navigation context, including private candidate previews and isolated archive-only fixture pages, add no public destinations or matching claims.
 
 ## Bounds and omission
 

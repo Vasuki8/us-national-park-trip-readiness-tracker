@@ -50,6 +50,61 @@ test('Rocky Mountain separates areas and exact time boundaries', async ({ page }
   await page.getByRole('button', { name: 'Check entry guidance' }).click();
   await expect(page.locator('#decision-title')).toHaveText('Verify the exact time boundary');
 });
+test('Rocky Mountain decisions link to the exact stored rule even when result wording is unchanged', async ({ page }) => {
+  const rest = publicRules.find((rule) => rule.park_code === 'romo' && rule.areas.includes('rest'))!;
+  const bearLake = publicRules.find((rule) => rule.park_code === 'romo' && rule.areas.includes('bear-lake'))!;
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime([rest, bearLake])));
+  await page.goto('/parks/rocky-mountain/');
+  const evidence = page.locator('#decision-evidence');
+  await expect(evidence).toBeHidden();
+  await expect(page.locator('#entry-decision #decision-evidence')).toHaveCount(0);
+  await page.getByLabel('Visit date').fill('2026-09-30');
+  await page.getByLabel('Planned area').selectOption('rest');
+  await page.locator('#special-case').check();
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  await expect(page.locator('#decision-title')).toHaveText('Check the rules for your circumstances');
+  const decisionText = await page.locator('#entry-decision').innerText();
+  await expect(evidence).toBeVisible();
+  await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(rest.id)}`);
+  await page.getByLabel('Planned area').selectOption('bear-lake');
+  await expect(page.locator('#entry-decision')).toHaveText(decisionText, { useInnerText: true });
+  await expect(evidence).toHaveAttribute('href', `#entry-rule-${encodeURIComponent(bearLake.id)}`);
+  await expect(evidence).toHaveText('View the stored rule used for this result');
+  await page.locator('[data-check]').first().check();
+  const progress = await page.locator('#checklist-progress').innerText();
+  const originalClocks = await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => ({
+    datetime: element.getAttribute('datetime'), text: element.textContent,
+  })));
+  await evidence.focus();
+  await expect(evidence).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(`http://127.0.0.1:4321/parks/rocky-mountain/#entry-rule-${encodeURIComponent(bearLake.id)}`);
+  const matched = page.locator(`[id="entry-rule-${bearLake.id}"]`);
+  await expect(matched).toBeFocused();
+  await expect(matched.getByRole('heading', { name: 'Bear Lake Road Corridor', exact: true })).toBeVisible();
+  await expect(matched.getByRole('heading', { name: 'Bear Lake Road Corridor', exact: true })).toBeInViewport();
+  const supportingText = matched.locator('summary');
+  await page.keyboard.press('Tab');
+  await expect(supportingText).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(matched.locator('blockquote')).toBeVisible();
+  await expect(matched.locator('blockquote')).toHaveText(bearLake.evidence.excerpt);
+  await expect(matched.getByRole('link', { name: 'Read the official source', exact: true })).toHaveAttribute('href', bearLake.evidence.url);
+  await expect(page.getByLabel('Visit date')).toHaveValue('2026-09-30');
+  await expect(page.getByLabel('Planned area')).toHaveValue('bear-lake');
+  await expect(page.locator('#special-case')).toBeChecked();
+  await expect(page.locator('[data-check]:checked')).toHaveCount(1);
+  await expect(page.locator('#checklist-progress')).toHaveText(progress);
+  await expect(page.locator('#entry-decision')).toHaveText(decisionText, { useInnerText: true });
+  expect(await page.locator('time:not(#print-time)').evaluateAll(elements => elements.map(element => ({
+    datetime: element.getAttribute('datetime'), text: element.textContent,
+  })))).toEqual(originalClocks);
+  await page.getByLabel('Visit date').fill('2027-06-01');
+  await expect(page.locator('#decision-title')).toHaveText('Entry requirements not verified for this date');
+  await expect(evidence).toHaveAttribute('href', '#guidance-title');
+  await expect(evidence).toHaveText('Browse stored entry guidance');
+});
+
 test('checklist is self-reported and resets when trip details change', async ({ page }) => {
   await page.goto('/parks/yosemite/');
   await page.locator('[data-check]').first().check();
@@ -62,6 +117,76 @@ test('checklist is self-reported and resets when trip details change', async ({ 
   await expect(page.locator('[data-check]:checked')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
 });
+
+test('page return invalidates checklist completion for each restored trip field', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime(publicRules.filter((rule) => rule.park_code === 'romo'))));
+  await page.goto('/parks/rocky-mountain/');
+  for (const restored of [
+    { selector: '#trip-date', value: '2027-06-01', state: 'not-verified', title: 'Entry requirements not verified for this date' },
+    { selector: '#trip-time', value: '18:00', state: 'review-required', title: 'Verify the exact time boundary' },
+    { selector: '#trip-area', value: 'rest', state: 'not-required-under-rule', title: 'Outside this reviewed timed-entry window' },
+    { selector: '#special-case', value: true, state: 'review-required', title: 'Check the rules for your circumstances' },
+  ]) {
+    await page.getByLabel('Visit date').fill('2026-09-30');
+    await page.getByLabel('Arrival time').fill('08:00');
+    await page.getByLabel('Planned area').selectOption('bear-lake');
+    await page.locator('#special-case').uncheck();
+    await page.getByRole('button', { name: 'Check entry guidance' }).click();
+    await expect(page.locator('#decision-title')).toHaveText('Review your timed-entry reservation');
+    await page.locator('[data-check]').first().check();
+    await expect(page.locator('#checklist-progress')).toHaveText('1 of 5 items reviewed by you');
+    // Exercise pageshow-before-restoration ordering without assuming every browser's history policy.
+    await page.evaluate(({ selector, value }) => {
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      if (typeof value === 'boolean') document.querySelector<HTMLInputElement>(selector)!.checked = value;
+      else document.querySelector<HTMLInputElement | HTMLSelectElement>(selector)!.value = value;
+    }, restored);
+    await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', restored.state);
+    await expect(page.locator('#decision-title')).toHaveText(restored.title);
+    await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+    await expect(page.locator('#checklist-progress')).toHaveText('0 of 5 items reviewed by you');
+  }
+});
+
+test('page return preserves only persisted checklist state and refreshes expired guidance', async ({ page }) => {
+  const rule = publicRules.find((item) => item.park_code === 'yose')!;
+  await page.clock.setFixedTime(new Date(guidanceScenarioTime([rule])));
+  await page.goto('/parks/yosemite/');
+  // Silent restoration follows the synthetic event; this does not prove browser history retention.
+  await page.evaluate((date) => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    document.querySelector<HTMLInputElement>('#trip-date')!.value = date;
+    document.querySelector<HTMLInputElement>('[data-check]')!.checked = true;
+  }, rule.effective_from);
+  await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'needs-input');
+  await expect(page.locator('#decision-title')).toHaveText('Start with your visit date');
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false }));
+    document.querySelectorAll<HTMLInputElement>('[data-check]').forEach((check) => { check.checked = true; });
+  });
+  await expect(page.locator('[data-check]:checked')).toHaveCount(0);
+  await expect(page.locator('#checklist-progress')).toHaveText('0 of 5 items reviewed by you');
+  await expect(page.locator('#decision-title')).toHaveText('Start with your visit date');
+  await page.getByRole('button', { name: 'Check entry guidance' }).click();
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'not-required-under-rule');
+  await page.locator('[data-check]').first().check();
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    document.querySelectorAll<HTMLInputElement>('[data-check]')[1].checked = true;
+  });
+  await expect(page.locator('[data-check]:checked')).toHaveCount(2);
+  await expect(page.locator('#checklist-progress')).toHaveText('2 of 5 items reviewed by you');
+  const expiry = Date.parse(rule.reviewed_at) + 168 * 3_600_000;
+  await page.clock.setFixedTime(new Date(expiry + 1));
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await expect(page.locator('#entry-decision')).toHaveAttribute('data-state', 'stale');
+  await expect(page.locator('#decision-title')).toHaveText('Entry guidance needs a fresh review');
+  await expect(page.locator(`[data-reviewed="${rule.reviewed_at}"]`).first()).toContainText('Needs a fresh review');
+  await expect(page.locator('[data-check]:checked')).toHaveCount(2);
+  await expect(page.locator('#checklist-progress')).toHaveText('2 of 5 items reviewed by you');
+});
+
 test('all pilot pages fit a 360px viewport without horizontal scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   for (const path of ['/', '/parks/', '/parks/yosemite/', '/parks/rocky-mountain/', '/parks/yellowstone/', '/parks/zion/', '/parks/grand-canyon/', '/sources/']) {
@@ -88,6 +213,7 @@ test('official links and evidence remain usable with JavaScript disabled', async
   await expect(page.locator('[data-history-observation]')).toHaveCount(history.observations.length);
   await expect(page.getByText('Baseline recorded', { exact: true })).toHaveCount(history.observations.filter((observation) => observation.comparison === 'baseline').length);
   await expect(page.getByRole('link', { name: 'Read the official source', exact: true })).toBeVisible();
+  await expect(page.locator('#decision-evidence')).toBeHidden();
   await expect(page.getByRole('button', { name: 'Check entry guidance' })).toBeDisabled();
   await expect(page.locator('[data-check]').first()).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Reset checklist' })).toBeDisabled();
@@ -111,10 +237,11 @@ test('paired feed evidence retains notices and its independently aged limitation
       for (const record of snapshot.records) {
         const notice = retained.locator('article').filter({ has: page.getByRole('heading', { name: record.title, exact: true }) });
         await expect(notice).toContainText(record.description);
-        if (record.url) await expect(notice.getByRole('link')).toHaveAttribute('href', record.url);
+        const providerLink = notice.getByRole('link', { name: 'More information link supplied by NPS', exact: true });
+        if (record.url) await expect(providerLink).toHaveAttribute('href', record.url);
         else {
           await expect(notice).toContainText('NPS did not supply a direct link for this alert.');
-          await expect(notice.locator('a')).toHaveCount(0);
+          await expect(notice.locator('a:not([data-correction-link])')).toHaveCount(0);
         }
       }
     } else {
