@@ -1,0 +1,35 @@
+---
+import type { ProfileSnapshot } from '../../scripts/validate-park-profiles';
+import ProfileCheck from './ProfileCheck.astro';
+interface Props { snapshot: ProfileSnapshot | null; officialUrl: string; weatherUrl?: string }
+const { snapshot, officialUrl, weatherUrl } = Astro.props;
+const profile = snapshot?.profile;
+const clock = snapshot ? { collection_status: snapshot.collection_status, last_checked_at: snapshot.last_checked_at, last_successful_fetch_at: snapshot.last_successful_fetch_at } : null;
+---
+<section class="panel profile-section" id="overview" tabindex="-1" aria-labelledby="overview-title">
+  <p class="eyebrow">Get to know the park</p><h2 id="overview-title">Overview</h2>
+  {profile?.description?.trim() ? <p class="profile-text" data-profile-introduction>{profile.description}</p>
+    : <p class="note">{profile?.description === null || !profile ? 'An introduction is not available in the stored official profile.' : 'The stored official profile has no introduction text.'}</p>}
+  <a class="text-link" href={profile?.url ?? officialUrl}>Explore official park information <span aria-hidden="true">↗</span></a>
+  <details data-profile-categories>
+    <summary>Browse NPS activity categories</summary>
+    <p>Categories do not establish individual activities, seasonal availability or access.</p>
+    {profile?.activity_categories === null || !profile ? <p>Activity categories are not available in the stored official profile.</p>
+      : profile.activity_categories.length === 0 ? <p>No activity categories were supplied. This does not establish that there are no activities.</p>
+      : <ul class="category-list">{profile.activity_categories.map(category => <li data-profile-category>{category.name}</li>)}</ul>}
+  </details>
+  <ProfileCheck clock={clock} sourceUrl={snapshot?.source_url ?? null} />
+</section>
+<section class="panel profile-section" id="when-to-visit" tabindex="-1" aria-labelledby="when-to-visit-title">
+  <p class="eyebrow">Seasons and weather</p><h2 id="when-to-visit-title">When to Visit</h2>
+  <p class="note">Seasonal context, not a forecast for your travel dates. Recheck current weather and access before travel.</p>
+  {profile?.seasonal_weather?.text.trim() ? <p class="profile-text" data-profile-seasonal>{profile.seasonal_weather.text}</p>
+    : <p class="note">{profile?.seasonal_weather ? 'The stored official profile has no seasonal text.' : 'Seasonal context is not available in the stored official profile.'}</p>}
+  <a class="text-link" href={weatherUrl ?? profile?.url ?? officialUrl}>Check official weather and seasons <span aria-hidden="true">↗</span></a>
+  <ProfileCheck clock={clock} sourceUrl={snapshot?.source_url ?? null} />
+</section>
+<style>
+  .profile-section .profile-text{font-size:.98rem;line-height:1.8;color:var(--ink);white-space:pre-line;overflow-wrap:anywhere}
+  .profile-section .eyebrow{margin-bottom:8px}.profile-section .note{font-size:.85rem}
+  .category-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:8px 28px;padding-left:20px;overflow-wrap:anywhere}
+</style>

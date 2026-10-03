@@ -38,7 +38,8 @@ category-only activity metadata and clearly typed seasonal weather context.
 Missing optional fields remain null; failed or quarantined attempts retain the
 last-good profile and successful clock. Its initial profile age policy is 168
 hours, independent of alert freshness. The normalizer has no default HTTP
-transport, persistence or website consumer.
+transport or persistence; the transport, checkpoint and public-consumer layers
+remain separate.
 
 `tracker/profile_transport.py` adds the separate bounded, header-authenticated
 fixed-endpoint request. `tracker/profile_checkpoints.py` retains explicit
@@ -51,7 +52,7 @@ approval false and source/publication clocks unchanged. See
 [PROFILE_COLLECTION.md](PROFILE_COLLECTION.md) for limits, interruption and
 backup boundaries. The first real five-park collection, owner-approved text
 scope, private remote recovery and paired public-data promotion are recorded in
-the [current handoff](../PROJECT_STATUS.md). Frontend consumption remains next.
+the [current handoff](../PROJECT_STATUS.md).
 
 `tracker/profile_release.py` now supplies the offline public projection, separate
 exact profile text-rights contract, explicit immutable approval bundle and paired
@@ -60,10 +61,36 @@ both files are absent; incomplete or invalid pairs fail build validation. Once
 present, readiness extends existing review, rights and backup gates with exact
 profile evidence rather than inheriting guidance/alert coverage. Local recovery
 does not establish remote transport. The current public pair contains the first
-reviewed real profiles; no frontend consumer is added yet. See
+reviewed real profiles. See
 [PROFILE_PROMOTION.md](PROFILE_PROMOTION.md).
 
-Each park page has native "On this page" navigation after its introduction. Fragment links reach the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
+`src/lib/data.ts` eagerly imports the optional profile/rights pair at the build
+boundary and validates both before lookup. The normal build gate additionally
+checks exact canonical file bytes. An incomplete pair is refused; an absent pair
+renders explicit unavailable states. Rendered profiles, including their original
+clocks, contribute to the build snapshot identity. The absent-pair hash retains
+the earlier input shape. No visitor-side API requests or rights manifest are
+needed to display the stored text.
+
+`ParkProfile.astro` renders source-backed Overview and When to Visit on each park
+page. Text is escaped and preserved without replacing missing or empty fields.
+Yellowstone's empty introduction receives an explicit empty-text label. Native
+details disclose the complete NPS category inventory, which does not establish
+individual activities or availability. Seasonal text has an explicit nonforecast
+disclosure and uses the existing reviewed official weather link.
+
+`src/lib/park-profile.ts` computes profile state from an injected clock, retaining
+microsecond precision at the 168-hour boundary. Failed or quarantined refreshes
+keep their own labels and the last successful clock. `ProfileCheck.astro`
+discloses original successful/attempted checks, the fixed source URL and absent
+publisher issue/update times. Its small browser script receives only collection
+status and the two original clocks; it updates labels on initialization, minute
+ticks, page return, visibility and printing without renewing evidence. Unchanged
+labels are not rewritten. Static text, links, disclosures and original clocks
+remain usable without JavaScript, with an explicit build-freshness warning.
+The feature adds no storage, tracking, forecast, collection or publication action.
+
+Each park page has native "On this page" navigation after its introduction. Fragment links reach Overview, When to Visit, the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
 
 The park directory applies the current search and state values on initialization and after page return (`pageshow`), as well as normal input/change events. Literal substring search trims, lowercases and collapses whitespace in both the query and card search text, so pasted multiword names match without rewriting visitor controls or metadata. The exact state filter still combines with the query. Page-return resync runs in a zero-delay timer because persisted form restoration can follow the event; see [the documented history-traversal ordering](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event). Cards, the result count and the empty state then follow restored controls without input events. Unchanged counts do not rewrite the live-region text. The application adds no storage, URL parameters or transmission of search selections.
 

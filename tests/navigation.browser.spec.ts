@@ -13,6 +13,8 @@ const selectedNotice = selectedSnapshot.records[0];
 function sections(park: PilotPark) {
   const snapshot = publicParkSnapshots.find(item => item.park_code === park.code)!;
   return [
+    { name: 'Overview', id: 'overview' },
+    { name: 'When to Visit', id: 'when-to-visit' },
     { name: 'Conditions snapshot', id: 'alert-status' },
     ...(snapshot.records.length ? [{ name: 'Retained notices', id: 'retained-notices' }] : []),
     { name: 'Entry guidance check', id: 'trip-context' },

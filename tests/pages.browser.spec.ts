@@ -1,7 +1,33 @@
 import { test, expect } from '@playwright/test';
 import { guidanceScenarioTime, PUBLIC_PILOT_REFERENCE_TIME, PUBLIC_PILOT_STALE_TIME, publicRules, publicNotes, publicParks, publicParkSnapshots, publicHistories } from './pilot-clock.ts';
 import { describeHistory } from '../src/lib/history.ts';
+import { readFileSync } from 'node:fs';
+import type { PublicProfiles } from '../scripts/validate-park-profiles.ts';
 const base = '/us-national-park-trip-readiness-tracker/';
+const publicProfiles = (JSON.parse(readFileSync(new URL('../data/park-profiles.json', import.meta.url), 'utf8')) as PublicProfiles).profiles;
+
+test('project-path overview and seasonal navigation preserve exact profile text and source clocks', async ({ page }) => {
+  const initial = new Date(Math.max(...publicProfiles.map(item => Date.parse(item.last_checked_at))) + 1000);
+  await page.clock.setFixedTime(initial);
+  for (const park of publicParks) {
+    const snapshot = publicProfiles.find(item => item.park_code === park.code)!;
+    await page.goto(`${base}parks/${park.slug}/`);
+    const nav = page.getByRole('navigation', { name: 'On this page', exact: true });
+    for (const [label, id] of [['Overview', 'overview'], ['When to Visit', 'when-to-visit']]) {
+      await nav.getByRole('link', { name: label, exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect(page).toHaveURL(`http://127.0.0.1:4324${base}parks/${park.slug}/#${id}`);
+      const section = page.locator(`#${id}`);
+      await expect(section).toBeFocused();
+      await expect(section.locator('[data-profile-state]')).toHaveAttribute('data-profile-state', 'fresh');
+      await expect(section.locator('[data-profile-success]')).toHaveAttribute('datetime', snapshot.last_successful_fetch_at);
+      await expect(section.locator('[data-profile-source]')).toHaveAttribute('href', snapshot.source_url);
+    }
+    await expect(page.locator('[data-profile-seasonal]')).toHaveText(snapshot.profile.seasonal_weather!.text);
+    if (!snapshot.profile.description?.trim()) await expect(page.locator('#overview')).toContainText('The stored official profile has no introduction text.');
+    else await expect(page.locator('[data-profile-introduction]')).toHaveText(snapshot.profile.description);
+  }
+});
 
 test('project-path directory resynchronizes restored filters on page return', async ({ page }) => {
   for (const route of [base, `${base}parks/`]) {

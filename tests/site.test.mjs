@@ -12,6 +12,7 @@ const rules = JSON.parse(readFileSync(new URL('../data/rules.json', import.meta.
 const notes = JSON.parse(readFileSync(new URL('../data/entry-notes.json', import.meta.url), 'utf8'));
 const histories = JSON.parse(readFileSync(new URL('../data/history.json', import.meta.url), 'utf8'));
 const snapshots = parks.map((park) => JSON.parse(readFileSync(new URL(`../data/alerts/${park.code}.json`, import.meta.url), 'utf8')));
+const profiles = JSON.parse(readFileSync(new URL('../data/park-profiles.json', import.meta.url), 'utf8')).profiles;
 const decodeHtml = (value) => value.replace(/&(?:quot|amp|lt|gt|#39);/g, (entity) => ({ '&quot;': '"', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&#39;': "'" })[entity]);
 const embeddedJson = (html, attribute) => {
   const match = html.match(new RegExp(`${attribute}="([^"]*)"`));
@@ -60,6 +61,46 @@ test('all park pages retain the exact public checked-feed snapshot and official 
 
 test('informational pages describe the hosted manual pilot honestly', () => assertLivePilotCopy(output));
 
+test('park overviews retain approved introductions and category-only context in native HTML', () => {
+  for (const park of parks) {
+    const snapshot = profiles.find(item => item.park_code === park.code);
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const overview = html.match(/<section\b[^>]*id="overview"[^>]*>[\s\S]*?<\/section>/)?.[0];
+    assert.ok(overview, `${park.code}: an overview exists without JavaScript`);
+    const text = decodeHtml(overview);
+    if (snapshot.profile.description?.trim()) assert.ok(text.includes(snapshot.profile.description));
+    else assert.ok(text.includes('The stored official profile has no introduction text.'));
+    assert.ok(text.includes(`href="${snapshot.profile.url}"`));
+    assert.match(overview, /<details\b[^>]*data-profile-categories/);
+    assert.ok(text.includes('Categories do not establish individual activities, seasonal availability or access.'));
+    const categories = [...overview.matchAll(/<li\b[^>]*data-profile-category[^>]*>([\s\S]*?)<\/li>/g)].map(match => decodeHtml(match[1]));
+    assert.deepEqual(categories, snapshot.profile.activity_categories.map(category => category.name));
+  }
+});
+
+test('when-to-visit context preserves original profile clocks and seasonal limitations', () => {
+  for (const park of parks) {
+    const snapshot = profiles.find(item => item.park_code === park.code);
+    const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
+    const seasonal = html.match(/<section\b[^>]*id="when-to-visit"[^>]*>[\s\S]*?<\/section>/)?.[0];
+    assert.ok(seasonal, `${park.code}: seasonal context exists without JavaScript`);
+    assert.ok(decodeHtml(seasonal).includes(snapshot.profile.seasonal_weather.text));
+    assert.ok(seasonal.includes('Seasonal context, not a forecast for your travel dates.'));
+    for (const id of ['overview', 'when-to-visit']) {
+      const section = html.match(new RegExp(`<section\\b[^>]*id="${id}"[^>]*>[\\s\\S]*?<\\/section>`))[0];
+      assert.deepEqual(embeddedJson(section, 'data-profile-clock'), {
+        collection_status: snapshot.collection_status,
+        last_checked_at: snapshot.last_checked_at,
+        last_successful_fetch_at: snapshot.last_successful_fetch_at,
+      });
+      assert.ok(section.includes(`datetime="${snapshot.last_successful_fetch_at}"`));
+      assert.ok(section.includes('Source issue/update time: Not supplied.'));
+      assert.ok(section.includes(snapshot.source_url.replaceAll('&', '&amp;')));
+      assert.ok(section.includes('Freshness labels reflect the build without JavaScript.'));
+    }
+  }
+});
+
 test('park section navigation contains native destinations only for sections present in each park', () => {
   for (const park of parks) {
     const snapshot = snapshots.find((item) => item.park_code === park.code);
@@ -70,7 +111,7 @@ test('park section navigation contains native destinations only for sections pre
     assert.match(menu, /aria-label="On this page"/);
     assert.match(menu, /<ul\b/);
     const links = [...menu.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)];
-    const expected = ['#alert-status', ...(snapshot.records.length ? ['#retained-notices'] : []), '#trip-context', '#checklist-title', '#guidance-title', `#history-${park.code}`, '#official-checks'];
+    const expected = ['#overview', '#when-to-visit', '#alert-status', ...(snapshot.records.length ? ['#retained-notices'] : []), '#trip-context', '#checklist-title', '#guidance-title', `#history-${park.code}`, '#official-checks'];
     assert.deepEqual(links.map((link) => decodeHtml(link[1].match(/\bhref="([^"]*)"/)[1])), expected);
     for (const link of links) {
       assert.ok(link[2].replace(/<[^>]+>/g, '').trim().length > 0, 'native links have visible names');
@@ -84,7 +125,7 @@ test('park section destinations are unique and focusable without hiding their ev
   for (const park of parks) {
     const snapshot = snapshots.find((item) => item.park_code === park.code);
     const html = readFileSync(`${output}/parks/${park.slug}/index.html`, 'utf8');
-    const targets = ['alert-status', ...(snapshot.records.length ? ['retained-notices'] : []), 'trip-context', 'checklist-title', 'guidance-title', `history-${park.code}`, 'official-checks'];
+    const targets = ['overview', 'when-to-visit', 'alert-status', ...(snapshot.records.length ? ['retained-notices'] : []), 'trip-context', 'checklist-title', 'guidance-title', `history-${park.code}`, 'official-checks'];
     const tags = [...html.matchAll(/<(?:section|h2)\b[^>]*>/g)].map(([tag]) => tag);
     for (const id of targets) {
       const matches = tags.filter((tag) => tag.match(/\bid="([^"]*)"/)?.[1] === id);

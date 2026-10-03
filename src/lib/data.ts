@@ -14,6 +14,7 @@ import { validateEntryNotes, type EntryNote } from '../../scripts/validate-entry
 import { applyEntryReview } from '../../scripts/entry-review';
 import { validateHistory } from '../../scripts/validate-history';
 import { validatePlanningResources } from '../../scripts/validate-planning-resources';
+import { validatePublicProfiles, validateProfileRights } from '../../scripts/validate-park-profiles';
 import type { Rule } from './readiness';
 import type { CoverageInput, ReviewCoverage } from './source-coverage';
 export { parks };
@@ -29,6 +30,15 @@ export const entryReviewHoldsFor = (code: string) => entryReview.holds.filter((h
 // Relevant links are not operational reviews and never enter rule/feed coverage.
 export const planningResources = validatePlanningResources(rawPlanningResources, parks.map((park) => park.code));
 export const planningResourcesFor = (code: string) => planningResources.filter((resource) => resource.park_code === code);
+// Eager, build-only imports retain the optional paired-data contract and never request the API.
+const profileFiles = import.meta.glob('../../data/{park-profiles,profile-source-rights}.json', { eager: true, import: 'default' });
+const rawProfiles = profileFiles['../../data/park-profiles.json'];
+const rawProfileRights = profileFiles['../../data/profile-source-rights.json'];
+if ((rawProfiles === undefined) !== (rawProfileRights === undefined)) throw new Error('incomplete_public_profile_pair');
+const publicProfiles = rawProfiles === undefined ? null : validatePublicProfiles(rawProfiles);
+if (publicProfiles) validateProfileRights(rawProfileRights, publicProfiles);
+export const profiles = publicProfiles?.profiles ?? [];
+export const profileFor = (code: string) => profiles.find(profile => profile.park_code === code) ?? null;
 export interface Notice { id: string; title: string; description: string; category: string; url: string | null; scope_status: string }
 export interface Snapshot {
   park_code: string; collection_status: string; coverage_status: string; last_checked_at: string | null;
@@ -50,7 +60,7 @@ export const coverageInput: CoverageInput = {
   snapshots: snapshots.map(({ park_code, collection_status, coverage_status, last_successful_fetch_at }) => ({ park_code, collection_status, coverage_status, last_successful_fetch_at })),
 };
 export const buildInfo = {
-  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, rawEntryReview, snapshots, histories, planningResources })).digest('hex').slice(0, 12)}`,
+  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, rawEntryReview, snapshots, histories, planningResources, ...(profiles.length ? { profiles } : {}) })).digest('hex').slice(0, 12)}`,
   built_at: new Date().toISOString(), published_at: null,
   code_commit: process.env.GITHUB_SHA || null, live_collection_enabled: false,
   base_path: import.meta.env.BASE_URL,

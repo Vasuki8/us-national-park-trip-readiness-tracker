@@ -1,8 +1,65 @@
 # Project status and handoff
 
-Updated: **October 3, 2026 (Toronto time), after PR #11 integrated the first reviewed real profiles and private recovery; the verified PR #7 live release is unchanged**.
+Updated: **October 3, 2026 (Toronto time), during source-backed Overview and When to Visit development; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+The five park pages now render Overview and When to Visit from the validated,
+approved public profile/rights pair. Native page navigation reaches both sections
+with keyboard focus. Exact escaped introductions and seasonal text retain nearby
+official sources and original checks. Yellowstone's empty introduction stays
+empty with an honest label. Category details list the complete supplied inventory
+without asserting individual activity availability. Seasonal context is explicitly
+distinct from a travel-date forecast.
+
+Build-only eager imports validate both files before lookup. Incomplete pairs are
+refused and an absent pair renders unavailable states. Rendered profile content
+and clocks now contribute to the snapshot hash. A small browser script receives
+only status and original attempted/successful clocks, recalculating labels every
+minute, on return, visibility and printing. The independent 168-hour policy
+preserves microsecond expiry boundaries and retained failed/quarantined states.
+It never changes evidence clocks. Static content and sources work without
+JavaScript, with a build-freshness disclosure. No dependencies, workflows,
+public source files, collection, private backups or live deployments changed.
+
+Fresh local verification passed **324 Node + 577 Python + 66 generated-site =
+967 tests**, zero Astro diagnostics across 36 files and both 14-page builds.
+Seven synthetic pages exercise the real profile component's absent,
+missing, empty, escaped, failed, quarantined and stale states. Sixteen pure tests
+exercise freshness, invalid clocks and exact microsecond boundaries. Independent
+review found no actionable defects. Local browser checks confirmed native section
+focus, source clocks, expanded categories, Yellowstone's empty-text label and
+360-pixel layout without horizontal overflow. Supported CI must still run both
+Chromium suites before integration; local Chromium remains unavailable in this
+WSL distribution. Project-path build/content checks passed; supported browser
+verification and final integration receipts are pending.
+
+The first PR #12 CI run, Verify pilot #219, passed every Node/Python/build/site
+gate and 110 of 111 root browser cases. The new no-JavaScript case selected the
+`noscript` wrapper, whose text Playwright deliberately excludes. Existing tests
+and the installed matcher confirm the boundary. The test now selects its rendered
+paragraph and checks visibility as well as disclosure text. Application output
+was unchanged. Both browser suites must pass on the corrected head before merge.
+
+The optional standalone TypeScript check initially used NodeNext against bundled
+Astro modules, producing JSON/import-resolution errors. The project uses bundler
+resolution; the same strict check with that resolution and Vite types passed.
+No production code or compiler strictness was changed to accommodate the check.
+
+Current branch: **`codex/park-overview-seasons`**, based on main
+**`c85f7125a05cb0e03b3ecca8fc525283044d039a`**. Required CI and final integration
+are pending. The live site remains at **`2fa4d4a`**, with stale alerts and its
+existing noindex/ad-free safeguards. This frontend change establishes no new
+source accuracy, backup, hosting or live-release readiness evidence.
+
+Next: finish CI, integrate under the owner's
+standing merge authorization, then build the separate NPS `/thingstodo` activity
+contract with provenance, unknown-field and freshness semantics. Named-location
+weather and rights-reviewed imagery remain separate subsequent work. A live
+release still needs a deliberate alert refresh, full release checks and applicable
+deployment authorization.
+
+## Preceding profile collection and promotion — PR #11
 
 The first real NPS `/parks` collection succeeded with checkpoint/check clock
 **2026-10-03T03:45:48.554581Z** (October 2 at 23:45 Toronto). This clock was
@@ -97,8 +154,8 @@ profile evidence is supplied. The first private report invocation lacked Node 24
 on operator PATH and was refused by the existing ledger replay guard; the normal
 project runtime rerun passed without ledger mutation. No gate was forced to pass.
 
-Next: integrate source-backed Overview and When to Visit using these verified
-profiles. Preserve the original collection clock throughout. The live alert feed's four-hour
+The following frontend increment consumes these verified profiles while
+preserving the original collection clock. The live alert feed's four-hour
 freshness window ended at **2026-10-03T03:10:42.565Z**; a subsequent authorized
 live release needs a deliberate alert refresh rather than a build-time clock
 change. Profiles retain their independent 168-hour freshness policy.
@@ -107,7 +164,7 @@ The owner adopted the complete [permanent project instructions](docs/PROJECT_INS
 
 The current milestone is **Phase 1 — Foundations**. The [foundation assessment](docs/FOUNDATION_ASSESSMENT.md) maps existing ingestion, provenance, cached publication, freshness/failure handling, rights boundaries and page architecture to the broader five-park scope. Keep Astro/GitHub Pages and the existing alert tools while adding separate profile, activity and named-location weather contracts. Cloudflare, scheduled collection, rights-verified imagery, richer planning sections and locally saved trips remain staged directions; hosting migration is not a prerequisite.
 
-Current branch: **`main`**, after checked PR #11 integration.
+Branch at this preceding milestone: **`main`**, after checked PR #11 integration.
 The preceding [PR #10](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/10)
 merged checked head **`39b3085e647d32ebb409e94a9aa3e0cdafe24d2e`** as
 **`d7d8e16a157fb8040fb34a933a82264c386f5f59`** under the owner's standing

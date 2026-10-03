@@ -9,7 +9,8 @@ import HistoryTimeline from '../../components/HistoryTimeline.astro';
 import PlanningResources from '../../components/PlanningResources.astro';
 import RetainedNotices from '../../components/RetainedNotices.astro';
 import ParkPageNav from '../../components/ParkPageNav.astro';
-import { parks, rulesFor, notesFor, entryReviewHoldsFor, snapshotFor, historyFor, planningResourcesFor, buildInfo } from '../../lib/data';
+import ParkProfile from '../../components/ParkProfile.astro';
+import { parks, rulesFor, notesFor, entryReviewHoldsFor, snapshotFor, historyFor, planningResourcesFor, profileFor, buildInfo } from '../../lib/data';
 import { describeAlerts } from '../../lib/readiness';
 import { correctionHref } from '../../lib/corrections';
 import { siteUrl } from '../../lib/urls';
@@ -20,12 +21,14 @@ const parkRules = rulesFor(park.code);
 const parkNotes = notesFor(park.code);
 const snapshot = snapshotFor(park.code);
 const notice = describeAlerts(snapshot, new Date());
+const weatherUrl = planningResourcesFor(park.code).find(resource => resource.category === 'weather')?.url;
 ---
-<Layout title={`${park.name} trip readiness`}>
+<Layout title={`${park.name} overview and trip planning`}>
   <div class="park-readiness-page">
   <nav class="breadcrumb" aria-label="Breadcrumb"><a href={siteUrl('/parks/', import.meta.env.BASE_URL)}>Explore parks</a><span aria-hidden="true">/</span><span>{park.name}</span></nav>
-  <section class="park-intro"><div><p class="eyebrow">{park.states.join(' · ')} · National park</p><h1>{park.name}<span>Trip readiness</span></h1><p class="lead">{park.summary}</p></div><a class="button secondary" href={park.official_url}>Official park planning <span aria-hidden="true">↗</span></a></section>
+  <section class="park-intro"><div><p class="eyebrow">{park.states.join(' · ')} · National park</p><h1>{park.name}<span>Explore &amp; plan</span></h1><p class="lead">{park.summary}</p></div><a class="button secondary" href={park.official_url}>Official park planning <span aria-hidden="true">↗</span></a></section>
   <ParkPageNav parkCode={park.code} hasRetainedNotices={snapshot.records.length > 0} />
+  <ParkProfile snapshot={profileFor(park.code)} officialUrl={park.official_url} weatherUrl={weatherUrl} />
   <section class="note print-only" id="print-snapshot" aria-label="Printed page copy">
     <p>Printed page copy. Stored guidance and self-reported checks do not verify bookings or conditions. Recheck official sources before travel.</p>
     <p>Page-copy time: <time id="print-time">Print time not recorded</time>. This is not a source check.</p>

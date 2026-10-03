@@ -1,0 +1,32 @@
+---
+import ParkProfile from '../../../../src/components/ParkProfile.astro';
+import type { ProfileSnapshot } from '../../../../scripts/validate-park-profiles';
+import { profileDigest } from '../../../../scripts/validate-park-profiles';
+export function getStaticPaths() {
+  return ['absent', 'missing', 'empty', 'escaped', 'failed', 'quarantined', 'stale'].map(scenario => ({ params: { scenario }, props: { scenario } }));
+}
+const { scenario } = Astro.props;
+const missing = scenario === 'missing', empty = scenario === 'empty';
+const clock = scenario === 'stale' ? '2020-01-01T10:00:00Z' : '2026-09-28T10:00:00Z';
+const semantic = {
+  id: 'synthetic-profile-yose', park_code: 'yose', full_name: 'Synthetic park profile', url: 'https://www.nps.gov/yose/index.htm',
+  description: missing ? null : empty ? '' : '<script>window.syntheticInjection = true</script> Synthetic & quoted "text".',
+  seasonal_weather: missing ? null : { kind: 'seasonal_context' as const, text: empty ? '' : 'Synthetic seasonal <b>context</b>, not a forecast.' },
+  activity_categories: missing ? null : empty ? [] : [{ id: 'synthetic-category', name: 'Synthetic <img src=x onerror="window.syntheticInjection=true"> category' }],
+  activity_scope: 'categories_only' as const,
+};
+const status = scenario === 'failed' || scenario === 'quarantined' ? scenario : 'success';
+const snapshot: ProfileSnapshot | null = scenario === 'absent' ? null : {
+  schema_version: 1, park_code: 'yose', provider: 'NPS', source_url: 'https://developer.nps.gov/api/v1/parks?parkCode=yose',
+  collection_status: status, coverage_status: status === 'success' ? 'checked_profile_only' : 'incomplete',
+  last_checked_at: status === 'success' ? clock : '2026-09-29T10:00:00Z', last_successful_fetch_at: clock,
+  source_issued_at: null, source_updated_at: null, published_at: null,
+  profile: { ...semantic, content_hash: profileDigest(semantic), hash_scope: 'normalized_record',
+    source_updated_at: null, observed_first_at: clock, observed_changed_at: clock },
+  error_code: status === 'failed' ? 'provider_request_failed' : status === 'quarantined' ? 'response_requires_review' : null,
+};
+---
+<!doctype html><html lang="en"><head><meta name="robots" content="noindex, nofollow" /><title>Synthetic profile rendering</title></head>
+<body><main><h1>Synthetic view fixture — not actual park evidence</h1>
+<ParkProfile snapshot={snapshot} officialUrl="https://www.nps.gov/yose/index.htm" />
+</main></body></html>
