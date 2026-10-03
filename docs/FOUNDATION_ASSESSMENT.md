@@ -72,9 +72,10 @@ POSIX guards rather than adding a mutable archive. See
 [PROFILE_COLLECTION.md](PROFILE_COLLECTION.md). Synthetic verification does
 not establish real profiles, text-use review, remote backup or public promotion.
 
-1. Establish new text-use scope and reviewed public-profile promotion contracts,
-   with separate approval/hash bindings and profile rights/backup coverage in
-   the public validator and readiness inventory. Private tooling is integrated.
+1. The [reviewed public-profile contract](PROFILE_PROMOTION.md) now implements
+   separate text-use scope, complete approval/hash bindings, paired patch
+   preparation/recheck and profile rights/backup coverage in build/readiness
+   validation. This synthetic engineering work does not approve actual text.
 2. Collect and verify real profiles in an authorized operator session; promote
    only reviewed public data. Build source-backed Overview and When to Visit
    sections, preserving existing fragment routes and uncertainty.

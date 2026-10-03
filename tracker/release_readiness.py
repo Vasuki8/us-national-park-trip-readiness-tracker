@@ -8,16 +8,23 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import stat
 import sys
 from pathlib import Path
 
 from .entry_review_backup import verify_backup
-from .entry_review_io import REPO_ROOT, ReviewStoreError
+from .entry_review_io import (MAX_INPUT_BYTES, REPO_ROOT, ReviewStoreError,
+                              check_path, parse_json)
 from .entry_review_store import EntryReviewStore
 from .entry_sources import PROFILES, digest
 from .entry_html import SourceExtractionError
 from .indexing_controls import pilot_meta_noindex, pilot_robots_disallow_all, pilot_header_noindex
 from .source_notice import public_footer_notice
+from .history_model import HistoryError, canonical
+from .profile_checkpoints import ProfileCheckpointError
+from .profile_release import (ProfileReleaseError, validate_public_profiles,
+                              validate_profile_rights, validate_release_bundle,
+                              verify_release_bundle)
 
 GATE_ORDER = (
     'durable_source_review',
@@ -423,8 +430,101 @@ def _advertising(root: Path) -> dict:
         'ad_integration_markers':sorted(found)})
 
 
+def _profile_json(path: Path):
+    """Read bounded canonical public JSON from ordinary nonsymlink files."""
+    try:
+        info, parent = path.lstat(), path.parent.lstat()
+        if (not stat.S_ISREG(info.st_mode) or not stat.S_ISDIR(parent.st_mode)
+                or not 0 < info.st_size <= MAX_INPUT_BYTES):
+            raise ReviewStoreError('public_profile_inventory_invalid')
+        with path.open('rb') as stream:
+            raw = stream.read(MAX_INPUT_BYTES + 1)
+        if not 0 < len(raw) <= MAX_INPUT_BYTES:
+            raise ReviewStoreError('public_profile_inventory_invalid')
+        value = parse_json(raw)
+        encoded = canonical(value)
+        if raw not in (encoded, encoded + b'\n'):
+            raise ReviewStoreError('public_profile_inventory_invalid')
+        return value
+    except (OSError, HistoryError):
+        raise ReviewStoreError('public_profile_inventory_invalid') from None
+
+
+def _profile_status(gate: dict, status: str, reason: str) -> None:
+    """A new source requirement can only reduce an existing gate's readiness."""
+    severity = {'pass': 0, 'not_checked': 1, 'blocked': 2}
+    if severity[status] > severity[gate['status']]:
+        gate.update(status=status, reason=reason)
+
+
+def _profile_publication(root: Path, gates: list, review: dict | None,
+                         backup: dict | None) -> None:
+    """Extend review/backup/rights only for the public profile inventory.
+
+    Bundle hashes prove the retained projection, rights and review bindings.
+    They neither authenticate a reviewer nor prove an off-host transfer.
+    """
+    try:
+        review = None if review is None else validate_release_bundle(review)
+        backup = None if backup is None else validate_release_bundle(backup)
+    except ProfileReleaseError:
+        raise ReviewStoreError('invalid_release_readiness_profile_evidence') from None
+    profiles_path = root/'data'/'park-profiles.json'
+    rights_path = root/'data'/'profile-source-rights.json'
+    present = [path.exists() or path.is_symlink() for path in (profiles_path, rights_path)]
+    if not any(present):
+        return
+
+    selected = {gate['id']: gate for gate in gates
+                if gate['id'] in ('durable_source_review', 'storage_backup', 'source_rights')}
+    for gate in selected.values():
+        gate['evidence'].update(profile_inventory_present=True,
+                                profile_inventory_valid=False,
+                                profile_records_total=None)
+    review_gate = selected['durable_source_review']
+    backup_gate = selected['storage_backup']
+    rights_gate = selected['source_rights']
+    review_gate['evidence']['public_profiles_match_review'] = False
+    backup_gate['evidence'].update(profile_backup_verified=backup is not None,
+                                   profile_backup_matches_review=False)
+    rights_gate['evidence']['profile_records_covered'] = 0
+    try:
+        if not all(present):
+            raise ProfileReleaseError('public_profile_inventory_invalid')
+        public = validate_public_profiles(_profile_json(profiles_path))
+        rights = validate_profile_rights(_profile_json(rights_path), public)
+    except (ProfileReleaseError, ReviewStoreError):
+        for gate in selected.values():
+            gate.update(status='blocked', reason='public_profile_inventory_invalid')
+        return
+
+    for gate in selected.values():
+        gate['evidence'].update(profile_inventory_valid=True,
+                                profile_records_total=len(public['profiles']))
+    rights_gate['evidence']['profile_records_covered'] = len(rights['records'])
+    matches = (review is not None
+               and canonical(review['public_profiles']) == canonical(public)
+               and canonical(review['rights']) == canonical(rights))
+    review_gate['evidence']['public_profiles_match_review'] = matches
+    if review is None:
+        _profile_status(review_gate, 'not_checked', 'profile_review_not_supplied')
+    elif not matches:
+        _profile_status(review_gate, 'blocked', 'public_profiles_differ_from_reviewed_bundle')
+
+    recovered = (matches and backup is not None
+                 and backup['bundle_id'] == review['bundle_id']
+                 and canonical(backup) == canonical(review))
+    backup_gate['evidence']['profile_backup_matches_review'] = recovered
+    if not recovered:
+        _profile_status(backup_gate, 'blocked',
+                        'verified_profile_backup_not_supplied' if backup is None
+                        else 'profile_backup_does_not_match_current_review')
+
+
 def evaluate_readiness(root: Path = REPO_ROOT, *, private_state: dict | None = None,
-                       backup_manifest: dict | None = None, release_target: str = 'pilot') -> dict:
+                       backup_manifest: dict | None = None, release_target: str = 'pilot',
+                       profile_review: dict | None = None,
+                       profile_backup: dict | None = None) -> dict:
     """Return a deterministic report. This function performs no network or writes."""
     if release_target not in RELEASE_TARGETS:
         raise ReviewStoreError('invalid_release_readiness_arguments')
@@ -438,6 +538,7 @@ def evaluate_readiness(root: Path = REPO_ROOT, *, private_state: dict | None = N
         _indexing(root),
         _advertising(root),
     ]
+    _profile_publication(root, gates, profile_review, profile_backup)
     if [gate['id'] for gate in gates] != list(GATE_ORDER):
         raise ReviewStoreError('invalid_release_readiness_state')
     for gate in gates:
@@ -505,13 +606,29 @@ def main(argv: list[str] | None = None) -> int:
         parser.add_argument('--target', choices=RELEASE_TARGETS, default='pilot')
         parser.add_argument('--store', type=Path)
         parser.add_argument('--backup', type=Path)
+        parser.add_argument('--profile-review', type=Path)
+        parser.add_argument('--profile-backup', type=Path)
         args = parser.parse_args(argv)
         if args.backup is not None and args.store is None:
             raise ReviewStoreError('invalid_release_readiness_arguments')
+        if args.profile_backup is not None and args.profile_review is None:
+            raise ReviewStoreError('invalid_release_readiness_arguments')
+        if args.profile_review is not None and args.profile_backup is not None:
+            review_path, backup_path = check_path(args.profile_review), check_path(args.profile_backup)
+            if review_path == backup_path or review_path.parent == backup_path.parent:
+                raise ReviewStoreError('invalid_release_readiness_arguments')
         private = EntryReviewStore(args.store).read() if args.store is not None else None
         backup = verify_backup(args.backup) if args.backup is not None else None
+        try:
+            profile_review = (verify_release_bundle(args.profile_review)
+                              if args.profile_review is not None else None)
+            profile_backup = (verify_release_bundle(args.profile_backup)
+                              if args.profile_backup is not None else None)
+        except (ProfileReleaseError, ProfileCheckpointError, ReviewStoreError, OSError):
+            raise ReviewStoreError('invalid_release_readiness_profile_evidence') from None
         report = evaluate_readiness(REPO_ROOT, private_state=private, backup_manifest=backup,
-                                    release_target=args.target)
+                                    release_target=args.target, profile_review=profile_review,
+                                    profile_backup=profile_backup)
         if args.format == 'json':
             sys.stdout.write(json.dumps(report,sort_keys=True,separators=(',',':'))+'\n')
         else:

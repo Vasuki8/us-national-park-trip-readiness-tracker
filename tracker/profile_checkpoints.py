@@ -134,7 +134,13 @@ def _sync_directory(path: Path) -> None:
 
 def _install(output: Path, value: dict) -> None:
     """Install once. Errors after the link commit preserve the final output."""
-    data = _encoded(value)
+    _install_bytes(output, _encoded(value))
+
+
+def _install_bytes(output: Path, data: bytes) -> None:
+    """Shared bounded private installation, including reviewed public-file patches."""
+    _require(isinstance(data, bytes) and 0 < len(data) <= MAX_CHECKPOINT_BYTES,
+             'profile_checkpoint_too_large')
     temporary = None
     try:
         fd, name = tempfile.mkstemp(dir=output.parent, prefix='.profile-', suffix='.tmp')

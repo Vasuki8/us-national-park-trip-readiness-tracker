@@ -2,11 +2,12 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { isIP } from 'node:net';
-import { readFileSync, readdirSync } from 'node:fs';
+import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { posix, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isCalendarDate } from '../src/lib/readiness.ts';
 import { validateSourceRights } from './validate-source-rights.ts';
+import { canonicalProfileJson, MAX_PROFILE_BYTES, validatePublicProfiles, validateProfileRights } from './validate-park-profiles.ts';
 const hosts = new Set(['www.nps.gov', 'nps.gov', 'home.nps.gov']);
 const required = (value: unknown) => assert.ok(typeof value === 'string' && value.trim().length > 0);
 const validTime = (value: unknown) => typeof value === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
@@ -115,6 +116,32 @@ export function validateData(root = 'data'): void {
   validateSourceRights(sourceRights, [...rules, ...notes]);
   assert.deepEqual(readdirSync(resolve(root, 'alerts')).filter((p) => p.endsWith('.json')).sort(), parks.map((p: any) => `${p.code}.json`).sort());
   for (const park of parks) validateSnapshot(read(`alerts/${park.code}.json`), park.code);
+  const profileFilePresent = (path: string) => {
+    try {
+      const stat = lstatSync(resolve(root, path));
+      assert.ok(stat.isFile() && stat.size <= MAX_PROFILE_BYTES, 'Public profile inputs must be bounded regular files.');
+      return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+      throw error;
+    }
+  };
+  const profilesPresent = profileFilePresent('park-profiles.json');
+  const rightsPresent = profileFilePresent('profile-source-rights.json');
+  assert.equal(profilesPresent, rightsPresent, 'Public park profiles require their paired exact text-rights manifest.');
+  if (profilesPresent) {
+    assert.ok(lstatSync(resolve(root)).isDirectory(), 'The public profile data directory must be a regular directory.');
+    const readProfiles = (path: string) => {
+      const bytes = readFileSync(resolve(root, path));
+      assert.ok(bytes.length <= MAX_PROFILE_BYTES);
+      const text = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(bytes);
+      const value = JSON.parse(text), canonical = canonicalProfileJson(value);
+      assert.ok(text === canonical || text === canonical + '\n', 'Public profile inputs must use canonical JSON.');
+      return value;
+    };
+    const profiles = validatePublicProfiles(readProfiles('park-profiles.json'));
+    validateProfileRights(readProfiles('profile-source-rights.json'), profiles);
+  }
   console.log(`Validated ${parks.length} parks, ${rules.length} reviewed rules and ${parks.length} alert snapshots.`);
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) validateData();

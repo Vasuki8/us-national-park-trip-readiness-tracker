@@ -3,6 +3,10 @@ import copy
 import hashlib
 import io
 import json
+import os
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from contextlib import ExitStack, contextmanager, redirect_stdout, redirect_stderr
@@ -16,6 +20,8 @@ from tracker.release_readiness import evaluate_readiness, main, _gate
 from tracker.entry_review_io import ReviewStoreError
 from tracker.entry_sources import PROFILES, digest
 from tracker.entry_review_store import EntryReviewStore
+from tracker.history_model import canonical, digest as profile_digest
+from tracker.park_profiles import PILOT_CODES, collect_profile, initial_profile
 
 ROOT=Path(__file__).resolve().parents[1]
 ALL_URLS={
@@ -70,6 +76,40 @@ def backup_manifest(revision='a'*64):
       'database_file':'review.sqlite3','database_bytes':100,'database_sha256':'f'*64,
       'network_performed':False,'approval_performed':False,'publication_performed':False,
     }
+
+def profile_release_fixture():
+    """Synthetic review metadata only; no real source or operator approval."""
+    checked='2026-10-02T12:00:00Z'
+    snapshots=[]
+    for code in PILOT_CODES:
+        payload={'total':'1','start':'0','data':[{
+            'id':'synthetic-profile-'+code,'parkCode':code,'fullName':'Synthetic '+code,
+            'url':f'https://www.nps.gov/{code}/index.htm',
+            'description':'Synthetic introduction for '+code,
+            'weatherInfo':'Synthetic seasonal context','activities':[]}]}
+        snapshots.append(collect_profile(code,initial_profile(code),checked,
+                                         lambda _start,payload=payload:payload))
+    checkpoint_core={'schema_version':1,'purpose':'private_park_profile_checkpoint',
+                     'parent_checkpoint_id':None,'checked_at':checked,'profiles':snapshots}
+    checkpoint={**checkpoint_core,'checkpoint_id':profile_digest(checkpoint_core)}
+    public={'schema_version':1,'purpose':'public_park_profiles','profiles':snapshots}
+    policy=json.loads((ROOT/'data/source-rights.json').read_text())['policy']
+    rights={'schema_version':1,'purpose':'public_park_profile_text_rights',
+            'reviewed_at':'2026-10-02T12:30:00Z',
+            'review_method':'official_nps_policy_and_exact_profile_review',
+            'policy':policy,'records':[{
+                'park_code':row['park_code'],'profile_id':row['profile']['id'],
+                'source_url':row['source_url'],'content_hash':row['profile']['content_hash'],
+                'classification':'nps_government_text',
+                'use_scope':'normalized_profile_text_and_category_names',
+                'third_party_material_reproduced':False,'nps_marks_reproduced':False,
+                'media_reproduced':False} for row in snapshots]}
+    core={'schema_version':1,'purpose':'private_reviewed_park_profiles',
+          'checkpoint':checkpoint,'public_profiles':public,'rights':rights,
+          'approval':{'decision':'approved','approved_at':'2026-10-02T13:00:00Z',
+                      'checkpoint_id':checkpoint['checkpoint_id'],
+                      'projection_hash':profile_digest(public),'rights_hash':profile_digest(rights)}}
+    return {**core,'bundle_id':profile_digest(core)}
 
 @contextmanager
 def synthetic_core_ready():
@@ -554,5 +594,254 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(code,2); self.assertEqual(out.getvalue(),'')
         self.assertNotIn(secret,err.getvalue())
         self.assertEqual(err.getvalue(),'invalid_release_readiness_arguments\n')
+
+    def profile_repository(self, bundle=None):
+        folder=tempfile.TemporaryDirectory(); self.addCleanup(folder.cleanup)
+        root=Path(folder.name)
+        for name in ('data','src','public','.github'):
+            shutil.copytree(ROOT/name,root/name)
+        bundle=profile_release_fixture() if bundle is None else bundle
+        for name,key in [('park-profiles.json','public_profiles'),
+                         ('profile-source-rights.json','rights')]:
+            (root/'data'/name).write_bytes(canonical(bundle[key]))
+        return root,bundle
+
+    def profile_report(self, root, **kwargs):
+        return evaluate_readiness(root,private_state=private_state(approved=True),
+                                  backup_manifest=backup_manifest(),**kwargs)
+
+    def test_absent_profiles_preserve_the_existing_report_with_unrelated_valid_evidence(self):
+        before=self.profile_report(ROOT)
+        bundle=profile_release_fixture()
+        after=self.profile_report(ROOT,profile_review=bundle,profile_backup=copy.deepcopy(bundle))
+        self.assertEqual(after,before)
+
+    def test_public_profiles_need_their_own_review_and_backup(self):
+        root,bundle=self.profile_repository()
+        report=self.profile_report(root)
+        review=self.gate(report,'durable_source_review')
+        backup=self.gate(report,'storage_backup')
+        self.assertEqual(review['status'],'not_checked')
+        self.assertEqual(review['reason'],'profile_review_not_supplied')
+        self.assertFalse(review['evidence']['public_profiles_match_review'])
+        self.assertEqual(backup['status'],'blocked')
+        self.assertFalse(backup['evidence']['profile_backup_verified'])
+        self.assertEqual(self.gate(report,'source_rights')['status'],'pass')
+        self.assertFalse(report['release_ready'])
+
+    def test_matching_profile_review_and_backup_extend_existing_gates(self):
+        root,bundle=self.profile_repository()
+        before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+        report=self.profile_report(root,profile_review=bundle,profile_backup=copy.deepcopy(bundle))
+        for identifier in ('durable_source_review','storage_backup','source_rights'):
+            self.assertEqual(self.gate(report,identifier)['status'],'pass')
+        self.assertTrue(self.gate(report,'durable_source_review')['evidence']['public_profiles_match_review'])
+        self.assertTrue(self.gate(report,'storage_backup')['evidence']['profile_backup_matches_review'])
+        self.assertEqual(self.gate(report,'source_rights')['evidence']['profile_records_covered'],5)
+        self.assertEqual(self.gate(report,'nps_alert_api')['status'],'not_checked')
+        self.assertFalse(report['release_ready'])
+        self.assertFalse(report['network_performed']); self.assertFalse(report['writes_performed'])
+        self.assertEqual(before,{p:p.read_bytes() for p in root.rglob('*') if p.is_file()})
+
+    def test_matching_profiles_cannot_clear_existing_guidance_backup_or_notice_blocks(self):
+        for identifier in ('durable_source_review','storage_backup','source_rights'):
+            with self.subTest(identifier=identifier):
+                root,bundle=self.profile_repository()
+                manifest=backup_manifest()
+                if identifier=='durable_source_review':
+                    rules=json.loads((root/'data/rules.json').read_text())
+                    rules[0]['summary']='Synthetic independently changed guidance.'
+                    (root/'data/rules.json').write_text(json.dumps(rules))
+                elif identifier=='storage_backup': manifest['ledger_revision']='9'*64
+                else:
+                    layout=root/'src/layouts/Layout.astro'
+                    layout.write_text(layout.read_text().replace(
+                        'No protection is claimed in original U.S. Government works.',''))
+                report=evaluate_readiness(root,private_state=private_state(approved=True),
+                    backup_manifest=manifest,profile_review=bundle,profile_backup=bundle)
+                self.assertEqual(self.gate(report,identifier)['status'],'blocked')
+                self.assertTrue(self.gate(report,'durable_source_review')['evidence']['public_profiles_match_review'])
+                self.assertTrue(self.gate(report,'storage_backup')['evidence']['profile_backup_matches_review'])
+
+    def test_unpaired_or_invalid_profile_files_block_all_three_gates(self):
+        for filename,content in [('park-profiles.json',None),('profile-source-rights.json',None),
+                                 ('park-profiles.json','{}'),('profile-source-rights.json','{}'),
+                                 ('park-profiles.json','not JSON')]:
+            with self.subTest(filename=filename,content=content):
+                root,bundle=self.profile_repository(); path=root/'data'/filename
+                if content is None: path.unlink()
+                else: path.write_text(content)
+                for private in (False,True):
+                    report=(self.profile_report(root,profile_review=bundle,profile_backup=bundle)
+                            if private else evaluate_readiness(root))
+                    for identifier in ('durable_source_review','storage_backup','source_rights'):
+                        gate=self.gate(report,identifier)
+                        self.assertEqual(gate['status'],'blocked')
+                        self.assertEqual(gate['reason'],'public_profile_inventory_invalid')
+                        self.assertTrue(gate['blocking'])
+
+    def test_changed_public_profile_clocks_or_text_do_not_match_old_review(self):
+        for changed in ('text','clock','rights'):
+            with self.subTest(changed=changed):
+                root,bundle=self.profile_repository()
+                public=copy.deepcopy(bundle['public_profiles'])
+                rights=copy.deepcopy(bundle['rights'])
+                row=public['profiles'][0]
+                if changed=='text':
+                    row['profile']['description']='Synthetic changed text'
+                    from tracker.park_profiles import SEMANTIC_FIELDS
+                    row['profile']['content_hash']=profile_digest({
+                        key:row['profile'][key] for key in SEMANTIC_FIELDS})
+                    rights['records'][0]['content_hash']=row['profile']['content_hash']
+                elif changed=='clock':
+                    for snapshot in public['profiles']:
+                        snapshot['last_checked_at']=snapshot['last_successful_fetch_at']='2026-10-02T12:01:00Z'
+                else: rights['reviewed_at']='2026-10-02T12:31:00Z'
+                (root/'data/park-profiles.json').write_bytes(canonical(public))
+                (root/'data/profile-source-rights.json').write_bytes(canonical(rights))
+                report=self.profile_report(root,profile_review=bundle,profile_backup=bundle)
+                gate=self.gate(report,'durable_source_review')
+                self.assertEqual(gate['status'],'blocked')
+                self.assertEqual(gate['reason'],'public_profiles_differ_from_reviewed_bundle')
+                self.assertFalse(gate['evidence']['public_profiles_match_review'])
+
+    def test_profile_rights_mismatch_cannot_borrow_guidance_rights_pass(self):
+        root,bundle=self.profile_repository()
+        rights=copy.deepcopy(bundle['rights']); rights['records'][0]['content_hash']='0'*64
+        (root/'data/profile-source-rights.json').write_bytes(canonical(rights))
+        for target in ('pilot','indexed','advertising'):
+            report=evaluate_readiness(root,release_target=target)
+            gate=self.gate(report,'source_rights')
+            self.assertEqual(gate['status'],'blocked'); self.assertTrue(gate['blocking'])
+
+    def test_duplicate_keys_and_oversized_public_profile_json_fail_closed(self):
+        for kind in ('duplicate','oversized'):
+            with self.subTest(kind=kind):
+                root,bundle=self.profile_repository()
+                encoded=canonical(bundle['public_profiles'])
+                raw=(b'{"purpose":"incorrect",'+encoded[1:] if kind=='duplicate'
+                     else b' '*(8*1024*1024)+encoded)
+                (root/'data/park-profiles.json').write_bytes(raw)
+                report=self.profile_report(root,profile_review=bundle,profile_backup=bundle)
+                for identifier in ('durable_source_review','storage_backup','source_rights'):
+                    self.assertEqual(self.gate(report,identifier)['status'],'blocked')
+
+    def test_public_profile_bytes_require_canonical_json_with_at_most_one_newline(self):
+        for kind in ('pretty','two-newlines','one-newline'):
+            with self.subTest(kind=kind):
+                root,bundle=self.profile_repository()
+                for name,key in [('park-profiles.json','public_profiles'),
+                                 ('profile-source-rights.json','rights')]:
+                    raw=(json.dumps(bundle[key],indent=2).encode() if kind=='pretty'
+                         else canonical(bundle[key])+(b'\n\n' if kind=='two-newlines' else b'\n'))
+                    (root/'data'/name).write_bytes(raw)
+                report=self.profile_report(root,profile_review=bundle,profile_backup=bundle)
+                for identifier in ('durable_source_review','storage_backup','source_rights'):
+                    self.assertEqual(self.gate(report,identifier)['status'],
+                                     'pass' if kind=='one-newline' else 'blocked')
+
+    @unittest.skipUnless(os.name=='posix','Symlink profile fixtures require POSIX.')
+    def test_symlink_profile_file_or_data_parent_cannot_supply_public_inventory(self):
+        for kind in ('file','parent'):
+            with self.subTest(kind=kind):
+                root,bundle=self.profile_repository()
+                path=root/'data/park-profiles.json' if kind=='file' else root/'data'
+                retained=path.with_name('retained-'+path.name)
+                path.rename(retained); path.symlink_to(retained,target_is_directory=kind=='parent')
+                report=self.profile_report(root,profile_review=bundle,profile_backup=bundle)
+                for identifier in ('durable_source_review','storage_backup','source_rights'):
+                    self.assertEqual(self.gate(report,identifier)['status'],'blocked')
+
+    @unittest.skipUnless(os.name=='posix','FIFO profile fixtures require POSIX.')
+    def test_fifo_profile_input_is_refused_before_a_blocking_read(self):
+        root,_=self.profile_repository(); path=root/'data/park-profiles.json'
+        path.unlink(); os.mkfifo(path)
+        code=('from pathlib import Path\n'
+              'import sys\n'
+              'from tracker.release_readiness import _profile_json\n'
+              'from tracker.entry_review_io import ReviewStoreError\n'
+              'try: _profile_json(Path(sys.argv[1]))\n'
+              'except ReviewStoreError: print("refused")\n'
+              'else: print("accepted")\n')
+        result=subprocess.run([sys.executable,'-c',code,str(path)],cwd=ROOT,
+                              capture_output=True,text=True,timeout=5,check=False)
+        self.assertEqual(result.returncode,0)
+        self.assertEqual(result.stdout,'refused\n'); self.assertEqual(result.stderr,'')
+
+    def test_missing_or_different_profile_backup_blocks_current_ledger_backup_pass(self):
+        root,bundle=self.profile_repository()
+        other=profile_release_fixture(); other['approval']['approved_at']='2026-10-02T13:01:00Z'
+        other['bundle_id']=profile_digest({key:value for key,value in other.items() if key!='bundle_id'})
+        for backup in (None,other):
+            with self.subTest(backup_supplied=backup is not None):
+                report=self.profile_report(root,profile_review=bundle,profile_backup=backup)
+                gate=self.gate(report,'storage_backup')
+                self.assertEqual(gate['status'],'blocked')
+                self.assertFalse(gate['evidence']['profile_backup_matches_review'])
+
+    def test_invalid_supplied_review_or_backup_is_refused_with_fixed_error(self):
+        root,bundle=self.profile_repository()
+        for field in ('profile_review','profile_backup'):
+            values={'profile_review':bundle,'profile_backup':bundle}
+            values[field]={'secret':'/private/sentinel/bad-review'}
+            with self.subTest(field=field), self.assertRaisesRegex(
+                    ReviewStoreError,'^invalid_release_readiness_profile_evidence$'):
+                self.profile_report(root,**values)
+
+    def test_profile_report_does_not_disclose_source_text_or_private_bundle_hashes(self):
+        root,bundle=self.profile_repository()
+        report=self.profile_report(root,profile_review=bundle,profile_backup=bundle)
+        text=json.dumps(report)
+        self.assertNotIn('Synthetic introduction',text)
+        self.assertNotIn(bundle['bundle_id'],text)
+        self.assertNotIn(bundle['checkpoint']['checkpoint_id'],text)
+        self.assertNotIn(bundle['approval']['rights_hash'],text)
+
+    def test_cli_refuses_profile_backup_without_review_or_same_path(self):
+        for arguments in (['--profile-backup','/private/sentinel/backup'],
+                          ['--profile-review','/private/sentinel/same',
+                           '--profile-backup','/private/sentinel/same'],
+                          ['--profile-review','/private/sentinel/review.json',
+                           '--profile-backup','/private/sentinel/backup.json']):
+            out,err=io.StringIO(),io.StringIO()
+            with redirect_stdout(out),redirect_stderr(err): code=main(arguments)
+            self.assertEqual(code,2); self.assertEqual(out.getvalue(),'')
+            self.assertNotIn('/private/sentinel',err.getvalue())
+            self.assertEqual(err.getvalue(),'invalid_release_readiness_arguments\n')
+
+    @unittest.skipUnless(os.name=='posix','Owner-only profile evidence requires POSIX.')
+    def test_cli_profile_verification_failures_use_one_fixed_refusal(self):
+        with tempfile.TemporaryDirectory() as folder:
+            parent=Path(folder); parent.chmod(0o700)
+            bad=parent/'bad.json'; bad.write_text('{'); bad.chmod(0o600)
+            for path in (bad,parent/'missing.json'):
+                out,err=io.StringIO(),io.StringIO()
+                with redirect_stdout(out),redirect_stderr(err):
+                    code=main(['--format','json','--profile-review',str(path)])
+                self.assertEqual(code,2); self.assertEqual(out.getvalue(),'')
+                self.assertEqual(err.getvalue(),'invalid_release_readiness_profile_evidence\n')
+                self.assertNotIn(str(parent),err.getvalue())
+
+    @unittest.skipUnless(os.name=='posix','Owner-only profile evidence requires POSIX.')
+    def test_cli_verifies_distinct_private_profile_bundles_without_writes(self):
+        root,bundle=self.profile_repository()
+        with tempfile.TemporaryDirectory() as folder:
+            parent=Path(folder); parent.chmod(0o700)
+            paths=[]
+            for name in ('review','downloaded-backup'):
+                directory=parent/name; directory.mkdir(mode=0o700)
+                path=directory/'profiles.json'; path.write_bytes(canonical(bundle)); path.chmod(0o600)
+                paths.append(path)
+            before=[(p.read_bytes(),p.stat().st_mtime_ns) for p in paths]
+            out,err=io.StringIO(),io.StringIO()
+            with patch('tracker.release_readiness.REPO_ROOT',root), redirect_stdout(out),redirect_stderr(err):
+                code=main(['--format','json','--profile-review',str(paths[0]),
+                           '--profile-backup',str(paths[1])])
+            self.assertEqual(code,1); self.assertEqual(err.getvalue(),'')
+            report=json.loads(out.getvalue())
+            self.assertTrue(self.gate(report,'durable_source_review')['evidence']['public_profiles_match_review'])
+            self.assertTrue(self.gate(report,'storage_backup')['evidence']['profile_backup_matches_review'])
+            self.assertNotIn(str(parent),out.getvalue())
+            self.assertEqual(before,[(p.read_bytes(),p.stat().st_mtime_ns) for p in paths])
 
 if __name__=='__main__': unittest.main()

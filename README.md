@@ -68,6 +68,12 @@ The successful keyed GitHub preflight is run `36628434444`: all five parks passe
 
 The complete first-session sequence is in [the durable collection runbook](docs/DURABLE_COLLECTION_SESSION.md), including separate verified backups, human review, alert staging and recovery checkpoints.
 
+The separate [park-profile promotion workflow](docs/PROFILE_PROMOTION.md) binds
+the exact five-park projection to a new text-rights review and immutable approval
+bundle, then prepares/rechecks a paired public-file patch. Real profile data,
+remote recovery and Overview/When to Visit consumption remain pending. Existing
+guidance/alert approvals and backups do not cover profiles.
+
 The entry-page capture command can check private storage setup offline before a live run:
 
 ```sh
