@@ -76,11 +76,16 @@ not establish real profiles, text-use review, remote backup or public promotion.
    separate text-use scope, complete approval/hash bindings, paired patch
    preparation/recheck and profile rights/backup coverage in build/readiness
    validation. This synthetic engineering work does not approve actual text.
-2. Collect and verify real profiles in an authorized operator session; promote
-   only reviewed public data. Build source-backed Overview and When to Visit
-   sections, preserving existing fragment routes and uncertainty.
-3. Add NPS `/thingstodo` adapter for individual activities. Preserve responsible
-   park relationships, unknown attributes and any nearby/outside-park status.
+2. The first real profiles, private remote recovery and reviewed public pair
+   were completed in PR #11. PR #12 renders source-backed Overview and When to
+   Visit, preserving fragments, original clocks and uncertainty. The current
+   handoff records verification; these changes have not been deployed live.
+3. The separate [NPS `/thingstodo` foundation](ACTIVITY_FOUNDATION.md) now adds
+   bounded individual listings, park attribution, unknown geography/agency/
+   difficulty/permits and independent freshness. Synthetic tests cover complete
+   pagination and last-good retention; there is no real activity inventory.
+   Next implement the separate transport and immutable private checkpoint/
+   recovery lifecycle before reviewed activity promotion and visitor rendering.
 4. Select named weather locations from authoritative geographic evidence.
    NWS `/points/{lat},{lon}` discovers the grid forecast; periodically recheck
    that mapping. Validate issue/valid-period/check clocks and retain last-good

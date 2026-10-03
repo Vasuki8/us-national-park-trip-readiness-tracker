@@ -90,6 +90,16 @@ labels are not rewritten. Static text, links, disclosures and original clocks
 remain usable without JavaScript, with an explicit build-freshness warning.
 The feature adds no storage, tracking, forecast, collection or publication action.
 
+`tracker/park_activities.py` now implements the separate pure NPS `/thingstodo`
+contract for individual listings, with injected bounded pagination, source
+attribution, nullable source fields and seven-day freshness. Related parks never
+prove physical location or responsible agency; difficulty and permit needs stay
+unknown. Malformed, incomplete or severely reduced inventories retain validated
+last-good records and original clocks. No activity transport, credentials,
+checkpoint, rights approval, public data or visitor rendering is implemented by
+this adapter. See [ACTIVITY_FOUNDATION.md](ACTIVITY_FOUNDATION.md) for the strict
+schema, documented flag aliases, size bounds and next private collection layer.
+
 Each park page has native "On this page" navigation after its introduction. Fragment links reach Overview, When to Visit, the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
 
 The park directory applies the current search and state values on initialization and after page return (`pageshow`), as well as normal input/change events. Literal substring search trims, lowercases and collapses whitespace in both the query and card search text, so pasted multiword names match without rewriting visitor controls or metadata. The exact state filter still combines with the query. Page-return resync runs in a zero-delay timer because persisted form restoration can follow the event; see [the documented history-traversal ordering](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event). Cards, the result count and the empty state then follow restored controls without input events. Unchanged counts do not rewrite the live-region text. The application adds no storage, URL parameters or transmission of search selections.
