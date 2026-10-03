@@ -1,5 +1,24 @@
 # Development guide
 
+## Product direction and operating rules
+
+Read the complete [permanent owner instructions](PROJECT_INSTRUCTIONS.md) and
+the current `PROJECT_STATUS.md` handoff before development. National Park
+Explorer & Trip Planner includes park discovery, activities, when-to-visit
+guidance, detailed planning, named-location weather, conditions and account-free
+personal trip tools. The five-phase policy governs the order of work; the first
+increment is a foundation assessment against the existing implementation.
+
+Codex owns routine technical decisions, implementation, source processing,
+testing, diagnosis and authorized release operations. Escalate consequential
+owner decisions as described in the policy, and record material architecture
+choices with their evidence. Cloudflare and centralized scheduled collection
+are preferred directions to evaluate; the current Astro/GitHub Pages hosting,
+manual publication and page-only trip state below describe the implemented
+pilot. New infrastructure, weather, imagery and persistent trip tools remain
+staged requirements. Historical pilot exclusions do not override the revised
+owner scope; current privacy, provenance and release safeguards still apply.
+
 ## Structure
 
 `data/parks.json` holds the reviewed pilot inventory, park-specific official URLs and IANA timezones. `data/rules.json` holds annual entry guidance, exact excerpt evidence and rights-review metadata. `data/alerts/*.json` holds the approved public collector state; the first five successful baselines were promoted with owner approval. Historic and synthetic tests use explicit fixtures rather than these mutable public snapshots.

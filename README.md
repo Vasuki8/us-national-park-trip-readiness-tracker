@@ -1,6 +1,8 @@
-# ParkReadiness — U.S. National Park Trip Readiness Tracker
+# National Park Explorer & Trip Planner — ParkReadiness repository
 
-An independent, light-theme planning pilot for Yosemite, Rocky Mountain, Yellowstone, Zion and Grand Canyon. The [public pilot is live](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/) with stored guidance and manually collected alert snapshots.
+This repository develops National Park Explorer & Trip Planner for Yosemite, Rocky Mountain, Yellowstone, Zion and Grand Canyon. The [permanent owner instructions](docs/PROJECT_INSTRUCTIONS.md) define the broader park-discovery and trip-planning product, engineering responsibilities, architecture principles and phased priorities. Readiness is one part of that experience.
+
+The current implementation is an independent, light-theme planning pilot. The [public pilot is live](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/) with stored guidance and manually collected alert snapshots. The revised scope is a development direction; the current pilot features and verified deployment below remain the implementation facts.
 
 ## Current pilot
 
@@ -46,7 +48,7 @@ npm run test:browser:pages
 
 `npm run dev` prints the local website URL. `npm run preview` serves the root build. `npm run preview:pages` serves the GitHub project build at `/us-national-park-trip-readiness-tracker/` on port 4324. Use a POSIX/WSL shell for the full command list. Native Windows can run the frontend preview, but the private evidence tools and full suite rely on POSIX permissions; use WSL and its Linux filesystem for those workflows. Run ordinary development tests with `umask 022`; the separate private operator session uses `umask 077`. No API key is required to build the committed development snapshot. The Astro build validates undated source notes separately from the dated-rule and alert schema checks.
 
-Open this repository root in Codex. The project instructions are in `AGENTS.md`; start with: "Read AGENTS.md and PROJECT_STATUS.md, review the next development priorities, and continue development with appropriate verification." Keep any NPS key and real private evidence outside the project folder.
+Open this repository root in Codex. `AGENTS.md` requires reading the complete permanent policy in `docs/PROJECT_INSTRUCTIONS.md`, then the current handoff in `PROJECT_STATUS.md` and the development/operator guides. Codex handles routine engineering and authorized operations; the owner makes consequential product, cost, rights, privacy and strategic decisions. Keep any NPS key and real private evidence outside the project folder.
 
 GitHub Pages release/rollback remains manual and uses an already verified artifact matching the configured hosting path. The live pilot passed deployment, older-version rollback and restoration checks against the exact hosted pages/assets, plus actual browser interaction checks. See `docs/PAGES_RELEASE.md` for release evidence and rollback preparation, and `docs/RELEASE_READINESS.md` for how external evidence differs from the conservative automated report.
 
@@ -87,6 +89,6 @@ After private collection and preview, the offline [alert-data candidate preparer
 
 ## Handoff
 
-Read `PROJECT_STATUS.md` first, then `docs/DEVELOPMENT.md`. The approved product design is in `docs/superpowers/specs/2026-09-28-national-park-trip-readiness-design.md`. Implementation plans are in `docs/superpowers/plans/`; the project Pages increment is `2026-09-30-pages-base-path.md`. Source-scope decisions are documented in `docs/ENTRY_SOURCE_REVIEW.md`.
+Read `AGENTS.md` and the complete [permanent project instructions](docs/PROJECT_INSTRUCTIONS.md), then `PROJECT_STATUS.md` and `docs/DEVELOPMENT.md`. The initial pilot design in `docs/superpowers/specs/2026-09-28-national-park-trip-readiness-design.md` and implementation plans in `docs/superpowers/plans/` are historical where they conflict with the revised scope. The project Pages increment is `2026-09-30-pages-base-path.md`; existing source-scope decisions are documented in `docs/ENTRY_SOURCE_REVIEW.md`. Start with the revised Phase 1 foundation assessment in the current handoff.
 
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.
