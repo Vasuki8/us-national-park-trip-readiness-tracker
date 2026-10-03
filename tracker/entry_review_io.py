@@ -56,17 +56,19 @@ def parse_json(raw: bytes):
     except (ValueError, UnicodeError, RecursionError):
         raise ReviewStoreError('invalid_private_json') from None
 
-def read_private_json(value: Path):
+def read_private_json(value: Path, *, max_bytes: int | None = None):
+    limit = MAX_INPUT_BYTES if max_bytes is None else max_bytes
+    require(type(limit) is int and limit > 0, 'invalid_private_input_limit')
     path = check_path(value)
     try:
         original = private_stat(path)
-        require(0 < original.st_size <= MAX_INPUT_BYTES, 'private_input_too_large')
+        require(0 < original.st_size <= limit, 'private_input_too_large')
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         with os.fdopen(fd, 'rb') as stream:
             actual = os.fstat(stream.fileno())
             require((actual.st_dev, actual.st_ino) == (original.st_dev, original.st_ino), 'private_input_changed')
-            raw = stream.read(MAX_INPUT_BYTES + 1)
-        require(len(raw) <= MAX_INPUT_BYTES, 'private_input_too_large')
+            raw = stream.read(limit + 1)
+        require(len(raw) <= limit, 'private_input_too_large')
         return parse_json(raw)
     except ReviewStoreError:
         raise

@@ -22,16 +22,18 @@ def require(condition: bool, code: str = 'invalid_snapshot') -> None:
     if not condition:
         raise HistoryError(code)
 
-def canonical(value: object) -> bytes:
+def canonical(value: object, *, max_bytes: int | None = None) -> bytes:
+    limit = MAX_OBJECT_BYTES if max_bytes is None else max_bytes
+    require(type(limit) is int and limit > 0, 'invalid_json_limit')
     try:
         data = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False).encode('utf-8')
     except (ValueError, TypeError, UnicodeError, RecursionError):
         raise HistoryError('invalid_json') from None
-    require(len(data) <= MAX_OBJECT_BYTES, 'object_too_large')
+    require(len(data) <= limit, 'object_too_large')
     return data
 
-def digest(value: object) -> str:
-    return hashlib.sha256(canonical(value)).hexdigest()
+def digest(value: object, *, max_bytes: int | None = None) -> str:
+    return hashlib.sha256(canonical(value, max_bytes=max_bytes)).hexdigest()
 
 def parse_json(data: bytes) -> object:
     require(len(data) <= MAX_OBJECT_BYTES, 'object_too_large')

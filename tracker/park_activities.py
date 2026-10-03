@@ -320,12 +320,11 @@ def _normalize(raw: object, code: str, now: str, previous: dict[str, dict]) -> d
     return record
 
 
-def collect_activities(park_code: str, previous: dict, now: str, fetch_page: Callable[[int], dict]) -> dict:
-    """Accept a complete bounded feed or retain the validated last good inventory.
+def preflight_activity_attempt(park_code: str, previous: dict, now: str) -> dict:
+    """Validate an attempt without transport or advancing any retained clock.
 
-    Attempts must strictly advance the check clock. Every page must agree on
-    total, offset and IDs; empty or severely reduced established feeds need
-    review. All partial candidate data is discarded on a refused/failed page.
+    Return an isolated accepted baseline. Batch callers can preflight every park
+    before acquiring a key or invoking a transport factory.
     """
     code = _pilot(park_code)
     result = validate_activities(previous)
@@ -333,13 +332,26 @@ def collect_activities(park_code: str, previous: dict, now: str, fetch_page: Cal
     current = _instant(now)
     _require(result['last_checked_at'] is None or _instant(result['last_checked_at']) < current,
              'collection_clock_not_advanced')
-    _require(callable(fetch_page), 'invalid_transport')
-    result['last_checked_at'] = now
     # Refuse before requests if retaining all accepted evidence could no longer
     # fit with either degraded envelope. Never trim records to fit a failure.
     for status, error in (('failed', 'provider_request_failed'), ('quarantined', 'response_requires_review')):
-        fallback = {**result, 'collection_status': status, 'coverage_status': 'incomplete', 'error_code': error}
+        fallback = {**result, 'last_checked_at': now, 'collection_status': status,
+                    'coverage_status': 'incomplete', 'error_code': error}
         _require(len(_canonical(fallback)) <= MAX_SNAPSHOT_BYTES, 'insufficient_failure_capacity')
+    return result
+
+
+def collect_activities(park_code: str, previous: dict, now: str, fetch_page: Callable[[int], dict]) -> dict:
+    """Accept a complete bounded feed or retain the validated last good inventory.
+
+    Attempts must strictly advance the check clock. Every page must agree on
+    total, offset and IDs; empty or severely reduced established feeds need
+    review. All partial candidate data is discarded on a refused/failed page.
+    """
+    result = preflight_activity_attempt(park_code, previous, now)
+    code = result['park_code']
+    _require(callable(fetch_page), 'invalid_transport')
+    result['last_checked_at'] = now
     old = {record['id']: record for record in result['records']}
     records = {}
     total = None

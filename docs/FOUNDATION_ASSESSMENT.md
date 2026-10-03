@@ -84,8 +84,12 @@ not establish real profiles, text-use review, remote backup or public promotion.
    bounded individual listings, park attribution, unknown geography/agency/
    difficulty/permits and independent freshness. Synthetic tests cover complete
    pagination and last-good retention; there is no real activity inventory.
-   Next implement the separate transport and immutable private checkpoint/
-   recovery lifecycle before reviewed activity promotion and visitor rendering.
+   The separate [private activity collection lifecycle](ACTIVITY_COLLECTION.md)
+   now adds fixed-endpoint transport, all-five preflight, immutable checkpoints,
+   offline verification, restore and private unapproved review export. Synthetic
+   tests establish tools only. Next implement separate activity text-rights/
+   public projection before real collection, verified remote backup, reviewed
+   promotion and visitor rendering.
 4. Select named weather locations from authoritative geographic evidence.
    NWS `/points/{lat},{lon}` discovers the grid forecast; periodically recheck
    that mapping. Validate issue/valid-period/check clocks and retain last-good

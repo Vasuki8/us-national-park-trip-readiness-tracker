@@ -70,9 +70,10 @@ The complete first-session sequence is in [the durable collection runbook](docs/
 
 The separate [park-profile promotion workflow](docs/PROFILE_PROMOTION.md) binds
 the exact five-park projection to a new text-rights review and immutable approval
-bundle, then prepares/rechecks a paired public-file patch. Real profile data,
-remote recovery and Overview/When to Visit consumption remain pending. Existing
-guidance/alert approvals and backups do not cover profiles.
+bundle, then prepares/rechecks a paired public-file patch. The five-park profile
+pair and its Overview/When to Visit consumers are implemented; their original
+source clocks are retained. Existing guidance/alert approvals and backups do
+not cover profiles.
 
 The entry-page capture command can check private storage setup offline before a live run:
 
@@ -99,7 +100,14 @@ Read `AGENTS.md` and the complete [permanent project instructions](docs/PROJECT_
 
 The separate [private profile collection guide](docs/PROFILE_COLLECTION.md)
 documents five-park checkpoints, offline verification/restore and unapproved
-review exports. Public profile promotion and park overview consumers remain
-subsequent work; these tools do not change the live pilot.
+review exports. Promotion and source-backed park overview consumers are
+implemented separately; these private commands do not deploy the live pilot.
+
+The separate [private activity collection guide](docs/ACTIVITY_COLLECTION.md)
+documents bounded header-authenticated `/thingstodo` requests, immutable
+five-park checkpoints, offline recovery and unapproved review exports. This
+increment is verified with synthetic sources. A reviewed activity text-rights
+and public-projection contract is the next step before real collection and
+Things to Do rendering.
 
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.

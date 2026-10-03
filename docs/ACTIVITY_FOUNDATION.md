@@ -31,6 +31,8 @@ not establish that a park has no activities.
 
 - `initial_activities(park_code)` for an unknown, uncollected inventory.
 - `validate_activities(snapshot)` for strict validation and a defensive copy.
+- `preflight_activity_attempt(park_code, previous, now)` for a pure isolated
+  baseline check before a batch acquires credentials or invokes any factory.
 - `collect_activities(park_code, previous, now, fetch_page)` for an injected,
   park-scoped `fetch_page(start)` transport.
 - `activity_freshness(snapshot, now)` for clock-injected freshness.
@@ -113,7 +115,10 @@ guarantee. `not_collected`, `failed` and `quarantined` remain distinct; the late
 degraded attempt takes precedence over age. Freshness refuses future evidence
 and never renews clocks. Alerts and seasonal profiles retain independent policies.
 
-Next, add a separate bounded header-authenticated transport and immutable private
-checkpoint/recovery lifecycle using existing POSIX guards. Complete synthetic
-checks before authorized real collection. Backup verification, text-rights
-review, public promotion and Things to Do rendering remain subsequent steps.
+The [private collection workflow](ACTIVITY_COLLECTION.md) now implements the
+separate bounded header-authenticated transport and immutable five-park
+checkpoint/recovery lifecycle using existing POSIX guards. It preflights every
+baseline before keys or factories. Synthetic checks establish tooling only.
+Next implement separate reviewed text-rights/public projection; real collection,
+verified remote backup, approval, promotion and Things to Do rendering remain
+subsequent steps.
