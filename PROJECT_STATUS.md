@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 3, 2026 (Toronto time), during private activity collection/recovery development; the verified PR #7 live release is unchanged**.
+Updated: **October 3, 2026 (Toronto time), after PR #14 integrated private activity collection/recovery; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
@@ -30,8 +30,30 @@ independent re-review. All 71 activity integration cases and 10 neutral storage
 cases are covered by the final suite. Implementation/documentation reviews have
 no remaining findings; 29 relative links and diff checks pass. Both generated
 hosting bases retain **`pilot-a2056877d1e7`**. Local Chromium remains unavailable;
-supported GitHub browser checks and PR integration are pending. Current branch:
-**`codex/activity-private-collection`**.
+supported GitHub CI completed both browser suites before integration.
+
+[PR #14](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/14)
+merged checked head **`c5c8e8f62b7815dc3c3d083a4f979d4f2284157a`** as
+**`9ae46b90c67a40d7384ec2634cbe6b76f85538c8`** under the owner's standing
+merge authorization. Native Windows Git confirms the actual merge, checked head
+and CI checkout have identical trees; local `main` was fast-forwarded to the
+merge. Independent implementation/re-review and documentation review have no
+remaining findings.
+
+[Verify pilot #226](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37158497539),
+job **111306784906**, passed **324 Node + 689 Python + 66 generated-site +
+126 Chromium = 1,205 tests**, zero Astro diagnostics across 36 files and both
+14-page builds. All **111 root + 15 project-path browser cases** passed; all
+three root accessibility screenshots survived the project suite. CI checked
+standard PR merge **`80f2d441fd44d4279f9a868d27c41cd031ce22c8`**, combining the
+checked head with unchanged main **`14e4346dead2e454334eb7afda0456db4ee1b9c1`**.
+Fresh checks, complete job-log, checkout-parent/tree and artifact-metadata
+inspection passed. Artifact **11286691378** uploaded successfully; it was not
+downloaded or deployed. PR-only verification is not a live release artifact.
+Existing npm advisory and Action/runner notices are unchanged.
+
+Current branch: **`main`**, after checked PR #14 integration. This handoff receipt
+records verified integration facts without changing the checked runtime files.
 
 This increment uses synthetic sources only. No real activity collection, private
 backup upload, public-data promotion, dependency/workflow change or deployment
@@ -40,11 +62,10 @@ The last verified live build remains **`2fa4d4a`** / **`pilot-0609c66f7954`**,
 with stale alerts and noindex/ad-free safeguards. No new live-site check occurred.
 Synthetic collection/recovery clears no rights, remote-backup or release gates.
 
-Next: integrate after required CI. The next product increment is a separately reviewed
-activity text-rights and public-projection contract before real collection,
-verified remote recovery, public promotion and Things to Do rendering. A live
-release still requires deliberate alert refresh, complete release checks and
-applicable deployment authorization.
+Next: implement a separately reviewed activity text-rights and public-projection
+contract before real collection, verified remote recovery, public promotion and
+Things to Do rendering. A live release still requires deliberate alert refresh,
+complete release checks and applicable deployment authorization.
 
 ## Preceding individual-activity foundation integration — PR #13
 
