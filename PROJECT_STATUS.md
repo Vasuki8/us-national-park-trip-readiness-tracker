@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 3, 2026 (Toronto time), during the separate individual-activity foundation; the verified PR #7 live release is unchanged**.
+Updated: **October 3, 2026 (Toronto time), after PR #13 integrated the separate individual-activity foundation; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
@@ -34,9 +34,31 @@ and documentation reviews have no remaining findings. Fresh **324 Node + 608
 Python + 66 generated-site = 998 tests**, zero Astro diagnostics across 36 files
 and both 14-page builds passed on the final implementation. Fourteen relative
 documentation links and diff checks passed. Local Chromium is unavailable in
-this WSL distribution; required supported CI must complete both browser suites.
-CI integration is being completed on `codex/park-activity-foundation`;
-integration results will be recorded here.
+this WSL distribution; supported CI completed both browser suites before merge.
+
+[PR #13](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/13)
+merged checked head **`3014e08cdd11d1305fe560da7b3e41bc6b374f6c`** as
+**`233c411cf2958bfa38cc3826851083c675f3a85e`** under the owner's standing merge
+authorization. Native Windows Git confirms the actual merge, checked head and
+CI checkout have identical trees; local `main` was fast-forwarded to the merge.
+Independent implementation and documentation reviews have no remaining findings.
+
+[Verify pilot #223](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37155596363),
+job **111298223185**, passed **324 Node + 608 Python + 66 generated-site +
+126 Chromium = 1,124 tests**, zero Astro diagnostics across 36 files and both
+14-page builds. All **111 root + 15 project-path browser cases** passed; all
+three root accessibility screenshots survived the project suite. CI checked
+standard PR merge **`b98198e917dca48a79278e37ec3523561d791529`**, combining the
+checked head with unchanged main **`224592162ec99361356f025cbab2b2808e615576`**.
+Fresh check, complete job-log, checkout-parent/tree and artifact-metadata
+inspection passed. Artifact **11285551765** uploaded successfully; it was not
+downloaded or deployed. PR-only verification is not a live release artifact.
+Existing npm advisory and Action/runner notices are unchanged.
+
+Current branch: **`main`**, after checked PR #13 integration. Generated public
+content remains the preceding profile experience, snapshot **`pilot-a2056877d1e7`**;
+this adapter adds no public dataset or source-clock change. This handoff receipt
+records integration facts without changing the verified runtime files.
 
 This increment has no default HTTP transport, credentials, activity persistence,
 real source collection, private backups, public-data promotion or visitor
