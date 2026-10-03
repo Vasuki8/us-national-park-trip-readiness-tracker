@@ -1,8 +1,52 @@
 # Project status and handoff
 
-Updated: **October 3, 2026 (Toronto time), after PR #13 integrated the separate individual-activity foundation; the verified PR #7 live release is unchanged**.
+Updated: **October 3, 2026 (Toronto time), during private activity collection/recovery development; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+The separate private `/thingstodo` transport, immutable five-park activity
+checkpoints and `tracker.activity_stage` commands now support collection,
+offline verification, restoration and unapproved review exports. All five
+baselines, clocks and degraded-state capacity are checked before reading the
+key or invoking transport. Requests use header authentication, refuse redirects,
+bound retries/body size and reject strict-JSON, nonfinite-number and configured
+key-echo violations. See [ACTIVITY_COLLECTION.md](docs/ACTIVITY_COLLECTION.md).
+
+Each checkpoint binds the exact attempted five-park state and a parent ID
+reference. Failed/quarantined attempts retain the last-good records and original
+successful/observation clocks. A neutral POSIX installer reuses existing private
+path/permission guards, locks a fresh destination and installs without overwrite.
+Explicit batch limits accommodate five 8 MiB inventories; existing 8 MiB reader
+and 10 MiB canonical-encoding defaults remain unchanged. Restoration preserves
+identity and source clocks. Review exports claim no rights or approval.
+
+Fresh local verification passed **324 Node + 689 Python + 66 generated-site
+= 1,079 tests**, zero Astro diagnostics across 36 files and both 14-page builds.
+The final full Python run includes the reviewed transport fix. Independent
+review reproduced an interrupted chunked-response exception bypassing retry
+classification. Three real-parser regressions failed with that exception, then
+passed after explicit classified handling; all 28 transport cases passed in
+independent re-review. All 71 activity integration cases and 10 neutral storage
+cases are covered by the final suite. Implementation/documentation reviews have
+no remaining findings; 29 relative links and diff checks pass. Both generated
+hosting bases retain **`pilot-a2056877d1e7`**. Local Chromium remains unavailable;
+supported GitHub browser checks and PR integration are pending. Current branch:
+**`codex/activity-private-collection`**.
+
+This increment uses synthetic sources only. No real activity collection, private
+backup upload, public-data promotion, dependency/workflow change or deployment
+occurred. Public profiles, guidance, alerts and source clocks are unchanged.
+The last verified live build remains **`2fa4d4a`** / **`pilot-0609c66f7954`**,
+with stale alerts and noindex/ad-free safeguards. No new live-site check occurred.
+Synthetic collection/recovery clears no rights, remote-backup or release gates.
+
+Next: integrate after required CI. The next product increment is a separately reviewed
+activity text-rights and public-projection contract before real collection,
+verified remote recovery, public promotion and Things to Do rendering. A live
+release still requires deliberate alert refresh, complete release checks and
+applicable deployment authorization.
+
+## Preceding individual-activity foundation integration — PR #13
 
 The separate NPS `/thingstodo` adapter now normalizes individual listings for
 the five pilots using an injected transport. It preserves source text, nullable
