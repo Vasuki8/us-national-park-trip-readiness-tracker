@@ -91,4 +91,9 @@ After private collection and preview, the offline [alert-data candidate preparer
 
 Read `AGENTS.md` and the complete [permanent project instructions](docs/PROJECT_INSTRUCTIONS.md), then `PROJECT_STATUS.md` and `docs/DEVELOPMENT.md`. The initial pilot design in `docs/superpowers/specs/2026-09-28-national-park-trip-readiness-design.md` and implementation plans in `docs/superpowers/plans/` are historical where they conflict with the revised scope. The project Pages increment is `2026-09-30-pages-base-path.md`; existing source-scope decisions are documented in `docs/ENTRY_SOURCE_REVIEW.md`. Follow the current Phase 1 milestone and [recorded foundation assessment](docs/FOUNDATION_ASSESSMENT.md).
 
+The separate [private profile collection guide](docs/PROFILE_COLLECTION.md)
+documents five-park checkpoints, offline verification/restore and unapproved
+review exports. Public profile promotion and park overview consumers remain
+subsequent work; these tools do not change the live pilot.
+
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.

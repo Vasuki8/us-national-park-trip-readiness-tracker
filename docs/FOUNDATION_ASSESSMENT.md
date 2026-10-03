@@ -65,9 +65,15 @@ fees and other unrelated fields are excluded from this narrow schema.
 
 ## Implementation sequence after this increment
 
-1. Add fixed-endpoint, header-authenticated profile transport and explicit
-   private staging/checkpoint/export contracts, including credential-echo
-   refusal and owner-only POSIX storage. Review new text reuse scope.
+The following private collection increment now implements the fixed-endpoint
+transport and immutable five-park checkpoint lifecycle, including offline
+verification, restore and private review-candidate export. It reuses existing
+POSIX guards rather than adding a mutable archive. See
+[PROFILE_COLLECTION.md](PROFILE_COLLECTION.md). Synthetic verification does
+not establish real profiles, text-use review, remote backup or public promotion.
+
+1. Complete independent verification/integration of the private tooling, then
+   establish new text-use scope and reviewed public-profile promotion contracts.
 2. Collect and verify real profiles in an authorized operator session; promote
    only reviewed public data. Build source-backed Overview and When to Visit
    sections, preserving existing fragment routes and uncertainty.

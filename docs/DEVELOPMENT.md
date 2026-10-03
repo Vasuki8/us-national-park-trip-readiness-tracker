@@ -37,9 +37,20 @@ and collection foundation. It retains introductions, official park identity,
 category-only activity metadata and clearly typed seasonal weather context.
 Missing optional fields remain null; failed or quarantined attempts retain the
 last-good profile and successful clock. Its initial profile age policy is 168
-hours, independent of alert freshness. It has no default HTTP transport,
-persistence, CLI or website consumer. See the assessment for the remaining
-private durability, transport, new text-rights scope and reviewed export steps.
+hours, independent of alert freshness. The normalizer has no default HTTP
+transport, persistence or website consumer.
+
+`tracker/profile_transport.py` adds the separate bounded, header-authenticated
+fixed-endpoint request. `tracker/profile_checkpoints.py` retains explicit
+immutable all-five checkpoints using existing POSIX private-file guards; no
+mutable latest head or history replay is claimed. `tracker/profile_stage.py`
+offers deliberate live collection and offline verification, fresh restore and
+private review export. It reads a key only after validating storage, baseline,
+clock and the output lock. Review export keeps source rights not checked,
+approval false and source/publication clocks unchanged. See
+[PROFILE_COLLECTION.md](PROFILE_COLLECTION.md) for limits, interruption and
+backup boundaries. Real profiles, their text-use scope, remote recovery,
+reviewed public promotion and frontend consumption remain subsequent work.
 
 Each park page has native "On this page" navigation after its introduction. Fragment links reach the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
 
