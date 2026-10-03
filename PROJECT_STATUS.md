@@ -1,8 +1,58 @@
 # Project status and handoff
 
-Updated: **October 3, 2026 (Toronto time), after PR #12 integrated source-backed Overview and When to Visit; the verified PR #7 live release is unchanged**.
+Updated: **October 3, 2026 (Toronto time), during the separate individual-activity foundation; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+The separate NPS `/thingstodo` adapter now normalizes individual listings for
+the five pilots using an injected transport. It preserves source text, nullable
+and empty fields, explicit boolean/string flags and documented pet-flag aliases.
+Related parks establish attribution; geography, responsible agency, difficulty
+and permit needs stay unconfirmed or null. Untrusted HTML/credit remain text,
+without rendering or rights inference. Source issue/update/publication clocks
+stay null. See [ACTIVITY_FOUNDATION.md](docs/ACTIVITY_FOUNDATION.md).
+
+Complete pagination requires stable totals, exact offsets and unique IDs within
+100 pages, 5,000 records, 256 KiB per record and 8 MiB per snapshot. A populated
+inventory dropping below half requires review. Failures/refusals discard all
+partial candidates and retain the validated defensive baseline, original
+successful check and observation clocks. Unchanged semantic hashes preserve
+observation clocks; collection attempts must strictly advance. An independent
+168-hour freshness policy keeps unknown, failed, quarantined and stale states
+distinct, with exact microsecond expiry boundaries.
+
+The initial 26 source-contract tests failed because the module was absent, then
+passed after implementation. Further tests exercise aggregate bounds, incoherent
+states, odd-count drops and recovery. Exact-size review found an extra counted
+comma and an estimated fallback envelope: the boundary regression reproduced
+rejection at the valid exact limit, then passed with exact success-envelope and
+comma accounting. A second boundary regression confirmed that failed/refused
+metadata could exceed a full baseline's size limit. Preflight now requires room
+for either degraded envelope before transport; it refuses rather than trimming
+evidence. All **31 focused activity tests** now pass. Independent implementation
+and documentation reviews have no remaining findings. Fresh **324 Node + 608
+Python + 66 generated-site = 998 tests**, zero Astro diagnostics across 36 files
+and both 14-page builds passed on the final implementation. Fourteen relative
+documentation links and diff checks passed. Local Chromium is unavailable in
+this WSL distribution; required supported CI must complete both browser suites.
+CI integration is being completed on `codex/park-activity-foundation`;
+integration results will be recorded here.
+
+This increment has no default HTTP transport, credentials, activity persistence,
+real source collection, private backups, public-data promotion or visitor
+rendering. Existing public profiles, guidance, alerts, dependencies and workflows
+are unchanged. The last verified live build remains **`2fa4d4a`** /
+**`pilot-0609c66f7954`**, with its stale alerts, noindex and ad-free safeguards.
+No deployment or new live-site check occurred. Synthetic activity checks clear
+no source-rights, durable-backup or live-release gates.
+
+Next: implement the separate bounded header-authenticated activity transport and
+immutable private checkpoint/recovery lifecycle, using existing POSIX guards.
+Real activity collection, text-rights review, public promotion and Things to Do
+rendering remain subsequent steps. A live release still requires deliberate
+alert refresh, complete release checks and applicable deployment authorization.
+
+## Preceding Overview and When to Visit integration — PR #12
 
 The five park pages now render Overview and When to Visit from the validated,
 approved public profile/rights pair. Native page navigation reaches both sections
