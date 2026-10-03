@@ -89,6 +89,6 @@ After private collection and preview, the offline [alert-data candidate preparer
 
 ## Handoff
 
-Read `AGENTS.md` and the complete [permanent project instructions](docs/PROJECT_INSTRUCTIONS.md), then `PROJECT_STATUS.md` and `docs/DEVELOPMENT.md`. The initial pilot design in `docs/superpowers/specs/2026-09-28-national-park-trip-readiness-design.md` and implementation plans in `docs/superpowers/plans/` are historical where they conflict with the revised scope. The project Pages increment is `2026-09-30-pages-base-path.md`; existing source-scope decisions are documented in `docs/ENTRY_SOURCE_REVIEW.md`. Start with the revised Phase 1 foundation assessment in the current handoff.
+Read `AGENTS.md` and the complete [permanent project instructions](docs/PROJECT_INSTRUCTIONS.md), then `PROJECT_STATUS.md` and `docs/DEVELOPMENT.md`. The initial pilot design in `docs/superpowers/specs/2026-09-28-national-park-trip-readiness-design.md` and implementation plans in `docs/superpowers/plans/` are historical where they conflict with the revised scope. The project Pages increment is `2026-09-30-pages-base-path.md`; existing source-scope decisions are documented in `docs/ENTRY_SOURCE_REVIEW.md`. Follow the current Phase 1 milestone and [recorded foundation assessment](docs/FOUNDATION_ASSESSMENT.md).
 
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.
