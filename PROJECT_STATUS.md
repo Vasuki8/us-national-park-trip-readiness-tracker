@@ -1,20 +1,100 @@
 # Project status and handoff
 
-Updated: **October 2, 2026 (Toronto time), after PR #10 integration; the verified PR #7 live release is unchanged**.
+Updated: **October 3, 2026 (Toronto time), after the first real profile collection and private recovery; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+The first real NPS `/parks` collection succeeded with checkpoint/check clock
+**2026-10-03T03:45:48.554581Z** (October 2 at 23:45 Toronto). This clock was
+sampled before the batch requests, not measured at completion. All five scoped
+requests succeeded; the immutable private checkpoint, offline verification and
+review-candidate export completed. Introductions, seasonal context and category
+names were inspected against current official NPS terms and park context.
+Yellowstone's API introduction is an empty string and remains empty; its website
+introduction was not substituted. Seasonal text remains distinct from forecasts,
+categories do not establish activity availability, and source issue/update/
+publication timestamps remain null. No photos, marks or raw API responses were
+retained for this proposed public scope.
+
+The **19,877-byte checkpoint** was uploaded to the selected private GitHub
+repository. Authenticated identity, ownership, private visibility, write access,
+disabled Actions and disabled Pages were checked before upload and recovery.
+Only that verified checkpoint and reviewed repository setup documentation/
+allowlist changes were committed. A fresh authenticated remote clone and fresh
+private restore passed the unchanged checkpoint verifier and matched the original
+ID and canonical bytes. Earlier ledger/alert checkpoints remain preserved. The
+first transfer attempt stopped at the existing ignore allowlist; its inventory
+was explicitly extended. The initial fresh clone lacked the transfer-local
+credential helper; the same existing helper was configured only for the new
+selected-repository clone. Neither issue changed access controls or exposed
+credentials. Detailed IDs, commits, paths and receipts remain in owner-only WSL
+storage outside the website checkout.
+
+The initial approved-bundle operation was rejected by automatic approval review
+pending the owner's text-use decision. The owner then approved the exact scope
+displayed on the private review page; the subsequent guarded operation was
+accepted. No complete human reading or new deployment authority is inferred.
+The **42,692-byte immutable reviewed bundle** binds the complete checkpoint,
+public projection, separate rights manifest and decision. Its selected private
+upload, fresh authenticated remote download and fresh restore passed independent
+bundle verification and exact ID/canonical-byte comparisons. Checkpoint-only
+recovery did not substitute for this approved-bundle recovery. Detailed review,
+authorization, transfer, recovery and application receipts remain private.
+
+The existing preparer regenerated/rechecked the exact initial two-file patch
+immediately before native Windows `git apply --check` and application. The paired
+`data/park-profiles.json` and `data/profile-source-rights.json` now match the
+approved projection and rights exactly, with one final LF. Windows Git initially
+converted that LF to CRLF; validation and independent review caught the mismatch.
+The two exact paths now use byte-preserving Git attributes. No source field or
+clock changed during the repair. Synthetic profile/readiness fixtures now
+establish their own profile-free base instead of inheriting real published
+profile evidence; their separate positive and refusal cases remain intact.
+Frontend, existing guidance/alerts/history, dependencies and workflows are
+unchanged. No deployment or new live-site check occurred.
+
+Fresh local verification passed **307 Node + 577 Python + 62 generated-site =
+946 tests**, zero Astro diagnostics across 32 files and both 14-page builds.
+The final Python run followed independent review's fixture no-write assertion
+repair and passed all 577 tests. Strict TypeScript for the changed test,
+12 relative documentation links and `git diff --check` passed. A disposable
+native Windows Git checkout with `core.autocrlf=true` preserved both exact profile
+file bytes under the new attributes. The existing validator reproduced the CRLF
+refusal before repair; Node fixture failures and eight Python readiness failures
+were observed before establishing explicit synthetic profile-free bases.
+Production validators and release gates were not weakened. Local Chromium suites
+remain unavailable in the current WSL distribution; supported CI is required
+before integration.
+
+The private readiness report, with the current reviewed ledger/recovered backup
+and separate profile review/recovered bundle, verifies exact public profile and
+rights matching plus all five profile rights records. It records **3 required
+passes, 0 blocked and 2 not checked**, with `release_ready: false`; external
+provider/freshness and hosting assessments are not ingested. The repository-only
+report is **1 required pass, 1 blocked and 3 not checked** because no recovered
+profile evidence is supplied. The first private report invocation lacked Node 24
+on operator PATH and was refused by the existing ledger replay guard; the normal
+project runtime rerun passed without ledger mutation. No gate was forced to pass.
+
+Next: integrate source-backed Overview and When to Visit using these verified
+profiles. Preserve the original collection clock throughout. The live alert feed's four-hour
+freshness window ended at **2026-10-03T03:10:42.565Z**; a subsequent authorized
+live release needs a deliberate alert refresh rather than a build-time clock
+change. Profiles retain their independent 168-hour freshness policy.
 
 The owner adopted the complete [permanent project instructions](docs/PROJECT_INSTRUCTIONS.md) on October 2. The product direction is **National Park Explorer & Trip Planner**, with readiness as part of park discovery and trip planning. All 49 instruction sections, the five development phases and priority hierarchy are preserved. `AGENTS.md` requires future sessions to read them in full; they supersede conflicting historical scope exclusions and plans. Codex is responsible for routine engineering, source processing and authorized operations; the owner makes consequential product, business, cost, legal-risk, privacy and strategic decisions.
 
 The current milestone is **Phase 1 — Foundations**. The [foundation assessment](docs/FOUNDATION_ASSESSMENT.md) maps existing ingestion, provenance, cached publication, freshness/failure handling, rights boundaries and page architecture to the broader five-park scope. Keep Astro/GitHub Pages and the existing alert tools while adding separate profile, activity and named-location weather contracts. Cloudflare, scheduled collection, rights-verified imagery, richer planning sections and locally saved trips remain staged directions; hosting migration is not a prerequisite.
 
-Continue on **`main`**. [PR #10](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/10)
+Current verification branch: **`codex/verified-five-park-profile-data`**.
+The preceding [PR #10](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/10)
 merged checked head **`39b3085e647d32ebb409e94a9aa3e0cdafe24d2e`** as
 **`d7d8e16a157fb8040fb34a933a82264c386f5f59`** under the owner's standing
 integration authorization. Native Git confirms their trees are identical. The new
 [profile publication contract](docs/PROFILE_PROMOTION.md) keeps public profiles
 and their separate text-rights manifest paired, all-five, exact-field validated
-and bound to unchanged source/observation clocks. Both public files remain absent.
+and bound to unchanged source/observation clocks. Both public files were absent
+at that integration; the real promotion is recorded above.
 An explicit immutable private approval bundle binds the checkpoint and complete
 public/rights digests. Offline tools verify/restore that bundle and prepare or
 regenerate/check only the paired Git patch, including exact old file bytes or
@@ -70,9 +150,9 @@ Reassess this unresolved dependency before adding remote imagery/server caching
 and validate a compatible maintainer fix when available. Existing Action runtime
 and Ubuntu runner migration notices also remain maintenance follow-ups.
 
-This increment performs no real collection, key read, text approval, remote
+The preceding PR #10 increment performed no real collection, key read, text approval, remote
 backup, public promotion, deployment or live-browser check. Frontend, real public
-data, dependencies and workflows are unchanged. Next: deliberately collect the
+data, dependencies and workflows were unchanged. Its recommended next task was to deliberately collect the
 actual five-park profiles, review exact text reuse, back up the approved bundle
 to the selected private repository and verify fresh-download recovery, then
 prepare/recheck the exact paired public-data change. Source-backed Overview and
@@ -115,8 +195,9 @@ Fresh local verification passed data validation, **290 Node + 432 Python + 62 ge
 
 The **previous live PR #6 build is the current rollback candidate**: **`fea984937067fc85fde08d506ced719254e0bc48`** / **`pilot-08efc3ad8281`**, successful push/main [Verify pilot #197](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37072908539), job **111056451305**, artifact **11255867049**, digest `sha256:441ebac553624cbfb4cd07fff0798549a089c823237d128936423950538376c6`, available through **October 9, 2026 at 22:35:29 UTC**. Immediately before this deployment, its GitHub eligibility, downloaded ZIP digest, safe inventory, manifests, both noindex builds, verifier and screenshots were independently rechecked. Previous [Deployment #5](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37073863612) verified 22 files and 14 pages; the original deliberate deployment/rollback/restoration drill remains recorded in `docs/PAGES_RELEASE.md`. No new rollback drill was performed for this refresh.
 
-The current next step is the real-profile operator work described at the top;
-the earlier schema/promotion milestone is now verified and integrated. Existing
+The current next step is source-backed Overview and When to Visit described at
+the top; real-profile collection, approved-bundle recovery and paired data are
+now verified. Existing
 six-record guidance approvals cannot
 approve park descriptions or seasonal text. Do not repeat already verified pilot
 work or migrate hosting merely because a preferred platform is listed. The bounded

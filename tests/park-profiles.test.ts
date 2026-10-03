@@ -57,7 +57,13 @@ function rehash(profile: any) {
 }
 function temporary(fn: (dir: string) => void) {
   const dir = mkdtempSync(join(tmpdir(), 'public-profiles-'));
-  try { cpSync(join(root, 'data'), join(dir, 'data'), {recursive: true}); fn(join(dir, 'data')); }
+  try {
+    const data = join(dir, 'data');
+    cpSync(join(root, 'data'), data, {recursive: true});
+    // Each case installs its own profile evidence; real promoted data is unrelated.
+    for (const file of ['park-profiles.json', 'profile-source-rights.json']) rmSync(join(data, file), {force: true});
+    fn(data);
+  }
   finally { rmSync(dir, {recursive: true, force: true}); }
 }
 
