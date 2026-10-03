@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 2, 2026 (Toronto time), after PR #9 integration; the verified PR #7 live release is unchanged**.
+Updated: **October 2, 2026 (Toronto time), during reviewed-profile publication development; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
@@ -8,7 +8,52 @@ The owner adopted the complete [permanent project instructions](docs/PROJECT_INS
 
 The current milestone is **Phase 1 — Foundations**. The [foundation assessment](docs/FOUNDATION_ASSESSMENT.md) maps existing ingestion, provenance, cached publication, freshness/failure handling, rights boundaries and page architecture to the broader five-park scope. Keep Astro/GitHub Pages and the existing alert tools while adding separate profile, activity and named-location weather contracts. Cloudflare, scheduled collection, rights-verified imagery, richer planning sections and locally saved trips remain staged directions; hosting migration is not a prerequisite.
 
-Continue on **`main`**. [PR #9](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/9) merged checked head **`2f34eb7bbfc8c55443656e3b8c721ffc4bc1ac4c`** as **`866dcbeb766592955aacce78a10898ddd65de76a`** under the owner's standing integration authorization; their trees match. The separate profile transport now uses only the scoped fixed NPS `/parks` endpoint, private header authentication, no redirects, three bounded attempts, a 20-second timeout and a 4,000,000-byte body limit. Strict parser/body refusals and literal or once-percent-decoded key echoes quarantine safely; terminal HTTP/network failures retain last-good profiles as failed attempts. Source bodies, headers and rejected text are never retained.
+The active branch is **`codex/reviewed-profile-promotion`**. The new
+[profile publication contract](docs/PROFILE_PROMOTION.md) keeps public profiles
+and their separate text-rights manifest paired, all-five, exact-field validated
+and bound to unchanged source/observation clocks. Both public files remain absent.
+An explicit immutable private approval bundle binds the checkpoint and complete
+public/rights digests. Offline tools verify/restore that bundle and prepare or
+regenerate/check only the paired Git patch, including exact old file bytes or
+absence. They never apply or deploy it. Failed/quarantined continuation cannot
+replace retained public evidence or renew the successful-fetch clock.
+
+Once the public pair exists, the existing durable review, source rights and
+backup gates require matching profile-specific evidence. Existing entry guidance
+or alert approvals/backups cannot cover this new text. Absent public profiles
+preserve the current seven-gate/schema-2 pilot report. A verified matching bundle
+under a separate private parent establishes local recovery only; real off-host
+transfer and fresh authenticated download remain deliberate operator evidence.
+The existing provider/freshness and hosting limitations are not promoted to
+passes. Focused Python/Node regressions reproduced the missing bindings/gate
+coverage before implementation; synthetic new-file and replacement patches apply
+exactly in a disposable repository. Independent review reproduced a conflicting
+earlier observation hidden by a newer fetch; both changed-text and replacement-ID
+regressions failed, then passed after requiring the new observation to follow the
+public last successful confirmation. The final diff is independently approved.
+
+Fresh local verification passed **307 Node + 577 Python + 62 generated-site =
+946 tests**, zero Astro diagnostics across 32 files and both 14-page hosting-base
+builds. The new contract/release/readiness coverage adds **17 Node + 19 Python
+release + 17 Python readiness tests**. Final Node and Python runs followed the
+review repair; 46 readiness methods and 19 release methods also passed separately.
+Strict TypeScript for the changed validator/test files, 22 relative documentation
+links and `git diff --check` passed. Repository-only readiness retains its exact
+existing pilot result: one required pass, four required not checked and
+`release_ready: false`. Local browser suites were not rerun; exact PR-head
+supported CI/browser verification and the checked-head merge receipt remain
+pending before integration.
+
+This increment performs no real collection, key read, text approval, remote
+backup, public promotion, deployment or live-browser check. Frontend, real public
+data, dependencies and workflows are unchanged. Next: deliberately collect the
+actual five-park profiles, review exact text reuse, back up the approved bundle
+to the selected private repository and verify fresh-download recovery, then
+prepare/recheck the exact paired public-data change. Source-backed Overview and
+When to Visit follow verified public profiles; photos, individual activities and
+named-location NWS weather retain separate source/rights contracts.
+
+The preceding [PR #9](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/9) merged checked head **`2f34eb7bbfc8c55443656e3b8c721ffc4bc1ac4c`** as **`866dcbeb766592955aacce78a10898ddd65de76a`** under the owner's standing integration authorization; their trees match. The separate profile transport now uses only the scoped fixed NPS `/parks` endpoint, private header authentication, no redirects, three bounded attempts, a 20-second timeout and a 4,000,000-byte body limit. Strict parser/body refusals and literal or once-percent-decoded key echoes quarantine safely; terminal HTTP/network failures retain last-good profiles as failed attempts. Source bodies, headers and rejected text are never retained.
 
 The [private profile collection tools](docs/PROFILE_COLLECTION.md) now provide all-five immutable checkpoints, offline integrity verification, fresh-destination restore and private review-candidate export. They reuse existing owner-only POSIX guards and validate the entire baseline, source clocks, external destination and output lock before key access or requests. Existing files are never overwritten or repaired. Checkpoints have an explicit parent ID but no mutable latest head or verified history-chain claim; separate outputs may branch from the same baseline. Pre-install interruption loses uncommitted in-memory results; post-install failure may leave a checkpoint that must be verified offline before retry. Review export preserves degraded states and nullable clocks with rights not checked, approval false and no public-data write.
 
@@ -44,7 +89,19 @@ Fresh local verification passed data validation, **290 Node + 432 Python + 62 ge
 
 The **previous live PR #6 build is the current rollback candidate**: **`fea984937067fc85fde08d506ced719254e0bc48`** / **`pilot-08efc3ad8281`**, successful push/main [Verify pilot #197](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37072908539), job **111056451305**, artifact **11255867049**, digest `sha256:441ebac553624cbfb4cd07fff0798549a089c823237d128936423950538376c6`, available through **October 9, 2026 at 22:35:29 UTC**. Immediately before this deployment, its GitHub eligibility, downloaded ZIP digest, safe inventory, manifests, both noindex builds, verifier and screenshots were independently rechecked. Previous [Deployment #5](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37073863612) verified 22 files and 14 pages; the original deliberate deployment/rollback/restoration drill remains recorded in `docs/PAGES_RELEASE.md`. No new rollback drill was performed for this refresh.
 
-Next: establish **the new text-use scope and a reviewed public-profile schema/promotion contract**, with source-specific approval/hash bindings and profile rights/backup coverage in the public validator and readiness inventory. Existing six-record guidance approvals cannot approve park descriptions or seasonal text. Use the private tools in a deliberate real-profile operator session, extend the selected private backup inventory and verify fresh-download recovery; earlier ledger/alert backup receipts do not cover profiles. Build source-backed Overview and When to Visit after verified public profiles exist; individual activities and named-location NWS weather follow their separate source contracts in the assessment. Do not repeat already verified pilot work or migrate hosting merely because a preferred platform is listed. The bounded manual screen-reader review remains an unresolved quality check for the technical team; actual announcements cannot be inferred from browser status attributes. The five published feeds were recent at live-check time; their four-hour freshness window ends **2026-10-03T03:10:42.565Z** (October 2 at 23:10 Toronto), and later stale warnings remain truthful without another deliberate collection/promotion. Guidance review time remains **2026-10-01T01:18:28.701Z**; its seven-day window ends **October 8 at 01:18:28.701 UTC**. Indexing, advertising and recurring operations remain disabled with their existing gates and applicable owner decisions.
+The current next step is the real-profile operator work described at the top;
+the earlier schema/promotion milestone is now implemented pending this branch's
+full verification and integration. Existing six-record guidance approvals cannot
+approve park descriptions or seasonal text. Do not repeat already verified pilot
+work or migrate hosting merely because a preferred platform is listed. The bounded
+manual screen-reader review remains an unresolved quality check for the technical
+team; actual announcements cannot be inferred from browser status attributes.
+The five published feeds were recent at live-check time; their four-hour freshness
+window ends **2026-10-03T03:10:42.565Z** (October 2 at 23:10 Toronto), and later stale
+warnings remain truthful without another deliberate collection/promotion.
+Guidance review time remains **2026-10-01T01:18:28.701Z**; its seven-day window ends
+**October 8 at 01:18:28.701 UTC**. Indexing, advertising and recurring operations
+remain disabled with their existing gates and applicable owner decisions.
 
 Owner workflow preference, recorded October 2: merge future PRs after required checks and review pass without asking again, include the next concrete step in chat updates and final responses, and keep this handoff current. `AGENTS.md` records the same preferences. A later documentation-only receipt commit does not change the pinned artifact served at the live URL.
 

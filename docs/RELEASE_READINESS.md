@@ -44,6 +44,25 @@ uv run --frozen python -m tracker.release_readiness \
 
 `--backup` is refused unless `--store` is also supplied. The backup is replay-verified by the existing backup module before its manifest can affect the report.
 
+When reviewed profiles have deliberately been promoted, supply their separate
+private reviewed bundle and verified recovered copy:
+
+```sh
+uv run --frozen python -m tracker.release_readiness \
+  --format json \
+  --store /absolute/private/entry-review \
+  --backup /absolute/private/backups/BACKUP_ID \
+  --profile-review /absolute/private/profile-review/reviewed.json \
+  --profile-backup /absolute/private/downloaded-profile-backup/reviewed.json
+```
+
+`--profile-backup` requires `--profile-review`. Both inputs use the existing
+owner-only POSIX file boundary outside the checkout. Their canonical paths
+and immediate parent directories must differ; the working review file cannot
+serve as its own backup. Both complete bundles are independently verified
+before comparison. These options perform no collection, approval, restore,
+transfer or public-data write.
+
 The CLI prints no supplied private path.
 
 Exit codes:
@@ -88,6 +107,20 @@ JSON is now **schema version 2**. The purpose remains `pilot_release_readiness`.
 
 The existing `summary` still counts all seven gates. `blocking` now means **required and not passed** for this target. Consumers of schema version 1 must account for that changed meaning before accepting version 2. Gate status, evidence and reason remain visible even when a later gate is not required. The text output labels those gates explicitly and shows both summaries.
 
+The optional profile inventory extends evidence within the existing durable
+review, backup and source-rights gates; it adds no gate and retains schema 2.
+With neither `data/park-profiles.json` nor `data/profile-source-rights.json`,
+the report is unchanged, including when unrelated valid private profile
+evidence is supplied. Either public file activates the profile requirements.
+Missing paired files, malformed JSON, invalid five-park inventories or invalid
+rights bindings block all three gates, even if the older guidance evidence
+passes. Duplicate JSON keys, nonfinite constants and inputs above 8 MiB are
+refused. Public profile inputs must be regular files under a nonsymlink
+immediate parent and use canonical UTF-8 JSON with at most one final newline;
+file symlinks and special files are refused before reading. No profile
+validation result establishes provider compatibility,
+freshness or release authorization.
+
 `release_ready` remains an evidence result for the named target, not deployment authorization. Target selection changes the report only; it does not change the site or activate features.
 
 ## Gates
@@ -115,6 +148,23 @@ The Python `evaluate_readiness` API expects an already replay-verified private s
 
 This establishes approval provenance within the ledger; it does not authenticate the operator's identity or independently verify the truth of their review metadata.
 
+For an active valid profile inventory, durable review additionally requires a
+verified `private_reviewed_park_profiles` bundle whose complete public profile
+projection and separate rights manifest exactly match the public files.
+The bundle binds the immutable checkpoint, complete projection, rights and
+explicit approval by canonical hashes. Collection states and source clocks
+are part of the comparison; a semantic content hash alone cannot approve a
+different check time, failed attempt or rights review. Existing guidance
+baselines do not approve profiles.
+
+Absent profile review is `not_checked`; a supplied review that differs from
+the public files is `blocked`. Existing unresolved guidance requirements
+continue to block this shared gate. Profile evidence consists only of
+inventory presence/validity/counts and `public_profiles_match_review`;
+the report emits no profile text, private paths or bundle/checkpoint hashes.
+The Python API validates supplied profile dictionaries again; a dictionary
+is not proof of authenticated human approval.
+
 ### NPS alert API
 
 The read-only keyed provider integration has now been validated for all five pilot parks. Run **36628434444** returned `gate_passed:true` with successful normalization for Yosemite, Rocky Mountain, Yellowstone, Zion and Grand Canyon.
@@ -133,6 +183,17 @@ With a ledger but no verified backup: `blocked`.
 
 A verified backup passes only when its manifest matches the exact current ledger revision and event count. A valid but older backup is blocked as stale for release purposes.
 
+For active public profiles, the gate additionally requires a separately
+verified recovered profile bundle matching the current reviewed bundle in
+full, including its bundle ID and canonical bytes. An absent, older or
+different profile backup blocks this gate even when the current ledger backup
+passes. `profile_backup_verified` reports supplied bundle integrity;
+`profile_backup_matches_review` reports exact current public-review coverage.
+Neither field proves an off-host copy or remote recovery. Retain the separate
+private-repository upload, fresh-download and restore receipts under
+[GITHUB_PRIVATE_BACKUP.md](GITHUB_PRIVATE_BACKUP.md). Earlier ledger and alert
+backup receipts do not cover profiles.
+
 ### Source-rights review
 
 The report requires both the record-level `rights_basis` / `rights_reviewed_at` fields and the exact-scope `data/source-rights.json` manifest.
@@ -148,6 +209,21 @@ The gate passes only when:
 - no public media asset or NPS-hosted/mark media use is detected in the current application.
 
 The manifest is grounded in the official NPS disclaimer and Arrowhead-use guidance. This pass applies only to the current six public text uses. It is not blanket clearance for NPS media, marks, third-party material, private raw captures, or future content.
+
+Active public profiles also require the separate
+`data/profile-source-rights.json` manifest. It must cover each of the five
+profiles exactly, binding park code, profile ID, scoped API source URL and
+normalized content hash. Its allowed use is
+`normalized_profile_text_and_category_names`, with a separate official-policy
+and exact-profile review clock and method. Third-party material, NPS marks,
+media and private raw captures remain excluded. The rights review covers only
+the normalized introduction, identity, seasonal context and category names;
+categories are not individual activities and seasonal context is not a
+forecast. A guidance rights manifest cannot provide this new coverage.
+
+Successful profile validation contributes `profile_records_covered` to the
+existing rights gate and retains its commercial-notice and media safeguards.
+It does not turn an API response or a review-export flag into rights clearance.
 
 Inventory validation precedes manifest coverage. Empty inventories, duplicate/conflicting IDs, invalid park/source bindings or a missing pilot source return `public_guidance_inventory_invalid`, even if the rights manifest was reduced or edited to match. A matching manifest cannot establish that its inputs are a valid pilot inventory. Record and manifest ordering remain immaterial; report schema and evidence fields are unchanged.
 

@@ -153,6 +153,8 @@ No remote copy or real recovery is claimed by this development increment.
 The review envelope retains the exact checkpoint, its identity, unchanged clocks
 and degraded states. Source rights remain not checked and approval remains
 false. It is not accepted by the existing alert promotion tools or website.
-A source-specific reviewed public-profile schema, approval/rights binding and
-promotion tool remain subsequent work before Overview/When to Visit consume
-real profiles. No release gate is cleared by these commands.
+The separate [reviewed promotion tools](PROFILE_PROMOTION.md) now provide the
+public schema, exact approval/rights bundle and paired patch prepare/check
+contract. A real collection, text-use review, fresh remote recovery and deliberate
+promotion still precede Overview/When to Visit consumption. No release gate is
+cleared by the collection/export commands.
