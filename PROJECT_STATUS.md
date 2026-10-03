@@ -34,6 +34,13 @@ Chromium suites before integration; local Chromium remains unavailable in this
 WSL distribution. Project-path build/content checks passed; supported browser
 verification and final integration receipts are pending.
 
+The first PR #12 CI run, Verify pilot #219, passed every Node/Python/build/site
+gate and 110 of 111 root browser cases. The new no-JavaScript case selected the
+`noscript` wrapper, whose text Playwright deliberately excludes. Existing tests
+and the installed matcher confirm the boundary. The test now selects its rendered
+paragraph and checks visibility as well as disclosure text. Application output
+was unchanged. Both browser suites must pass on the corrected head before merge.
+
 The optional standalone TypeScript check initially used NodeNext against bundled
 Astro modules, producing JSON/import-resolution errors. The project uses bundler
 resolution; the same strict check with that resolution and Vite types passed.

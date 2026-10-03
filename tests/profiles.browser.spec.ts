@@ -77,7 +77,10 @@ test('without JavaScript the overview and seasonal sources retain original clock
       for (const id of ['overview', 'when-to-visit']) {
         const section = page.locator(`#${id}`);
         await expect(section).toBeVisible();
-        await expect(section.locator('noscript')).toContainText('Freshness labels reflect the build without JavaScript.');
+        // Playwright's text matcher skips the noscript element itself; check its rendered paragraph.
+        const fallback = section.locator('noscript p');
+        await expect(fallback).toBeVisible();
+        await expect(fallback).toContainText('Freshness labels reflect the build without JavaScript.');
         await expect(section.locator('[data-profile-success]')).toHaveText(snapshot.last_successful_fetch_at);
         await expect(section.locator('[data-profile-source]')).toHaveAttribute('href', snapshot.source_url);
       }
