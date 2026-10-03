@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 3, 2026 (Toronto time), during source-backed Overview and When to Visit development; the verified PR #7 live release is unchanged**.
+Updated: **October 3, 2026 (Toronto time), after PR #12 integrated source-backed Overview and When to Visit; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
@@ -29,31 +29,52 @@ missing, empty, escaped, failed, quarantined and stale states. Sixteen pure test
 exercise freshness, invalid clocks and exact microsecond boundaries. Independent
 review found no actionable defects. Local browser checks confirmed native section
 focus, source clocks, expanded categories, Yellowstone's empty-text label and
-360-pixel layout without horizontal overflow. Supported CI must still run both
-Chromium suites before integration; local Chromium remains unavailable in this
-WSL distribution. Project-path build/content checks passed; supported browser
-verification and final integration receipts are pending.
+360-pixel layout without horizontal overflow. Project-path browser inspection
+also confirmed native focus, correct hosting-base navigation and original profile
+clocks. Strict TypeScript, all 15 relative documentation links and diff checks
+passed. Local Chromium remains unavailable in this WSL distribution; supported
+CI completed both suites before integration.
+
+[PR #12](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/12)
+merged checked head **`ef475f32b7e8a98062183174951f236db33dd26a`** as
+**`561b932f014fabf62f99a5c82b246f992b66d6d8`** under the owner's standing
+merge authorization. Native Windows Git confirms their trees are identical;
+the local checkout is fast-forwarded to `main`. Independent implementation,
+documentation and browser-test correction review has no remaining findings.
+
+[Verify pilot #220](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37117615712),
+job **111187358491**, passed **324 Node + 577 Python + 66 generated-site +
+126 Chromium = 1,093 tests**, zero Astro diagnostics across 36 files and both
+14-page builds. All **111 root + 15 project-path browser cases** passed; all
+three root accessibility screenshots survived the project suite. CI checked its
+standard PR merge **`7f9df514ed99d9224dffbdb96f694729b83efd77`**, combining the
+checked head with unchanged main **`c85f7125a05cb0e03b3ecca8fc525283044d039a`**.
+Fresh check, complete job-log and artifact-metadata inspection passed. Artifact
+**11271993269** uploaded successfully; it was not downloaded or deployed.
+PR-only verification cannot be used as a live release artifact. The existing
+dependency advisory and Action/runner notices remain unchanged.
 
 The first PR #12 CI run, Verify pilot #219, passed every Node/Python/build/site
 gate and 110 of 111 root browser cases. The new no-JavaScript case selected the
 `noscript` wrapper, whose text Playwright deliberately excludes. Existing tests
 and the installed matcher confirm the boundary. The test now selects its rendered
 paragraph and checks visibility as well as disclosure text. Application output
-was unchanged. Both browser suites must pass on the corrected head before merge.
+was unchanged. Both suites subsequently passed on the corrected head before merge.
 
 The optional standalone TypeScript check initially used NodeNext against bundled
 Astro modules, producing JSON/import-resolution errors. The project uses bundler
 resolution; the same strict check with that resolution and Vite types passed.
 No production code or compiler strictness was changed to accommodate the check.
 
-Current branch: **`codex/park-overview-seasons`**, based on main
-**`c85f7125a05cb0e03b3ecca8fc525283044d039a`**. Required CI and final integration
-are pending. The live site remains at **`2fa4d4a`**, with stale alerts and its
-existing noindex/ad-free safeguards. This frontend change establishes no new
-source accuracy, backup, hosting or live-release readiness evidence.
+Current branch: **`main`**, after checked PR #12 integration. The generated
+snapshot is **`pilot-a2056877d1e7`** under both hosting bases. Its identity includes
+the rendered profiles; it does not advance any source clock. The last verified
+live build remains **`2fa4d4a`** / **`pilot-0609c66f7954`**, with stale alerts and
+its existing noindex/ad-free safeguards. No deployment or new live-site check
+occurred. This frontend change establishes no new source accuracy, backup,
+hosting or live-release readiness evidence.
 
-Next: finish CI, integrate under the owner's
-standing merge authorization, then build the separate NPS `/thingstodo` activity
+Next: build the separate NPS `/thingstodo` activity
 contract with provenance, unknown-field and freshness semantics. Named-location
 weather and rights-reviewed imagery remain separate subsequent work. A live
 release still needs a deliberate alert refresh, full release checks and applicable
