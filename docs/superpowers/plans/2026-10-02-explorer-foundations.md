@@ -47,11 +47,17 @@ Files: `tracker/park_profiles.py`, `tests/test_park_profiles.py`.
 
 Files: `docs/DEVELOPMENT.md`, `PROJECT_STATUS.md`, this plan.
 
-- [ ] Run the complete Python and Node tests, Astro check, both builds and generated-site checks; use supported CI for both browser suites.
-- [ ] Obtain independent branch review, fix actionable findings and verify the exact PR head before the preauthorized merge.
-- [ ] Update the handoff and document remaining transport/durability/source-rights work. Record accurately that the live artifact and source data were unchanged.
+- [x] Run the complete Python and Node tests, Astro check, both builds and generated-site checks; use supported CI for both browser suites.
+- [x] Obtain independent branch review, fix actionable findings and verify the exact PR head before the preauthorized merge.
+- [x] Update the handoff and document remaining transport/durability/source-rights work. Record accurately that the live artifact and source data were unchanged.
 
-Local checkpoint: 290 Node, 477 Python and 62 generated-site tests passed;
-Astro reported zero diagnostics and both 14-page builds passed. Independent
-review and the mutation-fallback re-review passed. PR browser CI and integration
-remain pending; current handoff records the detailed evidence and next milestone.
+Completed checkpoint: 290 Node, 477 Python and 62 generated-site tests passed
+locally; Astro reported zero diagnostics and both 14-page builds passed.
+Independent review and the mutation-fallback re-review passed. Exact-head
+[Verify pilot #206](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37086874124)
+also passed all 122 Chromium cases and retained all three accessibility
+screenshots, totaling 951 tests. [PR #8](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/8)
+merged checked head `b78f73080a4aa7124de0f8ddb8a23f1c8b94e315` as
+`5bfd61e4c017ff5dc2824c4737ea029dfead0f02`; their trees match. The live artifact
+and public source data are unchanged. The current handoff records the remaining
+transport, private durability/export and text-use review work.
