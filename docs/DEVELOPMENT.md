@@ -6,8 +6,9 @@ Read the complete [permanent owner instructions](PROJECT_INSTRUCTIONS.md) and
 the current `PROJECT_STATUS.md` handoff before development. National Park
 Explorer & Trip Planner includes park discovery, activities, when-to-visit
 guidance, detailed planning, named-location weather, conditions and account-free
-personal trip tools. The five-phase policy governs the order of work; the first
-increment is a foundation assessment against the existing implementation.
+personal trip tools. The five-phase policy governs the order of work. The
+[foundation assessment](FOUNDATION_ASSESSMENT.md) records existing capabilities,
+source-contract gaps and the implementation sequence.
 
 Codex owns routine technical decisions, implementation, source processing,
 testing, diagnosis and authorized release operations. Escalate consequential
@@ -24,6 +25,21 @@ owner scope; current privacy, provenance and release safeguards still apply.
 `data/parks.json` holds the reviewed pilot inventory, park-specific official URLs and IANA timezones. `data/rules.json` holds annual entry guidance, exact excerpt evidence and rights-review metadata. `data/alerts/*.json` holds the approved public collector state; the first five successful baselines were promoted with owner approval. Historic and synthetic tests use explicit fixtures rather than these mutable public snapshots.
 
 `src/lib/readiness.ts` is the pure clock-injected decision layer. `scripts/validate-data.ts` gates build-time inventory, hashes, timestamp coherence and source scope. `tracker/alerts.py` handles injectable collection, bounded transport and atomic writes. Astro pages/components render meaningful HTML, and small browser scripts handle search and page-only trip choices. Tests use synthetic provider responses, never live network requests.
+
+The legacy `python -m tracker` direct-write command is retired. It returns exit
+2 with a static migration message and does not read keys, parse destinations,
+request sources or write files. Continue using the explicit private
+`python -m tracker.stage` commands and paired reviewed promotion workflow;
+there is no second public-data writer.
+
+`tracker/park_profiles.py` is a separate injectable NPS `/parks` normalization
+and collection foundation. It retains introductions, official park identity,
+category-only activity metadata and clearly typed seasonal weather context.
+Missing optional fields remain null; failed or quarantined attempts retain the
+last-good profile and successful clock. Its initial profile age policy is 168
+hours, independent of alert freshness. It has no default HTTP transport,
+persistence, CLI or website consumer. See the assessment for the remaining
+private durability, transport, new text-rights scope and reviewed export steps.
 
 Each park page has native "On this page" navigation after its introduction. Fragment links reach the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
 
