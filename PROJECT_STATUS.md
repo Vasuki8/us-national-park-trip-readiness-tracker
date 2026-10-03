@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 3, 2026 (Toronto time), after the first real profile collection and private recovery; the verified PR #7 live release is unchanged**.
+Updated: **October 3, 2026 (Toronto time), after PR #11 integrated the first reviewed real profiles and private recovery; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
@@ -63,8 +63,29 @@ file bytes under the new attributes. The existing validator reproduced the CRLF
 refusal before repair; Node fixture failures and eight Python readiness failures
 were observed before establishing explicit synthetic profile-free bases.
 Production validators and release gates were not weakened. Local Chromium suites
-remain unavailable in the current WSL distribution; supported CI is required
-before integration.
+remain unavailable in the current WSL distribution; supported CI completed both
+browser suites before integration. The development guide's outdated statements
+about absent real profiles were corrected; its five relative links and the
+narrow independent documentation review passed.
+
+[PR #11](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/11)
+merged checked head **`41613b5f7400157ee13922938484b2ada55435b4`** as
+**`4a0012c876ad4d8cdd7ebfef3858dc7c093287b6`** under the owner's standing
+merge authorization. Native Windows Git confirms the checked-head and actual
+merge trees are identical; the local checkout is fast-forwarded to `main`.
+Independent review found no remaining actionable issues.
+
+[Verify pilot #216](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37096772806),
+job **111128244423**, passed **307 Node + 577 Python + 62 generated-site +
+122 Chromium = 1,068 tests**, zero Astro diagnostics across 32 files and both
+14-page builds. All **108 root + 14 project-path browser cases** passed, and all
+three root accessibility screenshots survived the project suite. CI checked its
+standard PR merge **`a4839884e0e2ace17fb5b4891d55e19d60a9fa55`**, combining the
+checked head with unchanged main **`34bbd66500ef425cc44d6ca469f1eb55edc6a723`**.
+Fresh check, complete job-log and artifact-metadata inspection passed. Artifact
+**11264253651** was uploaded successfully; it was not downloaded or deployed.
+The existing dependency advisory and Action/runner notices described below
+remain unchanged. No new live-site success is claimed.
 
 The private readiness report, with the current reviewed ledger/recovered backup
 and separate profile review/recovered bundle, verifies exact public profile and
@@ -86,7 +107,7 @@ The owner adopted the complete [permanent project instructions](docs/PROJECT_INS
 
 The current milestone is **Phase 1 — Foundations**. The [foundation assessment](docs/FOUNDATION_ASSESSMENT.md) maps existing ingestion, provenance, cached publication, freshness/failure handling, rights boundaries and page architecture to the broader five-park scope. Keep Astro/GitHub Pages and the existing alert tools while adding separate profile, activity and named-location weather contracts. Cloudflare, scheduled collection, rights-verified imagery, richer planning sections and locally saved trips remain staged directions; hosting migration is not a prerequisite.
 
-Current verification branch: **`codex/verified-five-park-profile-data`**.
+Current branch: **`main`**, after checked PR #11 integration.
 The preceding [PR #10](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/10)
 merged checked head **`39b3085e647d32ebb409e94a9aa3e0cdafe24d2e`** as
 **`d7d8e16a157fb8040fb34a933a82264c386f5f59`** under the owner's standing
