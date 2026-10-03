@@ -6,8 +6,10 @@ It prepares two public files, `data/park-profiles.json` and
 five-park profiles and exact text-rights bindings. Real private collection,
 reviewed-bundle recovery and paired promotion are recorded in the
 [current handoff](../PROJECT_STATUS.md). No real profiles or approvals were
-produced while initially developing these tools. The website does not
-yet consume profiles. The existing entry-guidance manifest approves a different
+produced while initially developing these tools. The website consumes the
+validated pair for Overview and When to Visit; see the
+[development guide](DEVELOPMENT.md) for rendering and freshness behavior.
+The existing entry-guidance manifest approves a different
 text scope and cannot approve descriptions or seasonal context.
 
 ## Rights and exact review
@@ -150,6 +152,6 @@ refusal/interruption report. Reports exclude paths, source text and credentials;
 approval is true only after successful explicit approval creation. An interrupted
 post-install approval may exist despite a refused report; verify before retry.
 
-Next: Overview and When to Visit consume the verified public profiles in a later
-frontend increment. Subsequent data refreshes repeat exact review, approved-bundle
+Overview and When to Visit consume the verified public profiles. Subsequent data
+refreshes repeat exact review, approved-bundle
 recovery and paired promotion without renewing source clocks during copying.

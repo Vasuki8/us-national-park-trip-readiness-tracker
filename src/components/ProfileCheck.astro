@@ -1,0 +1,24 @@
+---
+import { describeProfile, type ProfileClock } from '../lib/park-profile';
+interface Props { clock: ProfileClock | null; sourceUrl: string | null }
+const { clock, sourceUrl } = Astro.props;
+const state = describeProfile(clock, new Date());
+---
+<div class="profile-check" data-profile-clock={JSON.stringify(clock)}>
+  <p class="small"><strong data-profile-state={state.state}>{state.title}</strong> <span data-profile-detail>{state.detail}</span></p>
+  {clock && <p class="small muted">Last successful profile check: <time data-profile-success datetime={clock.last_successful_fetch_at}>{clock.last_successful_fetch_at}</time>.</p>}
+  <details>
+    <summary>Source and check times</summary>
+    <p>Source issue/update time: Not supplied.</p>
+    {clock && <p>Last attempted check: <time datetime={clock.last_checked_at}>{clock.last_checked_at}</time>. A check time is not a publisher update time.</p>}
+    {sourceUrl && <a data-profile-source href={sourceUrl}>Stored text source: NPS park profile <span aria-hidden="true">↗</span></a>}
+  </details>
+  <noscript><p class="small">Freshness labels reflect the build without JavaScript. Use the original check times and verify official sources before travel.</p></noscript>
+</div>
+<style>
+  .profile-check{border-top:1px solid var(--line);margin-top:22px;padding-top:16px;overflow-wrap:anywhere}
+  .profile-check p{margin-bottom:10px}.profile-check details{margin-bottom:0}
+  [data-profile-state]{display:block;color:var(--forest)}
+  [data-profile-state="stale"],[data-profile-state="failed"],[data-profile-state="quarantined"],[data-profile-state="invalid"]{color:var(--amber)}
+</style>
+<script>import '../scripts/profiles';</script>
