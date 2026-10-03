@@ -49,8 +49,9 @@ private review export. It reads a key only after validating storage, baseline,
 clock and the output lock. Review export keeps source rights not checked,
 approval false and source/publication clocks unchanged. See
 [PROFILE_COLLECTION.md](PROFILE_COLLECTION.md) for limits, interruption and
-backup boundaries. Real profiles, their text-use scope, remote recovery,
-reviewed public promotion and frontend consumption remain subsequent work.
+backup boundaries. The first real five-park collection, owner-approved text
+scope, private remote recovery and paired public-data promotion are recorded in
+the [current handoff](../PROJECT_STATUS.md). Frontend consumption remains next.
 
 `tracker/profile_release.py` now supplies the offline public projection, separate
 exact profile text-rights contract, explicit immutable approval bundle and paired
@@ -58,8 +59,9 @@ Git patch preparation/recheck. The public profile/rights pair is optional while
 both files are absent; incomplete or invalid pairs fail build validation. Once
 present, readiness extends existing review, rights and backup gates with exact
 profile evidence rather than inheriting guidance/alert coverage. Local recovery
-does not establish remote transport. No real profiles are published and no
-frontend consumer is added. See [PROFILE_PROMOTION.md](PROFILE_PROMOTION.md).
+does not establish remote transport. The current public pair contains the first
+reviewed real profiles; no frontend consumer is added yet. See
+[PROFILE_PROMOTION.md](PROFILE_PROMOTION.md).
 
 Each park page has native "On this page" navigation after its introduction. Fragment links reach the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
 

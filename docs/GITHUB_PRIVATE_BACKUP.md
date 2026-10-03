@@ -10,7 +10,7 @@ Before uploading evidence, confirm through authenticated GitHub repository metad
 
 Use owner-only WSL directories with no symlink ancestry for the working root, transfer clone and recovery parent. The existing `tracker.entry_review_backup` verifier still enforces private local files and parents. Clone and copy under `umask 077`; set `core.autocrlf=false` and use `* -text` in the backup repository's `.gitattributes` so database and manifest bytes are preserved. Git does not preserve POSIX privacy permissions remotely: enforce and verify them again on materialized WSL files.
 
-The repository may contain only its setup files, explicitly selected verified entry-review bundles, committed alert-archive snapshots and clearly labeled synthetic transport probes. Never copy an entire home/configuration/staging directory. Keep API keys, credentials, live working databases, writer locks, pending receipts, packet output, website builds and source checkout files excluded. Retained ledger evidence is private source material and belongs only in this private repository.
+The repository may contain only its setup files, explicitly selected verified entry-review bundles, committed alert-archive snapshots, immutable park-profile checkpoints or reviewed bundles, and clearly labeled synthetic transport probes. Never copy an entire home/configuration/staging directory. Keep API keys, credentials, live working databases, writer locks, pending receipts, packet output, website builds and source checkout files excluded. Retained ledger evidence is private source material and belongs only in this private repository.
 
 ## Upload a verified entry-review checkpoint
 
@@ -38,6 +38,33 @@ Use the downloaded and verified current-head bundle for the existing release-rea
 ## Alert archives are separate
 
 The entry-review backup contains no alert archive. After collection has stopped, use `HistoryStore.read()` to verify each complete committed park chain, copy only its committed archive state into a new checkpoint under `alert-archives/`, and verify the copied and freshly downloaded chains again against the original heads/counts. Exclude staging pending receipts and writer locks. Apply the same private repository, byte-preservation, inventory and size checks. Do not count a ledger-only upload as an alert-archive backup.
+
+## Park-profile checkpoints and reviewed bundles
+
+Profiles have a separate source and review contract; entry-review and alert
+backups do not cover them. Before approval, a selected immutable checkpoint may
+be retained under `profiles/checkpoints/CHECKPOINT_ID.json`. Use the unchanged
+`tracker.profile_stage verify` command before copying and after a fresh download,
+then `restore` into a new private destination. Compare checkpoint ID and exact
+canonical bytes. This protects collected evidence only: it does not approve text
+reuse, clear a profile publication gate or authorize public-data application.
+
+After exact text-use approval, select the verified immutable bundle described in
+[PROFILE_PROMOTION.md](PROFILE_PROMOTION.md) under
+`profiles/reviewed/BUNDLE_ID.json`. It contains the checkpoint and complete
+projection, rights and approval bindings. Use `tracker.profile_release verify`
+before copying and after the fresh download, then `restore` into a new private
+destination. Compare bundle ID and exact canonical bytes. A checkpoint-only copy
+cannot substitute for recovery of that reviewed bundle.
+
+Apply the same authenticated repository identity/privacy checks, owner-only
+storage, byte-preserving Git configuration, exact staging, per-file size limit
+and preservation of historical evidence to both types. The selected inventory
+is the one verified JSON file and any explicitly reviewed setup documentation;
+exclude review HTML, proposals, operator receipts, raw responses, credentials,
+locks and temporary files. Recheck privacy before recovery and clone directly
+from the selected GitHub URL. Record remote commit, selected type/ID, byte
+comparisons and restore result privately. Approval remains a separate decision.
 
 ## Setup evidence versus real backup evidence
 

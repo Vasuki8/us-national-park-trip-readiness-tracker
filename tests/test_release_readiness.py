@@ -123,6 +123,20 @@ def synthetic_core_ready():
         yield
 
 class ReleaseReadinessTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Synthetic guidance/core-gate tests must not inherit real profile approval needs.
+        folder=tempfile.TemporaryDirectory(prefix='readiness-without-profiles-')
+        cls.addClassCleanup(folder.cleanup)
+        cls.profile_free_root=Path(folder.name)
+        for name in ('data','src','public','.github'):
+            shutil.copytree(ROOT/name,cls.profile_free_root/name)
+        for name in ('park-profiles.json','profile-source-rights.json'):
+            (cls.profile_free_root/'data'/name).unlink(missing_ok=True)
+
+    def setUp(self):
+        self.enterContext(patch('tracker.release_readiness.REPO_ROOT',self.profile_free_root))
+
     def gate(self, report, gate_id):
         return next(g for g in report['gates'] if g['id']==gate_id)
 
@@ -141,8 +155,11 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertTrue(alerts['blocking'])
         self.assertEqual(alerts['evidence']['never_checked'],0)
         self.assertEqual(alerts['evidence']['successful'],5)
-        self.assertEqual(self.gate(report,'storage_backup')['status'],'not_checked')
+        self.assertEqual(self.gate(report,'storage_backup')['status'],'blocked')
+        self.assertEqual(self.gate(report,'storage_backup')['reason'],
+                         'verified_profile_backup_not_supplied')
         self.assertEqual(self.gate(report,'source_rights')['status'],'pass')
+        self.assertEqual(self.gate(report,'source_rights')['evidence']['profile_records_covered'],5)
         self.assertEqual(self.gate(report,'hosting_rollback')['status'],'not_checked')
         self.assertEqual(self.gate(report,'indexing')['status'],'blocked')
         self.assertEqual(self.gate(report,'advertising')['status'],'blocked')
@@ -150,7 +167,7 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(report['summary']['blocked']+report['summary']['not_checked'],6)
 
     def test_pilot_requires_core_gates_but_not_disabled_future_features(self):
-        report=evaluate_readiness(ROOT)
+        report=evaluate_readiness(self.profile_free_root)
         self.assertEqual(report['schema_version'],2)
         self.assertEqual(report['release_target'],'pilot')
         self.assertEqual([gate['id'] for gate in report['gates'] if gate['required']], [
@@ -162,7 +179,7 @@ class ReleaseReadinessTests(unittest.TestCase):
 
     def test_reviewed_ad_free_unindexed_pilot_can_pass_without_enabling_ads(self):
         with synthetic_core_ready():
-            report=evaluate_readiness(ROOT)
+            report=evaluate_readiness(self.profile_free_root)
         self.assertTrue(report['release_ready'])
         self.assertEqual(report['required_summary'],{'pass':5,'blocked':0,'not_checked':0})
         self.assertEqual(self.gate(report,'advertising')['status'],'blocked')
@@ -177,15 +194,15 @@ class ReleaseReadinessTests(unittest.TestCase):
                 with self.subTest(gate=identifier,status=status), synthetic_core_ready(), \
                         patch(f'tracker.release_readiness.{function}',
                             return_value=_gate(identifier,status,'synthetic_test_only',{})):
-                    report=evaluate_readiness(ROOT)
+                    report=evaluate_readiness(self.profile_free_root)
                     self.assertFalse(report['release_ready'])
                     self.assertTrue(self.gate(report,identifier)['blocking'])
                     self.assertTrue(self.gate(report,identifier)['required'])
 
     def test_indexed_and_advertising_targets_require_their_later_gates(self):
         with synthetic_core_ready():
-            indexed=evaluate_readiness(ROOT,release_target='indexed')
-            advertising=evaluate_readiness(ROOT,release_target='advertising')
+            indexed=evaluate_readiness(self.profile_free_root,release_target='indexed')
+            advertising=evaluate_readiness(self.profile_free_root,release_target='advertising')
         self.assertFalse(indexed['release_ready']); self.assertFalse(advertising['release_ready'])
         self.assertTrue(self.gate(indexed,'indexing')['required'])
         self.assertFalse(self.gate(indexed,'advertising')['required'])
@@ -272,7 +289,7 @@ class ReleaseReadinessTests(unittest.TestCase):
 
     def test_invalid_release_target_is_refused_without_echoing_input(self):
         with self.assertRaisesRegex(ReviewStoreError,'^invalid_release_readiness_arguments$'):
-            evaluate_readiness(ROOT,release_target='/private/sentinel/path')
+            evaluate_readiness(self.profile_free_root,release_target='/private/sentinel/path')
 
     def test_cli_target_selection_and_later_gate_labels_are_explicit(self):
         out,err=io.StringIO(),io.StringIO()
@@ -326,7 +343,7 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertIn('never_checked',alerts['reason'])
 
     def test_private_review_pass_requires_all_five_v2_baselines_and_no_holds(self):
-        report=evaluate_readiness(ROOT,private_state=private_state(approved=True))
+        report=evaluate_readiness(self.profile_free_root,private_state=private_state(approved=True))
         gate=self.gate(report,'durable_source_review')
         self.assertEqual(gate['status'],'pass')
         self.assertEqual(gate['evidence']['approved_v2_sources'],5)
@@ -338,7 +355,7 @@ class ReleaseReadinessTests(unittest.TestCase):
              {**b,'schema_version':1} for b in private_state(approved=True)['baselines']]},
         ]:
             with self.subTest(state=state):
-                self.assertEqual(self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')['status'],'blocked')
+                self.assertEqual(self.gate(evaluate_readiness(self.profile_free_root,private_state=state),'durable_source_review')['status'],'blocked')
 
     def test_changed_private_guidance_cannot_approve_the_old_public_inventory(self):
         for field, value in [('summary','Private revised summary.'),
@@ -349,7 +366,7 @@ class ReleaseReadinessTests(unittest.TestCase):
             records=public_records(); records[0][field]=value
             state=private_state(approved=True,records=records)
             with self.subTest(field=field):
-                gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+                gate=self.gate(evaluate_readiness(self.profile_free_root,private_state=state),'durable_source_review')
                 self.assertEqual(gate['status'],'blocked')
                 self.assertEqual(gate['reason'],'public_guidance_differs_from_reviewed_ledger')
                 self.assertFalse(gate['evidence']['public_guidance_matches_ledger'])
@@ -366,7 +383,7 @@ class ReleaseReadinessTests(unittest.TestCase):
             baseline=next(b for b in state['baselines'] if '/romo/' in b['source_url'])
             mutate(baseline['guidance_hashes'])
             with self.subTest(hashes=baseline['guidance_hashes']):
-                gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+                gate=self.gate(evaluate_readiness(self.profile_free_root,private_state=state),'durable_source_review')
                 self.assertEqual(gate['status'],'blocked')
                 self.assertEqual(gate['reason'],'reviewed_context_guidance_mismatch')
                 self.assertFalse(gate['evidence']['reviewed_guidance_matches_baselines'])
@@ -377,17 +394,17 @@ class ReleaseReadinessTests(unittest.TestCase):
                   rows+[{**copy.deepcopy(rows[0]),'id':'synthetic-extra'}]]
         for records in variants:
             with self.subTest(count=len(records)):
-                gate=self.gate(evaluate_readiness(ROOT,private_state=private_state(approved=True,records=records)),
+                gate=self.gate(evaluate_readiness(self.profile_free_root,private_state=private_state(approved=True,records=records)),
                                'durable_source_review')
                 self.assertEqual(gate['status'],'blocked')
         state=private_state(approved=True); del state['records']
-        gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+        gate=self.gate(evaluate_readiness(self.profile_free_root,private_state=state),'durable_source_review')
         self.assertEqual(gate['status'],'blocked')
 
     def test_duplicate_approved_source_baseline_cannot_hide_ambiguous_binding(self):
         state=private_state(approved=True)
         state['baselines'].append(copy.deepcopy(state['baselines'][0]))
-        gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+        gate=self.gate(evaluate_readiness(self.profile_free_root,private_state=state),'durable_source_review')
         self.assertEqual(gate['status'],'blocked')
 
     def test_current_baseline_must_match_its_reconciliation_in_full(self):
@@ -397,14 +414,14 @@ class ReleaseReadinessTests(unittest.TestCase):
             with self.subTest(field=field):
                 state=private_state(approved=True)
                 state['baselines'][0][field]=value
-                gate=self.gate(evaluate_readiness(ROOT,private_state=state),'durable_source_review')
+                gate=self.gate(evaluate_readiness(self.profile_free_root,private_state=state),'durable_source_review')
                 self.assertEqual(gate['status'],'blocked')
                 self.assertEqual(gate['reason'],'context_approval_provenance_incomplete')
                 self.assertEqual(gate['evidence']['reconciled_v2_sources'],4)
 
     def test_inventory_and_object_key_order_do_not_change_record_identity(self):
         rows=[dict(reversed(list(r.items()))) for r in reversed(public_records())]
-        gate=self.gate(evaluate_readiness(ROOT,private_state=private_state(approved=True,records=rows)),
+        gate=self.gate(evaluate_readiness(self.profile_free_root,private_state=private_state(approved=True,records=rows)),
                        'durable_source_review')
         self.assertEqual(gate['status'],'pass')
         self.assertTrue(gate['evidence']['public_guidance_matches_ledger'])
@@ -416,13 +433,13 @@ class ReleaseReadinessTests(unittest.TestCase):
         rows=public_records(); secret='/private/sentinel/changed-guidance'
         rows[0]['summary']=secret
         state=private_state(approved=True,records=rows)
-        before=[(ROOT/path).read_bytes() for path in ('data/rules.json','data/entry-notes.json')]
-        report=evaluate_readiness(ROOT,private_state=state)
+        before=[(self.profile_free_root/path).read_bytes() for path in ('data/rules.json','data/entry-notes.json')]
+        report=evaluate_readiness(self.profile_free_root,private_state=state)
         serialized=json.dumps(report)
         self.assertNotIn(secret,serialized)
         self.assertNotIn(digest(rows[0]),serialized)
         self.assertFalse(report['writes_performed'])
-        self.assertEqual(before,[(ROOT/path).read_bytes() for path in ('data/rules.json','data/entry-notes.json')])
+        self.assertEqual(before,[(self.profile_free_root/path).read_bytes() for path in ('data/rules.json','data/entry-notes.json')])
         self.assertEqual(self.gate(report,'durable_source_review')['status'],'blocked')
 
     def replayed_synthetic_fixture(self, directory):
@@ -537,15 +554,15 @@ class ReleaseReadinessTests(unittest.TestCase):
 
     def test_backup_pass_requires_verified_manifest_for_exact_current_head(self):
         state=private_state(approved=True)
-        missing=evaluate_readiness(ROOT,private_state=state)
+        missing=evaluate_readiness(self.profile_free_root,private_state=state)
         self.assertEqual(self.gate(missing,'storage_backup')['status'],'blocked')
-        good=evaluate_readiness(ROOT,private_state=state,backup_manifest=backup_manifest())
+        good=evaluate_readiness(self.profile_free_root,private_state=state,backup_manifest=backup_manifest())
         self.assertEqual(self.gate(good,'storage_backup')['status'],'pass')
-        stale=evaluate_readiness(ROOT,private_state=state,backup_manifest=backup_manifest('9'*64))
+        stale=evaluate_readiness(self.profile_free_root,private_state=state,backup_manifest=backup_manifest('9'*64))
         self.assertEqual(self.gate(stale,'storage_backup')['status'],'blocked')
 
     def test_exact_source_rights_manifest_can_pass_only_the_public_text_scope(self):
-        gate=self.gate(evaluate_readiness(ROOT),'source_rights')
+        gate=self.gate(evaluate_readiness(self.profile_free_root),'source_rights')
         self.assertEqual(gate['status'],'pass')
         self.assertEqual(gate['evidence']['guidance_records_with_rights_metadata'],6)
         self.assertEqual(gate['evidence']['guidance_records_total'],6)
@@ -554,7 +571,7 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertFalse(gate['evidence']['nps_marks_or_media_detected'])
 
     def test_indexing_gate_requires_all_three_release_controls_to_be_removed(self):
-        gate=self.gate(evaluate_readiness(ROOT),'indexing')
+        gate=self.gate(evaluate_readiness(self.profile_free_root),'indexing')
         self.assertEqual(gate['status'],'blocked')
         self.assertTrue(gate['evidence']['meta_noindex'])
         self.assertTrue(gate['evidence']['robots_disallow_all'])
@@ -567,7 +584,7 @@ class ReleaseReadinessTests(unittest.TestCase):
             with patch('socket.create_connection',side_effect=AssertionError('network forbidden')), \
                  patch('urllib.request.urlopen',side_effect=AssertionError('network forbidden')):
                 for target in ('pilot','indexed','advertising'):
-                    report=evaluate_readiness(ROOT,release_target=target)
+                    report=evaluate_readiness(self.profile_free_root,release_target=target)
                     self.assertFalse(report['network_performed']); self.assertFalse(report['writes_performed'])
             self.assertEqual(marker.read_text(),'unchanged'); self.assertEqual(marker.stat().st_mtime_ns,before)
             self.assertFalse(report['network_performed']); self.assertFalse(report['writes_performed'])
@@ -611,9 +628,9 @@ class ReleaseReadinessTests(unittest.TestCase):
                                   backup_manifest=backup_manifest(),**kwargs)
 
     def test_absent_profiles_preserve_the_existing_report_with_unrelated_valid_evidence(self):
-        before=self.profile_report(ROOT)
+        before=self.profile_report(self.profile_free_root)
         bundle=profile_release_fixture()
-        after=self.profile_report(ROOT,profile_review=bundle,profile_backup=copy.deepcopy(bundle))
+        after=self.profile_report(self.profile_free_root,profile_review=bundle,profile_backup=copy.deepcopy(bundle))
         self.assertEqual(after,before)
 
     def test_public_profiles_need_their_own_review_and_backup(self):

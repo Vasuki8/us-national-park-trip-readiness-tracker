@@ -268,29 +268,41 @@ The evaluator never enables ads or analytics.
 After the owner-approved public-data promotion, a repository-only report (without private ledger/backup inputs) has:
 
 - **1 pass**
-- **2 blocked**
-- **4 not checked**
+- **3 blocked**
+- **3 not checked**
 - **release_ready: false**
 
-Those are counts across all seven gates. For the default pilot, the required summary is **1 pass, 0 blocked, 4 not checked**.
+Those are counts across all seven gates. With the first public profile pair,
+the default pilot's repository-only required summary is **1 pass, 1 blocked,
+3 not checked**. No private evidence is implied by committed public JSON.
 
-The two blocked statuses belong to later targets:
+Two blocked statuses belong to later targets:
 
 1. indexing is still disabled; and
 2. advertising is not enabled.
 
 Disabled indexing and ads remain visible as later-target gates, consistent with the approved ad-free pilot. They are still required for their respective later releases.
 
-The four not-checked gates are:
+The required backup gate is also blocked because a repository-only command
+does not supply the matching recovered reviewed-profile bundle. The three
+not-checked gates are:
 
 1. durable source review, because a repository-only command does not receive the private ledger;
-2. storage backup, because it does not receive the private ledger and verified backup;
-3. NPS alert API validation, because successful public snapshots still require separately assessed freshness/provider evidence; and
-4. hosting/rollback, because the CLI does not ingest the verified external release/browser reports.
+2. NPS alert API validation, because successful public snapshots still require separately assessed freshness/provider evidence; and
+3. hosting/rollback, because the CLI does not ingest the verified external release/browser reports.
 
-The current source-rights gate is the one passing gate, limited to the exact six public NPS text uses documented in `data/source-rights.json`.
+The current source-rights gate is the one passing gate, limited to the exact six
+guidance uses in `data/source-rights.json` plus the five normalized profile text
+uses in `data/profile-source-rights.json`. Neither manifest covers images or marks.
 
-Supplying the current reviewed private ledger and matching recovered backup changes durable review and backup to `pass`: **3 pass, 2 blocked, 2 not checked** overall, with **3 pass, 0 blocked, 2 not checked** required for the pilot. The owner-authorized launch separately verified the two external requirements; the unchanged automated report still returns `release_ready: false`. Retain the external assessment alongside the report instead of treating its limited input surface as proof that the completed deployment or review did not happen.
+Supplying the current reviewed private ledger and matching recovered backup,
+along with the matching reviewed profile bundle and its separately verified
+recovered copy, changes durable review and backup to `pass`: **3 pass, 2 blocked,
+2 not checked** overall, with **3 pass, 0 blocked, 2 not checked** required for the
+pilot. The earlier owner-authorized launch separately verified its external
+requirements; that historical assessment is not new profile freshness or hosting
+evidence. The automated report still returns `release_ready: false`. Retain each
+current external assessment alongside the report instead of inventing a pass.
 
 ## Safety properties
 

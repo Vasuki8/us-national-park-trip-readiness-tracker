@@ -2,8 +2,11 @@
 
 This source-specific offline workflow follows [private profile collection](PROFILE_COLLECTION.md).
 It prepares two public files, `data/park-profiles.json` and
-`data/profile-source-rights.json`. Both are currently absent; no real profiles
-or approvals were produced while developing these tools. The website does not
+`data/profile-source-rights.json`. Both now contain the first owner-approved
+five-park profiles and exact text-rights bindings. Real private collection,
+reviewed-bundle recovery and paired promotion are recorded in the
+[current handoff](../PROJECT_STATUS.md). No real profiles or approvals were
+produced while initially developing these tools. The website does not
 yet consume profiles. The existing entry-guidance manifest approves a different
 text scope and cannot approve descriptions or seasonal context.
 
@@ -92,7 +95,8 @@ visibility, preserve bytes, push only the reviewed inventory, freshly download,
 verify and restore to a new private destination, and compare bundle ID and
 canonical bytes. Retain remote and recovery receipts privately. A local copy
 does not prove an off-host backup; earlier ledger/alert receipts do not cover
-profile data. No such real backup is claimed by this increment.
+profile data. Checkpoint-only recovery cannot substitute for this approved-bundle
+recovery.
 
 ## Prepare, recheck and apply
 
@@ -112,7 +116,9 @@ their paired Git patch. Existing files must be valid as a pair; both absent is
 the initial case. The candidate identity binds the reviewed bundle, exact base
 bytes or absence, and exact patch bytes. Only public projection/manifest text
 crosses into the patch. The public outputs use canonical UTF-8 JSON with one
-final newline, without private checkpoint/approval envelopes.
+final newline, without private checkpoint/approval envelopes. The repository's
+two exact profile JSON paths use `-text` Git attributes so Windows checkout or
+patch application cannot silently convert that required LF to CRLF.
 
 Clocks cannot rewind. A same-check-clock replacement must preserve the entire
 snapshot. For a retained record, first observation remains unchanged; unchanged
@@ -144,6 +150,6 @@ refusal/interruption report. Reports exclude paths, source text and credentials;
 approval is true only after successful explicit approval creation. An interrupted
 post-install approval may exist despite a refused report; verify before retry.
 
-Next: a deliberate real five-park collection, exact text-use review and verified
-remote recovery, then paired promotion. Overview and When to Visit consume those
-verified public profiles in a later frontend increment.
+Next: Overview and When to Visit consume the verified public profiles in a later
+frontend increment. Subsequent data refreshes repeat exact review, approved-bundle
+recovery and paired promotion without renewing source clocks during copying.
