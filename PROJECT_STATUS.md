@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 2, 2026 (Toronto time), during reviewed-profile publication development; the verified PR #7 live release is unchanged**.
+Updated: **October 2, 2026 (Toronto time), after PR #10 integration; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
@@ -8,7 +8,10 @@ The owner adopted the complete [permanent project instructions](docs/PROJECT_INS
 
 The current milestone is **Phase 1 — Foundations**. The [foundation assessment](docs/FOUNDATION_ASSESSMENT.md) maps existing ingestion, provenance, cached publication, freshness/failure handling, rights boundaries and page architecture to the broader five-park scope. Keep Astro/GitHub Pages and the existing alert tools while adding separate profile, activity and named-location weather contracts. Cloudflare, scheduled collection, rights-verified imagery, richer planning sections and locally saved trips remain staged directions; hosting migration is not a prerequisite.
 
-The active branch is **`codex/reviewed-profile-promotion`**. The new
+Continue on **`main`**. [PR #10](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/10)
+merged checked head **`39b3085e647d32ebb409e94a9aa3e0cdafe24d2e`** as
+**`d7d8e16a157fb8040fb34a933a82264c386f5f59`** under the owner's standing
+integration authorization. Native Git confirms their trees are identical. The new
 [profile publication contract](docs/PROFILE_PROMOTION.md) keeps public profiles
 and their separate text-rights manifest paired, all-five, exact-field validated
 and bound to unchanged source/observation clocks. Both public files remain absent.
@@ -40,9 +43,32 @@ review repair; 46 readiness methods and 19 release methods also passed separatel
 Strict TypeScript for the changed validator/test files, 22 relative documentation
 links and `git diff --check` passed. Repository-only readiness retains its exact
 existing pilot result: one required pass, four required not checked and
-`release_ready: false`. Local browser suites were not rerun; exact PR-head
-supported CI/browser verification and the checked-head merge receipt remain
-pending before integration.
+`release_ready: false`. Local browser suites were not rerun; supported CI
+completed both suites before integration.
+
+Exact check head [Verify pilot #212](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37092715042),
+job **111116255685**, passed **307 Node + 577 Python + 62 generated-site +
+122 Chromium = 1,068 tests**, zero Astro diagnostics across 32 files, both
+14-page builds and all three accessibility screenshots. All **108 root +
+14 project-path browser cases** passed. CI used its standard PR merge checkout
+**`37778446a817e2cbf8da100bd1175bf0c346fd41`**, combining the checked head with
+unchanged main **`bcd5451160c00bc66b0dc9e5ee197c08e5f36b54`**. Independent log,
+head and artifact-metadata review passed. Artifact **11262731917** was uploaded
+successfully; no downloaded-artifact audit, deployment or live proof is claimed.
+
+CI and a fresh npm audit report two high entries for the same pre-existing
+[http-cache-semantics advisory](https://github.com/advisories/GHSA-ch52-4w7c-c8xp),
+including Astro's transitive exposure. PR #9 logs contain the same audit and
+esbuild install-script warnings; this increment changes no dependency. The
+official advisory lists no patched version. Local source/config inspection finds
+static output, no Astro image consumer, no authentication and no shared
+authenticated-response cache; the dependency is used by Astro's build-time
+remote-image cache. Independent assessment found no current attack path in the
+pilot or profile tools. This is a scoped reachability assessment, not a fix or
+general security clearance. Do not apply npm's suggested major Astro downgrade.
+Reassess this unresolved dependency before adding remote imagery/server caching
+and validate a compatible maintainer fix when available. Existing Action runtime
+and Ubuntu runner migration notices also remain maintenance follow-ups.
 
 This increment performs no real collection, key read, text approval, remote
 backup, public promotion, deployment or live-browser check. Frontend, real public
@@ -90,8 +116,8 @@ Fresh local verification passed data validation, **290 Node + 432 Python + 62 ge
 The **previous live PR #6 build is the current rollback candidate**: **`fea984937067fc85fde08d506ced719254e0bc48`** / **`pilot-08efc3ad8281`**, successful push/main [Verify pilot #197](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37072908539), job **111056451305**, artifact **11255867049**, digest `sha256:441ebac553624cbfb4cd07fff0798549a089c823237d128936423950538376c6`, available through **October 9, 2026 at 22:35:29 UTC**. Immediately before this deployment, its GitHub eligibility, downloaded ZIP digest, safe inventory, manifests, both noindex builds, verifier and screenshots were independently rechecked. Previous [Deployment #5](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37073863612) verified 22 files and 14 pages; the original deliberate deployment/rollback/restoration drill remains recorded in `docs/PAGES_RELEASE.md`. No new rollback drill was performed for this refresh.
 
 The current next step is the real-profile operator work described at the top;
-the earlier schema/promotion milestone is now implemented pending this branch's
-full verification and integration. Existing six-record guidance approvals cannot
+the earlier schema/promotion milestone is now verified and integrated. Existing
+six-record guidance approvals cannot
 approve park descriptions or seasonal text. Do not repeat already verified pilot
 work or migrate hosting merely because a preferred platform is listed. The bounded
 manual screen-reader review remains an unresolved quality check for the technical
