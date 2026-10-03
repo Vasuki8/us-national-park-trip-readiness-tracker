@@ -2,7 +2,8 @@
 
 Callers inject a scoped ``fetch_page(0)``. Raise ProfileCollectionError for known
 transport failures; TimeoutError and OSError also produce a generic failed
-attempt. Other transport exceptions propagate as programming errors.
+attempt. ProfileError from fetch quarantines a known response refusal. Other
+transport exceptions propagate as programming errors.
 ProfileError contains a fixed validation code, never provider bodies or secrets.
 """
 from __future__ import annotations
@@ -243,9 +244,10 @@ def _checked_now(snapshot: dict, now: str):
 def collect_profile(park_code: str, previous: dict, now: str, fetch_page: Callable[[int], dict]) -> dict:
     """Validate a single scoped response or retain accepted evidence on failure.
 
-    All previous evidence and clocks are validated before transport. Only known
-    transport failures are caught; unexpected exceptions propagate. Rejected
-    payloads and exception messages are never copied into the returned snapshot.
+    All previous evidence and clocks are validated before transport. Known
+    transport failures and response refusals are caught; unexpected exceptions
+    propagate. Rejected payloads and exception messages are never copied into
+    the returned snapshot.
     """
     code = _pilot(park_code)
     result = validate_profile(previous)
@@ -255,6 +257,10 @@ def collect_profile(park_code: str, previous: dict, now: str, fetch_page: Callab
     result['last_checked_at'] = now
     try:
         payload = fetch_page(0)
+    except ProfileError:
+        result.update(collection_status='quarantined',
+                      coverage_status='incomplete', error_code='response_requires_review')
+        return result
     except (ProfileCollectionError, TimeoutError, OSError):
         result.update(collection_status='failed', coverage_status='incomplete', error_code='provider_request_failed')
         return result

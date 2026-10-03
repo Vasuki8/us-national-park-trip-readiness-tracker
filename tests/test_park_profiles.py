@@ -295,6 +295,37 @@ class ProfileTests(unittest.TestCase):
                 self.assertNotIn('private-key', json.dumps(result))
                 self.assertEqual(adapter.validate_profile(result), result)
 
+    def test_explicit_profile_error_from_fetch_quarantines_without_retaining_its_text(self):
+        adapter = self.adapter()
+        previous = self.collected()
+        accepted = copy.deepcopy(previous)
+        def refusal(_start):
+            raise adapter.ProfileError('private-key-and-rejected-body-must-not-persist')
+        try:
+            result = adapter.collect_profile('yose', previous, T1, refusal)
+        except adapter.ProfileError:
+            self.fail('An explicit response refusal must quarantine instead of escaping collection.')
+        self.assert_retained(result, accepted)
+        self.assertNotIn('private-key', json.dumps(result))
+        self.assertEqual(adapter.validate_profile(result), result)
+        self.assertEqual(previous, accepted)
+
+    def test_fetch_quarantine_retains_validated_baseline_despite_caller_mutation(self):
+        adapter = self.adapter()
+        previous = self.collected()
+        accepted = copy.deepcopy(previous)
+        def refusal(_start):
+            previous['profile']['description'] = 'Callback altered caller evidence.'
+            previous['profile']['content_hash'] = semantic_hash(previous['profile'])
+            previous.update(last_checked_at=T2, last_successful_fetch_at=T2)
+            raise adapter.ProfileError('credential_echo')
+        try:
+            result = adapter.collect_profile('yose', previous, T1, refusal)
+        except adapter.ProfileError:
+            self.fail('Fetch quarantine must retain the validated baseline instead of escaping.')
+        self.assert_retained(result, accepted)
+        self.assertEqual(adapter.validate_profile(result), result)
+
     def test_initial_failure_or_quarantine_stays_unknown_without_last_good(self):
         adapter = self.adapter()
         def failure(_start):
