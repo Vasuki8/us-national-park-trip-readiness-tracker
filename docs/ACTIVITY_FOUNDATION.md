@@ -4,6 +4,10 @@ Implemented October 3, 2026. This pure adapter has synthetic tests. It establish
 no real activity inventory, source rights, private backup, public promotion or
 deployment evidence.
 
+The current handoff separately records the first real private collection and
+checkpoint remote recovery. Its [source review](ACTIVITY_SOURCE_REVIEW.md)
+leaves text-use rights and public publication pending.
+
 ## Source and interpretation
 
 NPS `/thingstodo` supplies individual listings. The `/parks` categories already
@@ -122,6 +126,8 @@ baseline before keys or factories. Synthetic checks establish tooling only.
 The separate [reviewed activity promotion layer](ACTIVITY_PROMOTION.md) now
 implements complete public projection, exact text-rights review bindings,
 private approval/recovery, paired patch checks and build/readiness validation.
-Synthetic verification establishes these tools only. Real collection, exact
-rights decisions, verified remote backup, approval, promotion and Things to Do
-rendering remain subsequent steps.
+Synthetic verification establishes these tools only. The first real private
+checkpoint and fresh remote recovery are recorded separately in the current
+handoff. A public projection that resolves the observed source concerns, exact
+rights decisions, approval, reviewed-bundle remote recovery, promotion and Things
+to Do rendering remain subsequent steps.

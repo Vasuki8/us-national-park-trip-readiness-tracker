@@ -106,12 +106,15 @@ implemented separately; these private commands do not deploy the live pilot.
 The separate [private activity collection guide](docs/ACTIVITY_COLLECTION.md)
 documents bounded header-authenticated `/thingstodo` requests, immutable
 five-park checkpoints, offline recovery and unapproved review exports. This
-increment is verified with synthetic sources. The separate
+tooling is verified with synthetic sources. The separate
 [reviewed activity promotion workflow](docs/ACTIVITY_PROMOTION.md) now binds
 complete inventories to exact text-rights review and private approval/recovery,
 prepares and rechecks a paired public-file patch, and validates the pair at build
 and release-readiness boundaries. No real activity data has been promoted.
-Next collect and review the exact real listings, verify remote recovery and
-prepare the public pair before Things to Do rendering.
+The first real five-park checkpoint and fresh remote recovery are now verified;
+the private review identified unresolved text-use, link-metadata and availability
+concerns. See the [activity source review](docs/ACTIVITY_SOURCE_REVIEW.md) and
+current handoff. Next prepare a separately reviewed public projection that
+resolves those concerns before approval, promotion and Things to Do rendering.
 
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.

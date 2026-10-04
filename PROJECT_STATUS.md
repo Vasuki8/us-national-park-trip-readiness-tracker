@@ -1,8 +1,78 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after PR #15 integrated reviewed activity promotion/recovery; the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after the first real private activity checkpoint and remote recovery; public activity approval is pending and the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+The existing tools collected the first real private NPS activity checkpoint for
+all five pilot parks. All collections succeeded, retaining **136 listings**:
+Yosemite 13, Rocky Mountain 12, Yellowstone 88, Zion 20 and Grand Canyon 3.
+Coverage is **`checked_activity_feed_only`**, with original attempt/success clock
+**`2026-10-04T05:49:46.709637Z`**. The immutable checkpoint and complete unapproved
+review export passed offline verification. A receipt-write size argument was
+corrected offline after collection; source requests were not repeated.
+
+The selected checkpoint was copied byte for byte to the owner-selected private
+GitHub backup. Authenticated identity, expected-owner write access, visibility,
+disabled Actions and unconfigured Pages were checked before upload and recovery;
+access was unchanged. Exact staging preserved earlier evidence and excluded
+credentials, review packets and operator receipts. A **fresh authenticated clone
+directly from GitHub** at the recorded remote commit, offline verification and
+restore into a **new owner-only WSL destination** passed. All three canonical
+copies and identities match (**480,419 bytes**); original working evidence and
+source clocks are unchanged. Detailed identities, private paths and receipts
+remain outside this public checkout. This is recovery of an **unapproved
+checkpoint**, not a reviewed approval bundle or release-readiness proof.
+
+Programmatic inspection covered **5,124 string values**, with selected flagged
+context review and no exhaustive human-reading claim. All 136 credits are empty;
+287 fields contain HTML. The private report flags **11 records** for attention,
+including attributed third-party quotations/production context, partner and
+concessioner references, wrapped links carrying contact/tracking metadata,
+a closure and a program whose end date preceded collection. Blank credits,
+API provenance and a successful recent request do not establish text-use rights
+or availability. See [ACTIVITY_SOURCE_REVIEW.md](docs/ACTIVITY_SOURCE_REVIEW.md).
+
+A complete private review packet contains **136 records / 5,032 field values**,
+round-trip checked against the retained candidate. All source markup and URLs
+remain escaped literal text; no active source media or external links are
+present. Loopback delivery, fixed-route refusal, response safeguards, desktop
+and mobile width, record expansion and keyboard collapse are verified. The
+packet, reports, server and receipts stay on private WSL storage, outside the
+checkout, website outputs, backup inventory and public CI artifacts. The private
+operator handoff records the exact recovery and review locations.
+
+This increment changes operator documentation and handoff only. No rights
+manifest, activity approval bundle, public pair or visitor activity consumer was
+created. No dependency/workflow change, public-data application, deployment,
+schedule, indexing or ads occurred. Current public profiles, guidance, alerts and
+source clocks remain unchanged. Last verified live remains **`2fa4d4a`** /
+**`pilot-0609c66f7954`**, with stale alerts and noindex/ad-free safeguards; no new
+live-site check occurred. Repository-only readiness is still **1 pass, 3 blocked,
+3 not checked**, with **1 pass, 1 blocked, 3 not checked** required and
+**`release_ready: false`**. Private checkpoint recovery clears no activity rights
+or reviewed-bundle requirement.
+
+Independent read-only re-verification confirms all three checkpoint files and
+14 recovery-receipt agreements, with no discrepancies. This independently proves
+file integrity and receipt agreement; the operator's authenticated checks and
+fresh-clone execution establish remote provenance. Documentation review found
+one stale synthetic-only opening, now corrected; no other actionable findings.
+All 34 local Markdown links resolve and diff checks pass.
+
+Current branch: **`codex/activity-review-checkpoint`**. PR checks/integration are
+pending. No unrelated local application test run was needed for these documentation
+changes; the prior checked application suite remains the PR #15 evidence below.
+
+Next: design and verify a separately reviewed public activity projection that
+preserves private originals, withholds unresolved text and link metadata and
+handles unknown/conflicting availability. The existing complete projection has
+no omission mode. Exact rights decisions, activity approval, reviewed-bundle
+remote recovery and public-pair preparation must precede Things to Do rendering.
+A live release still needs deliberate alert refresh, complete release checks and
+applicable deployment authorization.
+
+## Preceding reviewed activity promotion integration — PR #15
 
 The separate activity public contract, exact per-record text-rights manifest,
 immutable private approval/recovery and paired public-file patch preparation/

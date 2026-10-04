@@ -3,8 +3,9 @@
 The separate NPS `/thingstodo` workflow collects individual listings for the five
 pilots into an immutable private checkpoint. See
 [ACTIVITY_FOUNDATION.md](ACTIVITY_FOUNDATION.md) for field interpretation, unknown
-values, hashes, pagination and independent freshness. This engineering increment
-uses synthetic sources; no real activities or remote backup were collected.
+values, hashes, pagination and independent freshness. The original engineering
+increment used synthetic sources. Actual private collection and recovery are
+recorded separately in the current handoff and [source review](ACTIVITY_SOURCE_REVIEW.md).
 
 ## Deliberate commands and storage
 
@@ -144,19 +145,23 @@ and reverifies its identity. Review export preserves the complete checkpoint and
 degraded states with `source_rights_status: not_checked`, approval false,
 publication false and public-data writes false. Neither is a public exporter.
 
-Before real backup, deliberately extend the exact inventory in
+Use the exact activity inventory in
 [GITHUB_PRIVATE_BACKUP.md](GITHUB_PRIVATE_BACKUP.md) for selected verified activity
-checkpoints. Reuse identity/visibility checks, owner-only transfer/recovery paths,
+checkpoints or separately approved bundles. Reuse identity/visibility checks, owner-only transfer/recovery paths,
 byte-preserving Git settings, exact staging and fresh authenticated download.
 Exclude credentials, raw responses, locks, temporary files and public CI
 artifacts; preserve earlier ledger, alert and profile checkpoints. Verify the
 downloaded file, fresh restore, identity and canonical bytes, and retain receipts
-privately. No off-host transfer or real recovery is claimed here.
+privately. The current handoff records actual operator results; this guide alone
+does not establish an off-host transfer or successful recovery.
 
 The separate [reviewed activity promotion contract](ACTIVITY_PROMOTION.md)
 now implements complete public projection, exact per-record text-use review,
 immutable approval/recovery and paired patch preparation/recheck. Its synthetic
-tests establish tools only. Next collect and review the exact real listings,
-verify remote recovery and prepare the public pair. Things to Do rendering
+tests establish tools only. The first real checkpoint and its remote recovery
+are verified, while the [private source review](ACTIVITY_SOURCE_REVIEW.md)
+identified unresolved publication concerns. Next prepare a separately reviewed
+public projection that resolves those concerns. Approval, reviewed-bundle remote
+recovery and public-pair preparation remain subsequent steps. Things to Do rendering
 will consume only validated reviewed public data. Image publication, named
 weather, schedules, indexing, ads and live deployment retain their own gates.
