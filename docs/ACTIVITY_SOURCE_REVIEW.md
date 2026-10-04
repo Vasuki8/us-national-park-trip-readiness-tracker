@@ -54,15 +54,21 @@ were checked October 4, 2026; no blanket reuse classification was recorded.
 
 ## Consequence for development
 
-The current [promotion contract](ACTIVITY_PROMOTION.md) projects every normalized
+The complete version 1 [promotion contract](ACTIVITY_PROMOTION.md) projects every normalized
 field and requires exact per-record government-text review across all projected
 strings. The observed quotations and link metadata prevent confidently applying
 that classification to the complete retained batch. No rights manifest, approval
 bundle or public pair was created, and no deployment occurred.
 
-Next design and verify a separately reviewed public projection that keeps the
-original evidence private, withholds unresolved text/link content and represents
-unknown or conflicting availability honestly. The existing complete projection
-has no field-omission mode: changing the public scope requires explicit contract,
-review-binding and validation changes before promotion. Technical source handling
-does not settle material legal-risk or source-use decisions reserved to the owner.
+The separately versioned minimal catalog now defines exact titles, safe NPS
+listing links and optionally source categories. Explicit selected/withheld
+dispositions bind every source listing to its public view and narrowed rights;
+private originals and source clocks remain unchanged. Version 1 retains its
+complete-text meaning and has no field-omission mode.
+
+Next review the real retained batch under the version 2 catalog contract,
+withhold unresolved availability conflicts, establish exact published text-use
+decisions and verify reviewed-bundle recovery before public promotion. Technical
+source handling does not settle material legal-risk or source-use decisions
+reserved to the owner. No real catalog approval is established by engineering
+verification.

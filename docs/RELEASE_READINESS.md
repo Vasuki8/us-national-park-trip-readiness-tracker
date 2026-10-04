@@ -151,6 +151,15 @@ and fit each explicit 42,008,576-byte canonical bound plus that optional LF.
 Duplicate keys, nonfinite values, unknown fields and incorrect rights bindings
 are refused. No validity result establishes activity availability or freshness.
 
+Both the complete version 1 projection and minimal version 2 catalog use this
+same evidence boundary. Version 2 approval additionally binds exact private
+selected/withheld dispositions and regenerates the smaller public views from the
+unchanged checkpoint. Activity evidence separately reports original source
+total, published and withheld record counts; rights coverage counts published
+listings only. Wholly withheld source inventories remain distinct from confirmed
+empty sources. A matching checkpoint-only backup cannot cover a reviewed catalog
+bundle, and catalog validity does not establish text rights or reviewer identity.
+
 `release_ready` remains an evidence result for the named target, not deployment authorization. Target selection changes the report only; it does not change the site or activate features.
 
 ## Gates

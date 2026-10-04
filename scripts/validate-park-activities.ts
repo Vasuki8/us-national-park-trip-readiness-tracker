@@ -44,14 +44,43 @@ interface ActivityInventory {
   source_issued_at: null; source_updated_at: null; published_at: null; records: ActivityRecord[];
   error_code: null | 'provider_request_failed' | 'response_requires_review';
 }
-interface PublicActivities {schema_version: 1; purpose: 'public_park_activities'; inventories: ActivityInventory[]}
-interface ActivityRights {
+interface PublicActivitiesV1 {schema_version: 1; purpose: 'public_park_activities'; inventories: ActivityInventory[]}
+interface ActivityRightsV1 {
   schema_version: 1; purpose: 'public_park_activity_text_rights'; reviewed_at: string;
   review_method: 'official_nps_policy_and_exact_activity_review'; policy: typeof POLICY;
   records: {park_code: string; activity_id: string; source_url: string; content_hash: string;
     classification: 'nps_government_text'; use_scope: 'normalized_activity_text_and_metadata';
     third_party_material_reproduced: false; nps_marks_reproduced: false; media_reproduced: false}[];
 }
+export interface CatalogSourceRecord {
+  id: string; content_hash: string; hash_scope: 'normalized_record';
+  observed_first_at: string; observed_changed_at: string; publication_status: 'selected' | 'withheld';
+}
+export interface CatalogActivityRecord {
+  id: string; park_code: string; title: string; url: string;
+  activity_categories: {id: string; name: string}[] | null; category_scope: 'published' | 'withheld';
+  geographic_relationship: 'unconfirmed'; responsible_agency: null; difficulty: null; permit_required: null;
+  availability_status: 'not_verified'; source_updated_at: null; observed_first_at: string; observed_changed_at: string;
+  source_content_hash: string; view_hash: string; hash_scope: 'catalog_view';
+}
+export interface CatalogActivityInventory extends Omit<ActivityInventory, 'schema_version' | 'records'> {
+  schema_version: 2; source_records: CatalogSourceRecord[]; records: CatalogActivityRecord[];
+}
+export interface PublicActivityCatalog {
+  schema_version: 2; purpose: 'public_park_activities'; inventories: CatalogActivityInventory[];
+}
+export interface ActivityCatalogRights extends Omit<ActivityRightsV1, 'schema_version' | 'records'> {
+  schema_version: 2; projection_hash: string;
+  records: {park_code: string; activity_id: string; source_url: string; source_content_hash: string; view_hash: string;
+    classification: 'nps_government_text'; use_scope: 'activity_catalog_title_url_and_optional_categories';
+    third_party_material_reproduced: false; nps_marks_reproduced: false; media_reproduced: false}[];
+}
+export type PublicActivities = PublicActivitiesV1 | PublicActivityCatalog;
+export type ActivityRights = ActivityRightsV1 | ActivityCatalogRights;
+const CATALOG_SOURCE = 'id content_hash hash_scope observed_first_at observed_changed_at publication_status'.split(' ');
+const CATALOG_RECORD = 'id park_code title url activity_categories category_scope geographic_relationship responsible_agency difficulty permit_required availability_status source_updated_at observed_first_at observed_changed_at source_content_hash view_hash hash_scope'.split(' ');
+const CATALOG_SEMANTIC = CATALOG_RECORD.filter(field => !['view_hash', 'hash_scope'].includes(field));
+const CATALOG_RIGHTS_RECORD = 'park_code activity_id source_url source_content_hash view_hash classification use_scope third_party_material_reproduced nps_marks_reproduced media_reproduced'.split(' ');
 function requireValue(value: unknown): asserts value {
   if (!value) throw new Error('invalid_public_park_activities');
 }
@@ -180,9 +209,89 @@ function validateRecord(value: unknown, code: string, successful: bigint) {
   requireValue(timestamp(r.observed_first_at) <= timestamp(r.observed_changed_at)
     && timestamp(r.observed_changed_at) <= successful);
 }
+function catalogText(value: unknown) {
+  text(value);
+  requireValue(Array.from(value).length <= 1024 && !/[\u0000-\u001f\u007f-\u009f<>]/u.test(value));
+}
+function contentHash(value: unknown) {
+  requireValue(typeof value === 'string' && /^[a-f0-9]{64}$/.test(value));
+}
+function catalogRecord(value: unknown, source: Record<string, any>, code: string) {
+  const r = shape(value, CATALOG_RECORD);
+  requireValue(r.id === source.id && r.park_code === code && r.source_content_hash === source.content_hash
+    && r.observed_first_at === source.observed_first_at && r.observed_changed_at === source.observed_changed_at);
+  catalogText(r.title); officialUrl(r.url, new Set([code]), true);
+  requireValue(!r.url.includes('?') && !r.url.includes('#'));
+  requireValue(['published', 'withheld'].includes(r.category_scope)
+    && (r.category_scope !== 'withheld' || r.activity_categories === null));
+  categories(r.activity_categories);
+  if (r.activity_categories !== null) r.activity_categories.forEach((category: Record<string, any>) => catalogText(category.name));
+  requireValue(r.geographic_relationship === 'unconfirmed' && r.availability_status === 'not_verified'
+    && ['responsible_agency', 'difficulty', 'permit_required', 'source_updated_at'].every(field => r[field] === null)
+    && r.hash_scope === 'catalog_view');
+  canonicalActivityJson(r, MAX_RECORD_BYTES);
+  requireValue(r.view_hash === activityDigest(Object.fromEntries(CATALOG_SEMANTIC.map(field => [field, r[field]])), MAX_RECORD_BYTES));
+}
+function validateCatalog(value: unknown): PublicActivityCatalog {
+  const data = shape(value, ['schema_version', 'purpose', 'inventories']);
+  requireValue(data.schema_version === 2 && data.purpose === 'public_park_activities'
+    && Array.isArray(data.inventories) && data.inventories.length === CODES.length);
+  data.inventories.forEach((value: unknown, index: number) => {
+    const s = shape(value, [...INVENTORY, 'source_records']), code = CODES[index];
+    requireValue(s.schema_version === 2 && s.park_code === code && s.provider === 'NPS'
+      && s.source_url === `https://developer.nps.gov/api/v1/thingstodo?parkCode=${code}`
+      && s.last_checked_at === data.inventories[0].last_checked_at);
+    requireValue(['success', 'failed', 'quarantined'].includes(s.collection_status));
+    const success = s.collection_status === 'success';
+    requireValue(s.coverage_status === (success ? 'checked_activity_feed_only' : 'incomplete')
+      && s.error_code === (success ? null : s.collection_status === 'failed' ? 'provider_request_failed' : 'response_requires_review')
+      && ['source_issued_at', 'source_updated_at', 'published_at'].every(field => s[field] === null));
+    const checked = timestamp(s.last_checked_at), successful = timestamp(s.last_successful_fetch_at);
+    requireValue(successful <= checked && (!success || s.last_checked_at === s.last_successful_fetch_at));
+    requireValue(Array.isArray(s.source_records) && s.source_records.length <= 5000
+      && Array.isArray(s.records) && s.records.length <= 5000);
+    // Source evidence includes withheld rows. Its hashes bind private semantics
+    // and cannot be recomputed from this smaller public view.
+    let previous: string | undefined, published = 0;
+    for (const value of s.source_records) {
+      const source = shape(value, CATALOG_SOURCE); text(source.id, false, true); contentHash(source.content_hash);
+      requireValue(source.hash_scope === 'normalized_record' && ['selected', 'withheld'].includes(source.publication_status)
+        && (previous === undefined || scalarOrder(previous, source.id) < 0));
+      previous = source.id;
+      requireValue(timestamp(source.observed_first_at) <= timestamp(source.observed_changed_at)
+        && timestamp(source.observed_changed_at) <= successful);
+      canonicalActivityJson(source, MAX_RECORD_BYTES);
+      if (source.publication_status === 'selected') catalogRecord(s.records[published++], source, code);
+    }
+    requireValue(published === s.records.length);
+    canonicalActivityJson(s, MAX_INVENTORY_BYTES);
+  });
+  return structuredClone(data) as PublicActivityCatalog;
+}
+function validateCatalogRights(value: unknown, data: PublicActivityCatalog): ActivityCatalogRights {
+  const rights = shape(value, ['schema_version', 'purpose', 'reviewed_at', 'review_method', 'policy', 'records', 'projection_hash']);
+  requireValue(rights.schema_version === 2 && rights.purpose === 'public_park_activity_text_rights'
+    && rights.review_method === 'official_nps_policy_and_exact_activity_review'
+    && rights.projection_hash === activityDigest(data));
+  requireValue(canonical(shape(rights.policy, POLICY_FIELDS)) === canonical(POLICY));
+  const reviewed = timestamp(rights.reviewed_at);
+  const records = data.inventories.flatMap(s => s.records.map(record => ({inventory: s, record})));
+  requireValue(Array.isArray(rights.records) && rights.records.length === records.length);
+  data.inventories.forEach(s => requireValue(reviewed >= timestamp(s.last_checked_at)));
+  rights.records.forEach((value: unknown, index: number) => {
+    const r = shape(value, CATALOG_RIGHTS_RECORD), {inventory: s, record} = records[index];
+    requireValue(r.park_code === s.park_code && r.activity_id === record.id && r.source_url === s.source_url
+      && r.source_content_hash === record.source_content_hash && r.view_hash === record.view_hash
+      && r.classification === 'nps_government_text' && r.use_scope === 'activity_catalog_title_url_and_optional_categories'
+      && r.third_party_material_reproduced === false && r.nps_marks_reproduced === false && r.media_reproduced === false);
+  });
+  return structuredClone(rights) as ActivityCatalogRights;
+}
 export function validatePublicActivities(value: unknown): PublicActivities {
   try {
     canonicalActivityJson(value);
+    if (value && typeof value === 'object' && !Array.isArray(value)
+      && (value as Record<string, unknown>).schema_version === 2) return validateCatalog(value);
     const data = shape(value, ['schema_version', 'purpose', 'inventories']);
     requireValue(data.schema_version === 1 && data.purpose === 'public_park_activities'
       && Array.isArray(data.inventories) && data.inventories.length === CODES.length);
@@ -212,6 +321,7 @@ export function validatePublicActivities(value: unknown): PublicActivities {
 export function validateActivityRights(value: unknown, dataset: unknown): ActivityRights {
   try {
     const data = validatePublicActivities(dataset); canonicalActivityJson(value, MAX_ACTIVITY_RIGHTS_BYTES);
+    if (data.schema_version === 2) return validateCatalogRights(value, data);
     const rights = shape(value, ['schema_version', 'purpose', 'reviewed_at', 'review_method', 'policy', 'records']);
     requireValue(rights.schema_version === 1 && rights.purpose === 'public_park_activity_text_rights'
       && rights.review_method === 'official_nps_policy_and_exact_activity_review');

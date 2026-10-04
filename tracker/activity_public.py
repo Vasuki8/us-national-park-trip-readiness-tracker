@@ -81,6 +81,9 @@ def _clock(value: object):
 
 def validate_public_activities(value: dict) -> dict:
     """Validate all-five retained successful evidence, including empty feeds."""
+    if type(value) is dict and type(value.get('schema_version')) is int and value['schema_version'] == 2:
+        from .activity_catalog import validate_catalog
+        return validate_catalog(value)
     _require(type(value) is dict and set(value) == {'schema_version', 'purpose', 'inventories'})
     _require(type(value['schema_version']) is int and value['schema_version'] == 1
              and value['purpose'] == 'public_park_activities')
@@ -97,7 +100,10 @@ def validate_public_activities(value: dict) -> dict:
     return copy.deepcopy(value)
 
 
-def project_checkpoint(value: dict) -> dict:
+def project_checkpoint(value: dict, dispositions: dict | None = None) -> dict:
+    if dispositions is not None:
+        from .activity_catalog import project_catalog
+        return project_catalog(value, dispositions)
     try:
         checkpoint = validate_checkpoint(value)
     except ActivityCheckpointError:
@@ -108,6 +114,9 @@ def project_checkpoint(value: dict) -> dict:
 
 def validate_activity_rights(value: dict, dataset: dict) -> dict:
     """Check exact asserted review bindings; never infer a licence or review."""
+    if type(dataset) is dict and type(dataset.get('schema_version')) is int and dataset['schema_version'] == 2:
+        from .activity_catalog import validate_catalog_rights
+        return validate_catalog_rights(value, dataset)
     inventories = validate_public_activities(dataset)['inventories']
     _require(type(value) is dict and set(value) == {
         'schema_version', 'purpose', 'reviewed_at', 'review_method', 'policy', 'records'},

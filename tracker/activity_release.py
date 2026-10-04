@@ -61,10 +61,15 @@ def _clock(value: object):
         raise ActivityReleaseError('invalid_activity_release_clock') from None
 
 
-def build_release_bundle(checkpoint: dict, rights: dict, approved_at: str) -> dict:
+def build_release_bundle(checkpoint: dict, rights: dict, approved_at: str, *,
+                         dispositions: dict | None = None) -> dict:
     """Bind an asserted decision to every retained field, clock and rights row."""
     try:
-        public = project_checkpoint(checkpoint)
+        if dispositions is not None:
+            from .activity_catalog import validate_dispositions
+            dispositions = validate_dispositions(dispositions, checkpoint)
+        public = (project_checkpoint(checkpoint) if dispositions is None else
+                  project_checkpoint(checkpoint, dispositions=dispositions))
         rights = validate_activity_rights(rights, public)
     except ActivityPublicError:
         raise ActivityReleaseError('invalid_activity_release_evidence') from None
@@ -72,34 +77,53 @@ def build_release_bundle(checkpoint: dict, rights: dict, approved_at: str) -> di
                 'checkpoint_id': checkpoint['checkpoint_id'],
                 'projection_hash': _digest(public, max_bytes=MAX_PUBLIC_BYTES),
                 'rights_hash': _digest(rights, max_bytes=MAX_RIGHTS_BYTES)}
-    core = {'schema_version': 1, 'purpose': 'private_reviewed_park_activities',
+    core = {'schema_version': 1 if dispositions is None else 2, 'purpose': 'private_reviewed_park_activities',
             'checkpoint': copy.deepcopy(checkpoint), 'public_activities': public,
             'rights': rights, 'approval': approval}
+    if dispositions is not None:
+        core['dispositions'] = dispositions
+        approval['dispositions_hash'] = _digest(dispositions, max_bytes=MAX_PUBLIC_BYTES)
     return validate_release_bundle({**core, 'bundle_id': _digest(core, max_bytes=MAX_BUNDLE_BYTES)})
 
 
 def validate_release_bundle(value: dict) -> dict:
     """Verify a complete self-contained bundle offline; return a detached copy."""
-    _require(type(value) is dict and set(value) == {
-        'schema_version', 'purpose', 'checkpoint', 'public_activities', 'rights', 'approval', 'bundle_id'})
-    _require(type(value['schema_version']) is int and value['schema_version'] == 1
-             and value['purpose'] == 'private_reviewed_park_activities')
+    _require(type(value) is dict)
+    version = value.get('schema_version')
+    _require(type(version) is int and version in (1, 2))
+    _require(set(value) == {
+        'schema_version', 'purpose', 'checkpoint', 'public_activities', 'rights', 'approval', 'bundle_id'}
+        | ({'dispositions'} if version == 2 else set()))
+    _require(value['purpose'] == 'private_reviewed_park_activities')
     try:
-        projection = project_checkpoint(value['checkpoint'])
+        if version == 2:
+            from .activity_catalog import validate_dispositions
+            dispositions = validate_dispositions(value['dispositions'], value['checkpoint'])
+            projection = project_checkpoint(value['checkpoint'], dispositions=dispositions)
+        else:
+            projection = project_checkpoint(value['checkpoint'])
         public = validate_public_activities(value['public_activities'])
         rights = validate_activity_rights(value['rights'], public)
     except ActivityPublicError:
         raise ActivityReleaseError('invalid_activity_release_evidence') from None
+    _require(public['schema_version'] == version and rights['schema_version'] == version,
+             'activity_release_version_mismatch')
     _require(_encoded(projection, max_bytes=MAX_PUBLIC_BYTES) ==
              _encoded(public, max_bytes=MAX_PUBLIC_BYTES), 'activity_projection_mismatch')
     approval = value['approval']
     _require(type(approval) is dict and set(approval) == {
-        'decision', 'approved_at', 'checkpoint_id', 'projection_hash', 'rights_hash'})
+        'decision', 'approved_at', 'checkpoint_id', 'projection_hash', 'rights_hash'}
+        | ({'dispositions_hash'} if version == 2 else set()))
     _require(approval['decision'] == 'approved'
              and approval['checkpoint_id'] == value['checkpoint']['checkpoint_id']
              and approval['projection_hash'] == _digest(public, max_bytes=MAX_PUBLIC_BYTES)
              and approval['rights_hash'] == _digest(rights, max_bytes=MAX_RIGHTS_BYTES),
              'activity_approval_binding_mismatch')
+    if version == 2:
+        _require(approval['dispositions_hash'] == _digest(dispositions, max_bytes=MAX_PUBLIC_BYTES),
+                 'activity_approval_binding_mismatch')
+        _require(_clock(rights['reviewed_at']) >= _clock(dispositions['reviewed_at']),
+                 'activity_rights_review_predates_dispositions')
     _require(_clock(approval['approved_at']) >= _clock(rights['reviewed_at']),
              'activity_approval_predates_review')
     _encoded(value, max_bytes=MAX_BUNDLE_BYTES)
@@ -129,7 +153,7 @@ def verify_release_bundle(path: Path) -> dict:
 
 
 def _protect_inputs(destination: Path, *sources: Path) -> None:
-    # Check both names before invoking the writer: a rights/checkpoint input may
+    # Check both names before invoking the writer: a review/checkpoint input may
     # itself be named like the destination lock. That input must never be unlinked.
     output = _private_path(destination)
     lock = _private_path(Path(str(output) + '.lock'))
@@ -148,17 +172,24 @@ def _install(destination: Path, source: Path, data: bytes, *, max_bytes: int) ->
 
 
 def create_release_bundle(checkpoint: Path, rights: Path, destination: Path,
-                          approved_at: str, *, approve=False) -> dict:
+                          approved_at: str, *, approve=False, dispositions: Path | None = None) -> dict:
     """Record only an explicit approval, without overwrite or private-input loss."""
     _require(approve is True, 'activity_approval_confirmation_required')
     source, rights_source = _private_path(checkpoint), _private_path(rights)
+    disposition_source = None if dispositions is None else _private_path(dispositions)
     try:
         retained = verify_checkpoint(source)
     except ActivityCheckpointError:
         raise ActivityReleaseError('invalid_activity_release_checkpoint') from None
-    bundle = build_release_bundle(retained, _read_private(rights_source, max_bytes=MAX_RIGHTS_BYTES), approved_at)
+    plan = None if disposition_source is None else _read_private(disposition_source, max_bytes=MAX_PUBLIC_BYTES)
+    # A supplied file selects the catalog contract. JSON null cannot turn that
+    # explicit input into an absent plan and silently restore v1 review scope.
+    _require(disposition_source is None or type(plan) is dict, 'invalid_activity_release_evidence')
+    bundle = build_release_bundle(retained, _read_private(rights_source, max_bytes=MAX_RIGHTS_BYTES),
+                                  approved_at, dispositions=plan)
     data = _encoded(bundle, max_bytes=MAX_BUNDLE_BYTES)  # Refuse before locks or temporary files.
-    _protect_inputs(destination, source, rights_source)
+    _protect_inputs(destination, source, rights_source,
+                    *((disposition_source,) if disposition_source is not None else ()))
     _install(destination, source, data, max_bytes=MAX_BUNDLE_BYTES)
     return bundle
 
@@ -175,9 +206,24 @@ def restore_release_bundle(source: Path, destination: Path) -> dict:
     return restored
 
 
+def _source_inventory(inventory: dict) -> dict:
+    """Comparable original source metadata, independent of the public view."""
+    result = {key: value for key, value in inventory.items()
+              if key not in ('schema_version', 'records', 'source_records')}
+    records = inventory['source_records'] if inventory['schema_version'] == 2 else inventory['records']
+    result['records'] = [{key: record[key] for key in (
+        'id', 'content_hash', 'hash_scope', 'observed_first_at', 'observed_changed_at')}
+        for record in records]
+    return result
+
+
 def _advance(old: dict, new: dict) -> None:
     """Refuse unsupported public evidence replacement, including private forks."""
     for before, after in zip(old['inventories'], new['inventories']):
+        # Preserve v1 strict snapshot comparison. With either catalog version,
+        # original evidence carries the guards; editorial choices renew no age.
+        if old['schema_version'] == 2 or new['schema_version'] == 2:
+            before, after = _source_inventory(before), _source_inventory(after)
         _require(_clock(after['last_checked_at']) >= _clock(before['last_checked_at']),
                  'activity_promotion_clock_rewind')
         if _clock(after['last_checked_at']) == _clock(before['last_checked_at']):
@@ -328,6 +374,7 @@ def _parser():
     approve = commands.add_parser('approve')
     approve.add_argument('--checkpoint', type=Path, required=True)
     approve.add_argument('--rights', type=Path, required=True)
+    approve.add_argument('--dispositions', type=Path)
     approve.add_argument('--output', type=Path, required=True)
     approve.add_argument('--approve', action='store_true')
     verify = commands.add_parser('verify')
@@ -350,7 +397,8 @@ def main(argv=None) -> int:
         args = _parser().parse_args(argv)
         if args.command == 'approve':
             now = datetime.now(timezone.utc).isoformat(timespec='microseconds').replace('+00:00', 'Z')
-            bundle = create_release_bundle(args.checkpoint, args.rights, args.output, now, approve=args.approve)
+            bundle = create_release_bundle(args.checkpoint, args.rights, args.output, now,
+                                           approve=args.approve, dispositions=args.dispositions)
             report.update(operation='approval_recorded', bundle_id=bundle['bundle_id'], approval_performed=True)
         elif args.command in ('verify', 'restore'):
             bundle = verify_release_bundle(args.bundle) if args.command == 'verify' else \

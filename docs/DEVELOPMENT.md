@@ -121,6 +121,16 @@ large-batch bounds and neutral POSIX storage helpers. Promotion rechecks the exa
 public base bytes and retained observation/drop guards. Parent references do not
 establish complete checkpoint history.
 
+`tracker/activity_catalog.py` adds a separately versioned minimal projection:
+exact title, safe NPS listing link and optionally original categories. Every
+source record has an explicit private selected/withheld disposition and a public
+source-hash summary; selected views have their own digest. Private approval binds
+the dispositions, source checkpoint, complete projection and narrowed rights.
+Original descriptions/embedded metadata remain private; withholding never means
+source removal or availability. Version 1 verification/recovery retains its
+complete-text meaning. Promotion continuity checks original source summaries
+across versions, while readiness reports source, published and withheld counts.
+
 `scripts/validate-park-activities.ts` validates the optional paired public files
 at the build boundary, with Python-compatible canonical hashes and strict file,
 JSON, source, clock and rights checks. Both files absent remains optional;

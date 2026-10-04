@@ -552,7 +552,10 @@ def _activity_publication(root: Path, gates: list, review: dict | None,
     for gate in selected.values():
         gate['evidence'].update(activity_inventory_present=True,
                                 activity_inventory_valid=False,
-                                activity_records_total=None)
+                                activity_records_total=None,
+                                activity_source_records_total=None,
+                                activity_records_published=None,
+                                activity_records_withheld=None)
     review_gate = selected['durable_source_review']
     backup_gate = selected['storage_backup']
     rights_gate = selected['source_rights']
@@ -566,9 +569,14 @@ def _activity_publication(root: Path, gates: list, review: dict | None,
         return
 
     public, rights = pair['dataset'], pair['rights']
-    count = sum(len(inventory['records']) for inventory in public['inventories'])
+    published = sum(len(inventory['records']) for inventory in public['inventories'])
+    source_count = (sum(len(inventory['source_records']) for inventory in public['inventories'])
+                    if public['schema_version'] == 2 else published)
     for gate in selected.values():
-        gate['evidence'].update(activity_inventory_valid=True, activity_records_total=count)
+        gate['evidence'].update(activity_inventory_valid=True, activity_records_total=source_count,
+                                activity_source_records_total=source_count,
+                                activity_records_published=published,
+                                activity_records_withheld=source_count - published)
     rights_gate['evidence']['activity_records_covered'] = len(rights['records'])
     matches = (review is not None
                and canonical_activity_json(review['public_activities'], max_bytes=MAX_PUBLIC_BYTES)
