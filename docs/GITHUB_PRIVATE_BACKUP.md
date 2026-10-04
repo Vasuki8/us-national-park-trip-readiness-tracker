@@ -2,7 +2,13 @@
 
 The owner selected GitHub for the separate backup on September 30, 2026. Use a dedicated **private** repository separate from the public website repository. Record the exact selected repository identity privately. This replaces the earlier blanket restriction against GitHub backups for this owner-selected destination. Public repositories, Pages outputs and Actions artifacts remain unsuitable for private evidence.
 
-Keep the authoritative working ledger, alert archive and local verified backups on the WSL Linux filesystem outside the website checkout. GitHub is the remote second copy. A local clone on C: or D: is a transfer/recovery workspace, not a separate physical backup. GitHub access controls protect this private repository; this procedure does not claim client-side encryption or indefinite retention.
+For each authorized operator session, use the selected private destination and
+exact verified evidence inventory. Extending the supported inventory below does
+not itself establish upload approval, source-rights approval, public-data
+application or deployment. New destinations, access changes and paid Git LFS
+retain their owner-decision boundaries.
+
+Keep the authoritative working ledger, alert archive, profile/activity checkpoints and local verified backups on the WSL Linux filesystem outside the website checkout. GitHub is the remote second copy. A local clone on C: or D: is a transfer/recovery workspace, not a separate physical backup. GitHub access controls protect this private repository; this procedure does not claim client-side encryption or indefinite retention.
 
 ## Repository and local setup
 
@@ -10,7 +16,7 @@ Before uploading evidence, confirm through authenticated GitHub repository metad
 
 Use owner-only WSL directories with no symlink ancestry for the working root, transfer clone and recovery parent. The existing `tracker.entry_review_backup` verifier still enforces private local files and parents. Clone and copy under `umask 077`; set `core.autocrlf=false` and use `* -text` in the backup repository's `.gitattributes` so database and manifest bytes are preserved. Git does not preserve POSIX privacy permissions remotely: enforce and verify them again on materialized WSL files.
 
-The repository may contain only its setup files, explicitly selected verified entry-review bundles, committed alert-archive snapshots, immutable park-profile checkpoints or reviewed bundles, and clearly labeled synthetic transport probes. Never copy an entire home/configuration/staging directory. Keep API keys, credentials, live working databases, writer locks, pending receipts, packet output, website builds and source checkout files excluded. Retained ledger evidence is private source material and belongs only in this private repository.
+The repository may contain only its setup files, explicitly selected verified entry-review bundles, committed alert-archive snapshots, immutable park-profile checkpoints or reviewed bundles, immutable activity checkpoints or separately reviewed activity approval bundles, and clearly labeled synthetic transport probes. Never copy an entire home/configuration/staging directory. Keep API keys, credentials, live working databases, writer locks, pending receipts, packet output, website builds and source checkout files excluded. Retained ledger evidence is private source material and belongs only in this private repository.
 
 ## Upload a verified entry-review checkpoint
 
@@ -66,9 +72,59 @@ locks and temporary files. Recheck privacy before recovery and clone directly
 from the selected GitHub URL. Record remote commit, selected type/ID, byte
 comparisons and restore result privately. Approval remains a separate decision.
 
+## Activity checkpoints and reviewed approval bundles
+
+Activities have their own [collection](ACTIVITY_COLLECTION.md) and
+[reviewed promotion](ACTIVITY_PROMOTION.md) contracts. Ledger, alert and profile
+backups do not cover activity evidence or approval. Before approval, select the
+verified immutable checkpoint under
+`activities/checkpoints/CHECKPOINT_ID.json`. Use the unchanged
+`tracker.activity_stage verify --checkpoint PATH` before copying, on the copied
+file and after a fresh authenticated remote download. Use
+`tracker.activity_stage restore --checkpoint PATH --output NEW_PATH` to restore
+the downloaded file into a new owner-only private destination. Compare checkpoint
+ID and exact canonical bytes with the local verified checkpoint. Checkpoint-only
+backup proves recovery of unapproved collected evidence; it does not establish
+text-use rights approval, recovery of a reviewed approval bundle or public
+readiness.
+
+After exact text-use review and explicit approval under the promotion contract,
+select the verified immutable approval bundle under
+`activities/reviewed/BUNDLE_ID.json`. It retains the checkpoint, complete public
+projection, rights manifest and approval bindings. Use the unchanged
+`tracker.activity_release verify --bundle PATH` before copying, on the copied
+file and after the fresh authenticated remote download. Use
+`tracker.activity_release restore --bundle PATH --output NEW_PATH` to restore
+the downloaded bundle into a new owner-only private destination. Compare bundle
+ID and exact canonical bytes with the local verified bundle. Verify the restored
+file and compare identity and canonical bytes again for either type. Copying and
+restoration preserve original source clocks; backup never supplies a rights
+decision or authorizes public-data application.
+
+Apply the same authenticated repository identity, expected-owner, write-access
+and privacy checks before each upload and recovery. Keep Actions disabled, Pages
+unconfigured and access unchanged. Use existing owner-only WSL Linux parents
+outside the checkout with no symlink ancestry, `umask 077`, `core.autocrlf=false`
+and `* -text`; enforce file privacy again after download. Stage only the selected
+verified JSON at its exact inventory path, inspect the staged bytes and refuse
+symlinks, unexpected files or any file larger than 50 MiB. A valid approved
+bundle can exceed this unchanged transport limit: refuse its upload without
+splitting or trimming evidence, changing destinations or enabling paid Git LFS.
+Exclude credentials, raw HTTP responses, review HTML, proposals, operator
+receipts, writer locks and temporary files. Preserve earlier activity, profile,
+alert and ledger checkpoints; do not force-push, prune or delete history.
+
+Clone directly from the same selected GitHub URL into a fresh owner-only
+recovery workspace at the recorded remote commit, following the remote-download
+requirements above. A transfer clone, shared objects, local cache or acknowledged
+push cannot substitute for this recovery check. Record selected type/ID, remote
+commit, download, byte comparisons and fresh restore result privately. Neither
+checkpoint-only recovery nor an approved-bundle recovery clears the remaining
+source, freshness, review, public-data or deployment gates by itself.
+
 ## Setup evidence versus real backup evidence
 
-A labeled synthetic push/download/restore probe may verify credentials, Git transport, byte preservation and the existing restore path. It does not establish a backup of real evidence, physical durability, human review or release readiness. Keep any probe separate under `probes/`. Every real session requires actual current-head ledger and alert-archive uploads, fresh-download verification and the owner's review before public-data application or deployment.
+A labeled synthetic push/download/restore probe may verify credentials, Git transport, byte preservation and the existing restore path. It does not establish a backup of real evidence, physical durability, human review or release readiness. Keep any probe separate under `probes/`. Before public guidance and alert application or deployment, verify their actual current-head ledger and alert-archive backups, fresh downloads and applicable owner review. Profile and activity evidence follow the separate checkpoint/reviewed-bundle scopes above; a private collection-only session does not change the ledger or public data.
 
 ## Record recovery privately
 
