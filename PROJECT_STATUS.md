@@ -1,13 +1,12 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), during reviewed activity promotion verification; the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after PR #15 integrated reviewed activity promotion/recovery; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
 The separate activity public contract, exact per-record text-rights manifest,
 immutable private approval/recovery and paired public-file patch preparation/
-recheck are implemented on **`codex/reviewed-activity-promotion`**, based on main
-**`e4659506847494d2b8c1d482a96a5f87eb92d34a`**. Build validation and release
+recheck are integrated in **`main`** through PR #15. Build validation and release
 readiness accept the optional complete pair and refuse incomplete/invalid pairs;
 readiness extends existing review, rights and backup gates only downward. See
 [ACTIVITY_PROMOTION.md](docs/ACTIVITY_PROMOTION.md).
@@ -32,9 +31,32 @@ reproduced Unicode credential-pattern, neutral Unicode-fragment and ancestor-
 symlink parity gaps. Four failing regressions established the defects before
 fixes; all 55 focused activity/profile/build-gate cases now pass. Independent
 TypeScript re-review confirms 14 URL and nine ancestry cases with no remaining
-findings. Local Chromium remains unavailable, so both supported CI browser suites
-remain required. No PR/CI/integration or deployment success is claimed by this
-in-progress handoff.
+findings. Local Chromium remains unavailable; supported CI completed both browser
+suites before integration.
+
+[PR #15](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/15)
+merged checked head **`b10daa1d42fff90a25e1ce906a8a4fbc085c536a`** as
+**`66d1b65583239d54a1ae56f334d23f0bbdf7693a`** under the owner's standing
+merge authorization. Native Windows Git confirms the actual merge, checked head
+and CI checkout share tree **`7e5079877cc3b7c62144b48f8c941038070e4282`**;
+local `main` was fast-forwarded to that merge.
+
+[Verify pilot #229](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37180240009),
+job **111371173112**, passed **350 Node + 759 Python + 66 generated-site +
+126 Chromium = 1,301 tests**, zero Astro diagnostics across 36 files and both
+14-page builds. All **111 root + 15 project-path browser cases** passed, and all
+three accessibility screenshots survived. CI checked standard PR merge
+**`ce64ac0595c471a9cf84591c1295c3c440f0606b`**, combining the reviewed head with
+unchanged main **`e4659506847494d2b8c1d482a96a5f87eb92d34a`**. Fresh checks,
+complete job-log, checkout-parent/tree and artifact metadata inspection passed.
+Artifact **11295260413** uploaded successfully (4,661,901 bytes); it was not
+downloaded or deployed. PR-only verification is not a live release artifact.
+CI installation reports one high-severity npm advisory with unchanged
+dependencies; existing Action Node-runtime and Ubuntu-runner notices remain.
+
+Current branch: **`main`**, after checked PR #15 integration. This handoff and
+completed implementation-plan receipt record verified integration without changing
+the checked runtime files.
 
 This increment uses synthetic sources only. No real activity collection, rights
 decision, private backup transfer, public-data application, dependency/workflow
@@ -48,8 +70,7 @@ The repository-only readiness report remains **1 pass, 3 blocked, 3 not checked*
 overall and **1 pass, 1 blocked, 3 not checked** required for the pilot, with
 `release_ready: false` and no supplied private evidence.
 
-Next: complete required CI and checked PR integration. Then collect and review
-exact real activity listings, verify remote
+Next: collect and review exact real activity listings, verify approved-bundle remote
 recovery and prepare the public pair before Things to Do rendering. A live
 release still needs deliberate alert refresh, complete release checks and
 applicable deployment authorization.

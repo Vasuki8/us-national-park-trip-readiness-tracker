@@ -83,6 +83,6 @@ Consume Task 1 paired-file reader and Task 3 bundle validators. Add `activity_re
 ## Task 5: Documentation, review and integration
 
 - [x] Document exact operator commands, rights scope, bounds, interruption/recovery, paired patch/CAS and readiness in `docs/ACTIVITY_PROMOTION.md`; update README, development, foundation/collection next steps and release-readiness docs.
-- [ ] Review code and contract independently, fix reproduced findings, run complete Python/Node/Astro/root/project-build/site checks and required CI browser suites.
-- [ ] Review staged diff/private boundaries; create/attach PR, merge checked head after all required checks/review pass, verify identical trees and update current handoff with actual receipts.
+- [x] Review code and contract independently, fix reproduced findings, run complete Python/Node/Astro/root/project-build/site checks and required CI browser suites.
+- [x] Review staged diff/private boundaries; create/attach PR, merge checked head after all required checks/review pass, verify identical trees and update current handoff with actual receipts.
 - [x] Leave real collection, rights decisions, verified remote backup, public promotion, Things to Do rendering and live release as explicit subsequent work.
