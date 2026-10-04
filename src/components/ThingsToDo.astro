@@ -1,0 +1,43 @@
+---
+import type { CatalogActivityInventory } from '../../scripts/validate-park-activities';
+import ActivityCheck from './ActivityCheck.astro';
+interface Props { inventory: CatalogActivityInventory | null; officialUrl: string }
+const { inventory, officialUrl } = Astro.props;
+const clock = inventory ? { collection_status: inventory.collection_status, last_checked_at: inventory.last_checked_at, last_successful_fetch_at: inventory.last_successful_fetch_at } : null;
+const sourceCount = inventory?.source_records.length ?? null;
+const publishedCount = inventory?.records.length ?? null;
+const withheldCount = inventory?.source_records.filter(record => record.publication_status === 'withheld').length ?? null;
+---
+<section class="panel activities-section" id="things-to-do" tabindex="-1" aria-labelledby="things-to-do-title">
+  <p class="eyebrow">Explore official activity listings</p><h2 id="things-to-do-title">Things to Do</h2>
+  <p class="note" data-activity-limitations>Availability is not verified. Each listing’s relationship to this park is unconfirmed. Responsible agency, difficulty and permit requirements are unknown. Check current access, seasons, fees and reservations with NPS before planning.</p>
+  <a class="text-link" href={officialUrl}>Confirm activities with NPS <span aria-hidden="true">↗</span></a>
+  {inventory ? <>
+    <p class="small" data-activity-counts>{publishedCount} published listings · {sourceCount} source listings · {withheldCount} withheld listings</p>
+    <p class="small muted">Coverage: {inventory.coverage_status === 'incomplete' ? 'Incomplete. A refresh failed or needs review; retained evidence is shown.' : 'Activity feed only. This is not a complete park inventory.'}</p>
+    <p class="small muted">Editorial withholding does not mean source removal, closure or reopening.</p>
+    {sourceCount === 0 ? <p class="note">No listings were returned by the checked activity feed. This does not establish that there are no activities.</p>
+      : publishedCount === 0 ? <p class="note">All stored source listings are withheld from this catalog. This does not establish activity availability or source removal.</p>
+      : <details data-activity-inventory>
+        <summary>Browse {publishedCount} published activity listings</summary>
+        <p>Exact NPS listing titles and source categories. Follow each official listing to confirm details and current requirements.</p>
+        <ul class="activity-list">
+          {inventory.records.map(record => <li class="activity-item" data-activity-record>
+            <h3><a data-activity-link href={record.url}>{record.title}</a></h3>
+            {record.category_scope === 'withheld' ? <p class="small muted">Categories are withheld from this published view.</p>
+              : record.activity_categories === null ? <p class="small muted">Categories are not available in the stored listing.</p>
+              : record.activity_categories.length === 0 ? <p class="small muted">No categories were supplied for this listing. This does not establish that it has no activity types.</p>
+              : <ul class="activity-categories">{record.activity_categories.map(category => <li data-activity-category>{category.name}</li>)}</ul>}
+          </li>)}
+        </ul>
+      </details>}
+  </> : <p class="note">A reviewed activity catalog is not available for this park. Explore the official park information.</p>}
+  <ActivityCheck clock={clock} sourceUrl={inventory?.source_url ?? null} />
+</section>
+<style>
+  .activities-section{overflow-wrap:anywhere}.activities-section .eyebrow{margin-bottom:8px}.activities-section .note{font-size:.85rem}
+  .activities-section [data-activity-counts]{margin-top:18px;font-weight:600;color:var(--ink)}
+  .activity-list{list-style:none;margin:0;padding:0}.activity-item{border-top:1px solid var(--line);padding:16px 0}
+  .activity-item h3{font-size:1rem;line-height:1.65;letter-spacing:normal;margin:0 0 8px;overflow-wrap:anywhere}
+  .activity-item p{margin-bottom:0}.activity-categories{display:flex;flex-wrap:wrap;gap:4px 24px;padding-left:20px;margin:0}
+</style>

@@ -10,7 +10,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    # Keep the frozen Playwright browser installer on its supported OS.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       ASTRO_TELEMETRY_DISABLED: '1'

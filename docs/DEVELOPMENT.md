@@ -140,13 +140,53 @@ and separately verified recovered copy. Local equality does not prove remote
 transfer. See [ACTIVITY_PROMOTION.md](ACTIVITY_PROMOTION.md) for commands, exact
 text scope and limits. The owner-approved version 2 public pair contains 129
 selected views and seven withheld listings among 136 source summaries, after
-verified reviewed-bundle remote download and restore. No visitor consumer is
-present; existing build snapshot inputs and source clocks are unchanged.
+verified reviewed-bundle remote download and restore. The visitor consumer
+validates the pair again before exposing version 2 inventories.
 Synthetic readiness fixtures explicitly remove both real activity files when
-testing guidance or profiles alone. Next implement Things to Do and include the
-validated catalog and rights digests in the build snapshot identity.
+testing guidance or profiles alone.
 
-Each park page has native "On this page" navigation after its introduction. Fragment links reach Overview, When to Visit, the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
+`src/lib/public-activity-catalog.ts` supplies the build-only paired loader and
+snapshot identity binding. Partial, invalid or mismatched pairs fail; absent
+pairs and valid version 1 pairs expose no catalog and preserve the previous
+snapshot preimage. Complete validated version 2 catalog and rights digests
+participate in the existing snapshot hash, including withheld source summaries,
+original clocks and rights review. Version 1 prose and rights metadata are never
+passed to the visitor component or browser clock.
+
+`ThingsToDo.astro` follows Overview and When to Visit. Exact NPS titles, listing
+links and categories use escaped interpolation inside an initially collapsed
+native disclosure. Published, source and withheld counts are separate;
+withholding does not establish removal. Missing catalog, confirmed empty feed,
+wholly withheld feed and unavailable/empty/withheld categories remain distinct.
+The shared disclosure keeps availability unverified, physical park relationship
+unconfirmed and difficulty, permit requirements and responsible agency unknown.
+Closed/open disclosure state is preserved in print; visitors can expand the
+inventory before printing its listings and wrapped HTTPS destinations.
+
+`src/lib/park-activities.ts` computes the original-clock seven-day activity
+state with microsecond precision. Failed/quarantined checks retain their last
+successful evidence; invalid/future/rewound clocks establish no freshness.
+`ActivityCheck.astro` serializes only collection status and original attempt/
+success times. `src/scripts/activities.ts` refreshes labels on initialization,
+minute, page return, visible-tab return and before print, writing only changed
+labels. It adds no provider requests, storage or trip-control side effects.
+
+Verify pilot uses `ubuntu-24.04` for the frozen Playwright installer. The local
+WSL Ubuntu 26.04 host cannot install this pinned Chromium version; required CI
+executes both browser suites and retains accessibility screenshots. Node tests
+must finish before browser preparation because both build the same synthetic
+history fixture output. See [Playwright system requirements](https://playwright.dev/docs/intro#system-requirements)
+and [GitHub runner images](https://github.com/actions/runner-images).
+
+The frozen installation reports one existing high-severity
+[http-cache-semantics advisory](https://github.com/advisories/GHSA-ch52-4w7c-c8xp).
+The advisory lists no patched version. In the installed Astro dependency it is
+used by the build-time remote-image cache; this project has static output, no
+remote image imports/configuration and no shared authenticated response cache.
+No dependency fix or exhaustive security audit is claimed. Reassess before
+adding authenticated caching or remote imagery; check upstream for a supported fix.
+
+Each park page has native "On this page" navigation after its introduction. Fragment links reach Overview, When to Visit, Things to Do, the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
 
 The park directory applies the current search and state values on initialization and after page return (`pageshow`), as well as normal input/change events. Literal substring search trims, lowercases and collapses whitespace in both the query and card search text, so pasted multiword names match without rewriting visitor controls or metadata. The exact state filter still combines with the query. Page-return resync runs in a zero-delay timer because persisted form restoration can follow the event; see [the documented history-traversal ordering](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event). Cards, the result count and the empty state then follow restored controls without input events. Unchanged counts do not rewrite the live-region text. The application adds no storage, URL parameters or transmission of search selections.
 

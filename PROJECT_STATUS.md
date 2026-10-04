@@ -1,8 +1,74 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after explicit owner approval, verified private recovery and paired promotion of the 129-listing activity catalog; the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after implementing Things to Do from the approved activity catalog; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+Park pages now expose **Things to Do** after Overview and When to Visit, with a
+native section-navigation target and initially collapsed activity inventory.
+Exact NPS titles, official listing links and categories are escaped normally.
+Published, source and withheld counts stay separate: Yosemite 13/13/0, Rocky
+Mountain 11/12/1, Yellowstone 84/88/4, Zion 19/20/1 and Grand Canyon 2/3/1.
+Availability remains unverified, physical park relationship unconfirmed, and
+agency, difficulty and permit requirements unknown. Missing catalogs, confirmed
+empty sources, wholly withheld inventories and category unavailable/empty/
+withheld states remain distinct. Withholding never establishes source removal.
+
+The build-only loader validates both optional files before exposing version 2.
+Absent pairs and validated version 1 pairs expose no catalog and retain the old
+snapshot preimage; partial, malformed or mismatched pairs fail. Complete
+canonical catalog and rights digests now bind the build snapshot, including
+withheld summaries, clocks and rights review. Original prose, credit, media,
+withheld identities/reasons and rights metadata never enter the visitor markup.
+
+Activity freshness uses the original microsecond clock with an inclusive
+seven-day expiry. Failed/quarantined attempts retain their last successful
+evidence. The browser receives only collection status and original attempt/
+success times, recalculating on load, minute, page return, visible-tab return
+and before print. Unchanged labels are not rewritten. Native browsing works
+without JavaScript; print preserves inventory disclosure state, and expanded
+listings print with wrapped official destinations. No provider requests, storage
+or trip-control changes are added by the activity interface.
+
+Data/source work: the approved 136-source / 129-view / seven-withheld public pair
+is byte-for-byte unchanged. Its source attempt/success clock remains
+`2026-10-04T05:49:46.709637Z`; no collection, renewed review, private backup
+transfer or source-age renewal was performed. PR #21 integrated the reviewed
+pair at `ed2263d`, after Verify pilot #242 passed 1,360 tests, both browser
+suites and retained accessibility screenshots. Its remote recovery and approval
+receipts remain in the private operator handoff.
+
+Local verification passes **404 Node + 800 Python + 68 generated-site tests =
+1,272 tests**, zero Astro diagnostics across 41 files, and both 14-page builds
+with snapshot **`pilot-7bb1d6f859a6`**. The static integration regression first
+failed on the old build's absent activity section. Focused loader tests pass
+15/15 and clock/rendering tests pass 21/21 after their recorded red stages.
+Browser discovery registers 117 root and 17 project tests; discovery is not
+execution. Independent review and native visual verification are in progress.
+Required CI must pass both browser suites and retain all three accessibility
+screenshots before standing-authorized merge;
+record exact CI and integration results in the associated PR and private
+operator handoff. Verify pilot is pinned to Ubuntu 24.04 for its frozen
+Playwright installer. Local Chromium remains unavailable on WSL Ubuntu 26.04.
+
+The frozen dependency audit reports one existing high-severity
+`http-cache-semantics` advisory with no listed patched version. Installed usage
+is Astro's build-time remote-image cache; this static pilot has no remote image
+imports or shared authenticated cache. See the scoped evidence and follow-up in
+[DEVELOPMENT.md](docs/DEVELOPMENT.md); no dependency fix or exhaustive security
+audit is claimed.
+
+Deployment/live verification: no deployment or live probe was performed. Last
+verified production remains **`2fa4d4a` / `pilot-0609c66f7954`**.
+The last private-evidence release assessment passed review, backup and rights
+but left conditions/provider freshness and hosting/rollback not checked.
+Indexing and advertising remain disabled.
+
+Next: finish required checks and reviewed PR integration, then refresh the
+17 retained condition notices and assemble complete release evidence against
+reviewed main before requesting any new applicable deployment decision.
+
+## Preceding approved activity promotion — PR #21
 
 The owner explicitly approved the previously presented **129 exact NPS activity
 titles, official listing links and source categories**, including public-repository

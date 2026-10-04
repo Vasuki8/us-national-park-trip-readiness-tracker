@@ -15,6 +15,7 @@ function sections(park: PilotPark) {
   return [
     { name: 'Overview', id: 'overview' },
     { name: 'When to Visit', id: 'when-to-visit' },
+    { name: 'Things to Do', id: 'things-to-do' },
     { name: 'Conditions snapshot', id: 'alert-status' },
     ...(snapshot.records.length ? [{ name: 'Retained notices', id: 'retained-notices' }] : []),
     { name: 'Entry guidance check', id: 'trip-context' },

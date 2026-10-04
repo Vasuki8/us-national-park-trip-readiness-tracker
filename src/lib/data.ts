@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import parks from '../../data/parks.json';
 import rawRules from '../../data/rules.json';
 import rawNotes from '../../data/entry-notes.json';
@@ -15,6 +14,8 @@ import { applyEntryReview } from '../../scripts/entry-review';
 import { validateHistory } from '../../scripts/validate-history';
 import { validatePlanningResources } from '../../scripts/validate-planning-resources';
 import { validatePublicProfiles, validateProfileRights } from '../../scripts/validate-park-profiles';
+import type { CatalogActivityInventory } from '../../scripts/validate-park-activities';
+import { activityCatalogSnapshotId, loadPublicActivityCatalog } from './public-activity-catalog';
 import type { Rule } from './readiness';
 import type { CoverageInput, ReviewCoverage } from './source-coverage';
 export { parks };
@@ -39,6 +40,9 @@ const publicProfiles = rawProfiles === undefined ? null : validatePublicProfiles
 if (publicProfiles) validateProfileRights(rawProfileRights, publicProfiles);
 export const profiles = publicProfiles?.profiles ?? [];
 export const profileFor = (code: string) => profiles.find(profile => profile.park_code === code) ?? null;
+const activityFiles = import.meta.glob('../../data/{park-activities,activity-source-rights}.json', { eager: true, import: 'default' });
+const publicActivityCatalog = loadPublicActivityCatalog(activityFiles['../../data/park-activities.json'], activityFiles['../../data/activity-source-rights.json']);
+export const activitiesFor = (code: string): CatalogActivityInventory | null => publicActivityCatalog.catalog?.inventories.find(inventory => inventory.park_code === code) ?? null;
 export interface Notice { id: string; title: string; description: string; category: string; url: string | null; scope_status: string }
 export interface Snapshot {
   park_code: string; collection_status: string; coverage_status: string; last_checked_at: string | null;
@@ -60,7 +64,7 @@ export const coverageInput: CoverageInput = {
   snapshots: snapshots.map(({ park_code, collection_status, coverage_status, last_successful_fetch_at }) => ({ park_code, collection_status, coverage_status, last_successful_fetch_at })),
 };
 export const buildInfo = {
-  snapshot_id: `pilot-${createHash('sha256').update(JSON.stringify({ parks, rules, notes, rawEntryReview, snapshots, histories, planningResources, ...(profiles.length ? { profiles } : {}) })).digest('hex').slice(0, 12)}`,
+  snapshot_id: activityCatalogSnapshotId({ parks, rules, notes, rawEntryReview, snapshots, histories, planningResources, ...(profiles.length ? { profiles } : {}) }, publicActivityCatalog),
   built_at: new Date().toISOString(), published_at: null,
   code_commit: process.env.GITHUB_SHA || null, live_collection_enabled: false,
   base_path: import.meta.env.BASE_URL,

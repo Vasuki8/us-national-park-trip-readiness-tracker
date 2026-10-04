@@ -119,7 +119,9 @@ verification before paired promotion. Original source clocks are preserved;
 private prose, quotations, tracking links, media and marks are excluded.
 See the [activity source review](docs/ACTIVITY_SOURCE_REVIEW.md) and current
 handoff. Availability and unsupported planning fields remain unverified or
-unknown. Next build Things to Do from the validated catalog; this data promotion
-adds no visitor renderer or live deployment.
+unknown. Park pages now expose Things to Do through the validated version 2
+catalog, with native collapsed inventories, separate published/source/withheld
+counts and original-clock freshness. The build snapshot binds both catalog and
+rights digests. This development increment does not deploy the live site.
 
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.

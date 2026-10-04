@@ -4,6 +4,7 @@ const { parkCode, hasRetainedNotices } = Astro.props;
 const sections = [
   { href: '#overview', label: 'Overview' },
   { href: '#when-to-visit', label: 'When to Visit' },
+  { href: '#things-to-do', label: 'Things to Do' },
   { href: '#alert-status', label: 'Conditions snapshot' },
   ...(hasRetainedNotices ? [{ href: '#retained-notices', label: 'Retained notices' }] : []),
   { href: '#trip-context', label: 'Entry guidance check' },
