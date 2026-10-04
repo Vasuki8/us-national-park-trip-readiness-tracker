@@ -1,8 +1,72 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after merging the approved conditions refresh and preparing its verified release; the PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after publishing and verifying build `2434546` through Deployment #7**.
 
 ## Current development handoff
+
+The integrated park Overview, When to Visit, Things to Do and approved conditions
+refresh are live at [ParkReadiness](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/).
+The owner explicitly authorized merging, pulling, pushing and publishing.
+That standing authorization is recorded in `AGENTS.md` and the permanent owner
+policy; required checks, review and the existing manual release process remain.
+Do not ask again for these routine actions within the recorded scope.
+
+[Deployment #7](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37244227142),
+job **111558808343**, published exact **`2434546303d62a5fcacd4fa5542e37d734a89774`**
+from successful default-branch [Verify pilot #248](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37216789036).
+Its **1,406 tests**, both 14-page builds, zero Astro diagnostics and screenshot
+retention passed. Deployment downloaded the existing artifact **11308073698**
+with the verified digest and did not rebuild, collect or retimestamp source data.
+The dispatch workflow head was documentation receipt **`0d6a7fb`**; the validated
+release target and hosted report bind **`2434546` / `pilot-b45391284d2e`**.
+
+The workflow report at **`2026-10-04T23:34:29.174Z`** and an independent read-only
+recheck at **`2026-10-04T23:38:09.732Z`** each matched **24 public files and 14
+pages in one attempt**. Report artifact **11318596324** has digest
+`sha256:f476fa38ebad407c44835d34bf0160d21bb711953e49d04483670f1abf57050a`,
+expires **`2026-10-11T23:34:31Z`**, and passed downloaded digest, safe single-file
+layout, identity, URL/base and count checks. All four observed security/robots
+headers remain null; every page retains meta `noindex, nofollow`. Indexing,
+advertising, tracking and recurring operations remain disabled.
+
+Data/source work: publication preserves the approved **16 notices** (1/0/5/6/4),
+paired histories, six guidance records, five profiles and 129 published activity
+views. The alert clock remains **`2026-10-04T14:56:52.574947Z`** and is now stale.
+All five live park pages and their histories display fresh-check warnings;
+publishing and preflight do not renew evidence. The 23:33 UTC read-only provider
+preflight passed all five parks with counts **1/0/5/7/4**. That diagnostic is not a
+new durable snapshot or a public-data promotion; the Zion count differs from the
+published historical snapshot. No all-clear, reopening or ended-restriction
+conclusion follows from missing notices.
+
+Live-browser checks completed on October 4 around 19:40 Toronto: all 14 pages
+loaded with noindex metadata; all five park pages preserve source clocks,
+snapshot identity, stale alert warnings and Things to Do. Zion activity
+expansion, both before/after comparisons and native retained-article focus
+passed. Park-directory whitespace/state/no-match/reset controls and a real back
+return, retained-notice search/reset, section focus with checklist preservation,
+and checklist toggle/reset passed. The light layout is visually checked; no
+console warnings/errors were captured. These checks do not establish every
+browser's restoration/print behavior or screen-reader announcements.
+
+The previous live **`2fa4d4a` / `pilot-0609c66f7954`** release is the rollback
+target, Verify #202 artifact **11257849120**, expiring **`2026-10-09T23:58:37Z`**.
+Its eligibility, ZIP digest, extracted bytes and manifests were rechecked before
+dispatch. No new rollback drill was performed. The unchanged readiness CLI does
+not ingest these external receipts; its last integrated report remains three
+required pass, zero blocked and two not checked, with `release_ready: false`.
+Detailed approval, provider, artifact, hosted-report, recovery and engineering
+receipts remain in the owner-only private operator handoff.
+
+Next: collect a fresh five-park alert checkpoint through the existing private
+staging/archive path, verify its separate backup/recovery, review the new Zion
+inventory and prepare the exact paired alert/history promotion. Retain current
+public data and stale warnings until a validated, reviewed replacement is ready.
+
+## Conditions release preparation — PR #24 (historical)
+
+The following records preparation before publication; the current live results
+above take precedence.
 
 [PR #23](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/23)
 is merged at **`2434546303d62a5fcacd4fa5542e37d734a89774`**. Independent review

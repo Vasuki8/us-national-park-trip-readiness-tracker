@@ -48,6 +48,17 @@ When a task can reasonably be completed with available repository access, tools 
 
 Make ordinary implementation decisions autonomously.
 
+On October 4, 2026, the owner explicitly authorized merging, pulling, pushing
+and publishing for this repository. Reuse that authorization for routine Git
+operations and verified updates through the existing PR and manual
+verified-artifact release process after required checks and review pass. Do not
+ask again for those actions within this scope. Keep approval, exact release
+identity, source state, rollback evidence and hosted verification recorded in
+the current handoff. This does not enable automatic release triggers or
+schedules, and does not waive source-rights review or the consequential decisions
+listed below, including new costs, destructive changes, major access changes,
+indexing, advertising and tracking.
+
 Do not repeatedly ask the user to choose between:
 - frameworks;
 - libraries;

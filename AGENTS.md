@@ -108,7 +108,10 @@ new authorization from historical releases.
 
 ## Owner workflow preferences
 
-- The owner authorizes merging future pull requests after required checks and
-  review pass. Do not ask for merge permission again.
+- The owner explicitly authorizes routine merges, pulls, pushes and publication
+  for this repository. After required checks and review pass, use the established
+  PR and verified-artifact release process without asking again for these actions.
+  This does not authorize new costs, source-rights approvals, destructive changes,
+  major access changes, schedules, indexing, advertising or tracking.
 - Include the next concrete step in chat progress updates and final responses.
 - Keep the current handoff updated with verified results and remaining work.
