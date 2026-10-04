@@ -1,8 +1,69 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after checked PR #18 integrated the versioned minimal activity catalog; real catalog approval is pending and the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after exact technical review prepared a 129-listing private activity catalog candidate; explicit source-use approval is pending and the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+All **136 retained activity listings** have now received technical model review
+of their complete contexts, with independent park assignments. The coordinating
+operator inspected every proposed title, official listing link and category,
+and adjudicated the seven retained warning contexts. The private version 2
+candidate selects **129 listings**: Yosemite 13, Rocky Mountain 11,
+Yellowstone 84, Zion 19 and Grand Canyon 2. Seven are explicitly withheld for
+a historically dated closure framed as current, three washout/access conflicts,
+an NPS seasonal recommendation against hiking, a rockfall closure and an ended
+program. Withholding does not claim source removal, a new closure or reopening.
+
+The exact dispositions, draft narrowed rights manifest, regenerated projection
+and passive private HTML packet passed canonical/schema/hash checks and an
+independent read-only audit. All source headers, original normalized hashes and
+observation clocks match the unchanged checkpoint. The source attempt/success
+clock remains **`2026-10-04T05:49:46.709637Z`**. Every selected category list is
+an exact source copy; no descriptions, quotations, credits, tracking-bearing
+links, embedded HTML, images or protected graphics are proposed for publication.
+API provenance and empty credits were not treated as ownership evidence.
+
+The current NPS API guide, disclaimer, DOI copyright notice and NPS marks policy
+were checked against the narrower title/link/category scope. This is technical
+review, not authenticated human approval or a licence grant. Automatic approval
+review rejected recording the real catalog approval because it treats the new
+rights/publication scope as an owner legal-risk decision and does not accept
+"continue" as explicit authorization. The owner has been asked to approve the
+concrete 129-listing scope and public promotion after verified private recovery
+and required PR checks. Existing launch-backup authorization remains recorded.
+
+No approved activity bundle, reviewed-bundle backup transfer, public activity
+pair or deployment was created. The selected private backup destination's
+authenticated identity, privacy, write access, disabled Actions and absent Pages
+were rechecked; this proves configuration only. The passive preview delivers
+its exact verified bytes, serves unrelated paths as 404 and has no active source
+links, scripts, media or external assets. Native disclosure works at the checked
+desktop viewport. No new provider requests were made.
+
+Read-only consumer assessment confirms that Things to Do can reuse the current
+Astro/profile patterns without dependencies. Load and validate the optional pair
+in `src/lib/data.ts`, render version 2 only in a native collapsible inventory,
+add `#things-to-do` navigation, and bind catalog plus rights digests into the
+build snapshot while preserving the absent-pair hash. Show feed-only coverage,
+separate withholding, unknown planning fields and original source clocks.
+Follow the existing microsecond-precise seven-day freshness helper and lifecycle
+updater; exercise absent/v1, empty/wholly withheld, category null/empty/withheld,
+degraded/stale, 84-listing, no-JavaScript and project-base-path cases with synthetic
+fixtures. This assessment is a design recommendation, not an implemented renderer.
+
+Documentation-only verification checks all four changed documents as nonempty
+UTF-8, resolves all 29 local Markdown links, excludes private source identities,
+paths and backup destination metadata, and passes `git diff --check`. The isolated
+worktree's unchanged public-data baseline also passes `npm run validate:data`.
+No unrelated local application test run is claimed for this documentation change.
+
+Next: obtain the pending explicit source-use/public-promotion decision, record
+the reviewed bundle, verify a fresh authenticated remote download and restore,
+then prepare and recheck the paired public patch. Things to Do rendering remains
+the next implementation step; refreshed conditions and complete release checks
+are still required before any separately authorized deployment.
+
+## Preceding minimal activity catalog engineering — PR #18
 
 The separately versioned minimal activity contract is implemented. Version 2
 publishes only selected exact titles, safe NPS listing links and optional source

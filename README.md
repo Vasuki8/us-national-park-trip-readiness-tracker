@@ -115,9 +115,13 @@ and release-readiness boundaries. No real activity data has been promoted.
 The first real five-park checkpoint and fresh remote recovery are now verified;
 the private review identified unresolved text-use, link-metadata and availability
 concerns. See the [activity source review](docs/ACTIVITY_SOURCE_REVIEW.md) and
-current handoff. The minimal catalog contract supports exact titles, safe NPS
-links, optional categories and explicit selected/withheld decisions while
-retaining private originals and source clocks. Next review the real checkpoint
-under that contract before approval, recovery, promotion and Things to Do rendering.
+current handoff. Exact technical review has prepared a private version 2
+candidate with 129 selected listings and seven explicitly withheld listings,
+preserving original source clocks. The proposed scope is exact NPS titles,
+official links and source categories; private prose, quotations, tracking links,
+media and marks are excluded. Explicit owner source-use/public-promotion approval
+is pending after automatic approval review rejected recording that decision
+from "continue" alone. Next record the authorized reviewed bundle, verify its
+fresh remote recovery and promote the public pair before Things to Do rendering.
 
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.

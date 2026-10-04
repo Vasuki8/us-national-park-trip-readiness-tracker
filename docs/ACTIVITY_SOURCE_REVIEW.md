@@ -22,7 +22,7 @@ Identity and canonical bytes match; the working evidence is unchanged. See
 [GITHUB_PRIVATE_BACKUP.md](GITHUB_PRIVATE_BACKUP.md) for the supported inventory.
 This is checkpoint-only recovery, not recovery of an approved activity bundle.
 
-## Review scope and findings
+## Initial complete-text inspection
 
 Programmatic inspection scanned all 5,124 retained string values and selected
 flagged contexts. It did not establish exhaustive human reading or completed
@@ -52,23 +52,70 @@ third-party content and protected marks require separate consideration. The
 disclaimer does not guarantee complete rights metadata. These official sources
 were checked October 4, 2026; no blanket reuse classification was recorded.
 
-## Consequence for development
+## Initial version 1 conclusion
 
-The complete version 1 [promotion contract](ACTIVITY_PROMOTION.md) projects every normalized
-field and requires exact per-record government-text review across all projected
-strings. The observed quotations and link metadata prevent confidently applying
-that classification to the complete retained batch. No rights manifest, approval
-bundle or public pair was created, and no deployment occurred.
+The complete version 1 [promotion contract](ACTIVITY_PROMOTION.md) projects every
+normalized field and requires exact per-record government-text review across all
+projected strings. The observed quotations and link metadata prevented confidently
+applying that classification to the complete retained batch. That initial review
+created no rights manifest, approval bundle or public pair, and no deployment
+occurred. Version 1 retains its complete-text meaning and has no field-omission
+mode; the later minimal review does not approve the omitted complete text.
 
-The separately versioned minimal catalog now defines exact titles, safe NPS
-listing links and optionally source categories. Explicit selected/withheld
-dispositions bind every source listing to its public view and narrowed rights;
-private originals and source clocks remain unchanged. Version 1 retains its
-complete-text meaning and has no field-omission mode.
+## Version 2 technical review and private draft
 
-Next review the real retained batch under the version 2 catalog contract,
-withhold unresolved availability conflicts, establish exact published text-use
-decisions and verify reviewed-bundle recovery before public promotion. Technical
-source handling does not settle material legal-risk or source-use decisions
-reserved to the owner. No real catalog approval is established by engineering
-verification.
+On October 4, 2026, Codex technical review read the complete retained contexts for
+all 136 listings. A separate final pass inspected every exact proposed title,
+official listing URL and source category view. This is technical model review,
+not authenticated human approval or an owner rights decision.
+
+The private minimal catalog draft selects 129 listings with their exact titles,
+safe NPS listing URLs and complete source categories, and withholds seven
+listings and their categories:
+
+| Park | Selected | Withheld |
+| --- | ---: | ---: |
+| Yosemite | 13 | 0 |
+| Rocky Mountain | 11 | 1 |
+| Yellowstone | 84 | 4 |
+| Zion | 19 | 1 |
+| Grand Canyon | 2 | 1 |
+| Total | 129 | 7 |
+
+The seven holds cover one unresolved outdated winter-closure statement, three
+washout/access warnings, one explicit NPS recommendation against hiking in
+September and October, one explicit rockfall closure, and one ended program.
+The against-hiking recommendation is not a source-claimed closure. Withholding
+is an editorial decision, not source removal, and resolves no reopening or
+availability question.
+
+Descriptions, attributed quotations, credits and HTML carrying tracking/link
+metadata are omitted from the proposed public views. Complete originals remain
+private. The draft reproduces no images or NPS marks. Original source hashes,
+observations and collection clocks are preserved; availability remains
+unverified and unsupported fields remain null.
+
+Private draft dispositions, proposed rights assertions, the minimal projection
+and a passive escaped HTML review view passed validation and an independent
+audit with no discrepancies. These checks establish consistency of the draft,
+not final source rights, owner approval, an authenticated human review or remote
+recovery of an approval bundle.
+
+## Pending decision and next step
+
+Automatic approval review rejected the attempted approval-bundle operation
+because the instruction to continue did not explicitly cover this new
+consequential rights/publication scope. The pending owner decision concerns use
+of the 129 exact title/link/category views and paired public-data promotion.
+Existing private-backup authorization remains applicable once an approved
+bundle exists.
+
+No activity approval bundle, new reviewed-bundle backup transfer, public-data
+application or deployment has occurred. Checkpoint-only recovery still does not
+cover a reviewed activity bundle. Next obtain the explicit owner decision,
+create and verify the reviewed bundle if authorized, perform fresh remote
+download and recovery verification, then prepare/recheck and apply the reviewed
+public pair under that authorization. Build Things to Do from the validated
+catalog afterward, with official links, original freshness and honest
+uncertainty. A live release still needs refreshed conditions, complete release
+checks and applicable deployment authorization.
