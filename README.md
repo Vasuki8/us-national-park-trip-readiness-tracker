@@ -10,7 +10,7 @@ A searchable five-park directory, static park pages, source-backed dated entry c
 
 Reviews expire after seven days; unsupported years and areas never inherit an exemption. Directory age labels update in the browser without a new build. Stored source reviews, dated rules and recent successful alert checks are counted separately.
 
-The Python NPS alerts collector has conservative pagination, retry limits, response validation, last-good retention, clock checks and atomic writes. All five parks have owner-approved successful baselines containing 17 retained notices. Durable private review and separate-backup recovery were verified before promotion. Collection is not scheduled; alert freshness expires after four hours. Empty feeds and removed notices never imply an all-clear or reopening.
+The Python NPS alerts collector has conservative pagination, retry limits, response validation, last-good retention, clock checks and atomic writes. All five parks have owner-approved successful observations containing 16 retained notices. Durable private review and separate-backup recovery were verified before promotion. Collection is not scheduled; alert freshness expires after four hours. Empty feeds and removed notices never imply an all-clear or reopening.
 
 There are no ads, accounts, analytics, paid APIs, booking inventory or weather forecasts. All pages retain `noindex, nofollow` and the project robots file disallows crawling until the separate indexed-release gates are met. The pilot is not affiliated with the National Park Service.
 

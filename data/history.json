@@ -1,7 +1,17 @@
 [
   {
-    "head_observation_id": "dfb790ca43f38acbfce1a50493d6e39b9155f5b82f5051c1e238e918b7f5e212",
+    "head_observation_id": "8acd409afdc7428e580b5c18448f0ac9d06de2df833fb505400a9210f5ea5d82",
     "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-04T14:56:52.574947Z",
+        "collection_status": "success",
+        "comparison": "compared",
+        "observation_id": "8acd409afdc7428e580b5c18448f0ac9d06de2df833fb505400a9210f5ea5d82",
+        "omitted_changes": 0,
+        "sequence": 3
+      },
       {
         "change_count": 0,
         "changes": [],
@@ -27,13 +37,23 @@
     "omitted_observations": 0,
     "park_code": "yose",
     "schema_version": 1,
-    "snapshot_hash": "639530b0f2eb18a2e3f54e41b715e015cd78d3b27f99f54bba42a0f4a69566d6",
+    "snapshot_hash": "8f5153a32da2b9446e46786fee03541bf08720cf3a3dea6d514921b775cc0b5a",
     "total_changes": 0,
-    "total_observations": 2
+    "total_observations": 3
   },
   {
-    "head_observation_id": "a646217794079950dfab9dafb85d8a8364024df3f2f7248a055d32ef43a45cd7",
+    "head_observation_id": "d13f044bc0656d470469ec1f2e4a4daa71396d35472c45e0c5e2094213251cd5",
     "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-04T14:56:52.574947Z",
+        "collection_status": "success",
+        "comparison": "compared",
+        "observation_id": "d13f044bc0656d470469ec1f2e4a4daa71396d35472c45e0c5e2094213251cd5",
+        "omitted_changes": 0,
+        "sequence": 3
+      },
       {
         "change_count": 0,
         "changes": [],
@@ -59,13 +79,23 @@
     "omitted_observations": 0,
     "park_code": "romo",
     "schema_version": 1,
-    "snapshot_hash": "fe0605be8ae18095e68e1c696598867ad2cabb586ff85649a0baccbebe5fbccb",
+    "snapshot_hash": "fcc64ca73cc81dc97064f5bac70b39a6b7ace3c292f985401c3868ef8cdbbaa7",
     "total_changes": 0,
-    "total_observations": 2
+    "total_observations": 3
   },
   {
-    "head_observation_id": "aa4bcaffaf3569f267c2a6f845be82b5d452d0bce30a8ae523709f681e9dc466",
+    "head_observation_id": "35fc2ffbc8298cf84c1c16ce358b6ae782ca6c397c261b9d0cb23cfb9182b2e7",
     "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-04T14:56:52.574947Z",
+        "collection_status": "success",
+        "comparison": "compared",
+        "observation_id": "35fc2ffbc8298cf84c1c16ce358b6ae782ca6c397c261b9d0cb23cfb9182b2e7",
+        "omitted_changes": 0,
+        "sequence": 3
+      },
       {
         "change_count": 0,
         "changes": [],
@@ -91,13 +121,57 @@
     "omitted_observations": 0,
     "park_code": "yell",
     "schema_version": 1,
-    "snapshot_hash": "e58c7e743974f327d315155fdb06e2f58fb05c3b5bc1aeea255a58db74b13bbf",
+    "snapshot_hash": "e2b6881ff8cac8ed2ae861e613cdb2de91fe99fcbe40a0d1f5b4c87782f3d236",
     "total_changes": 0,
-    "total_observations": 2
+    "total_observations": 3
   },
   {
-    "head_observation_id": "f55c098d65569985fbd468fc0100dd74e56fce19a41f6c07933debd6b336c0e1",
+    "head_observation_id": "a4e52368585aa016c5b8a7918d52e4549830a2e43fd54998065fd7debc3b7d70",
     "observations": [
+      {
+        "change_count": 2,
+        "changes": [
+          {
+            "after": null,
+            "before": {
+              "category": "Information",
+              "content_hash": "2781ee9d7516e5d1cf2a7edd42d77ba948d478eb05103213839cb6074b4e8463",
+              "description": "Campfires are only allowed in designated fire rings at Watchman Campground, South Campground, and Lava Point Campground. Smoking near vegetation is not allowed. Fireworks are never allowed within the park.",
+              "id": "4F7A97F4-90C4-44BE-A2D0-B0B6C19E6AB4",
+              "title": "Fire restrictions are in effect",
+              "url": "https://www.nps.gov/zion/learn/news/zion-national-park-rescinds-stage-2-fire-restrictions-resumes-year-round-fire-restrictions.htm"
+            },
+            "kind": "removed",
+            "record_id": "4F7A97F4-90C4-44BE-A2D0-B0B6C19E6AB4"
+          },
+          {
+            "after": {
+              "category": "Park Closure",
+              "content_hash": "960530efdb316a231f5a2cfc9b66e13e03e49b1e528f497232811a3c5dcb5ad8",
+              "description": "The Zion-Mt. Carmel Highway is currently closed from Canyon Junction to the East Entrance. There will be no through traffic until further notice. Zion Canyon Scenic Drive remains open to shuttles and lodge guests.",
+              "id": "76DA8D85-4EC6-4988-A71B-6E6F6E939274",
+              "title": "Zion-Mt. Carmel Highway closed from Canyon Junction to East Entrance",
+              "url": null
+            },
+            "before": {
+              "category": "Park Closure",
+              "content_hash": "c3126c216c86fe22c2bf2eddc7dfcbb8a1d3bbfea9bb7f8c18f57382979041b8",
+              "description": "The Zion-Mt. Carmel Highway is partially closed. There will be no through traffic until further notice. Zion Canyon Scenic Drive remains open to shuttles and lodge guests.",
+              "id": "76DA8D85-4EC6-4988-A71B-6E6F6E939274",
+              "title": "Zion-Mt. Carmel Highway closed from Canyon Junction to East Entrance",
+              "url": null
+            },
+            "kind": "edited",
+            "record_id": "76DA8D85-4EC6-4988-A71B-6E6F6E939274"
+          }
+        ],
+        "checked_at": "2026-10-04T14:56:52.574947Z",
+        "collection_status": "success",
+        "comparison": "compared",
+        "observation_id": "a4e52368585aa016c5b8a7918d52e4549830a2e43fd54998065fd7debc3b7d70",
+        "omitted_changes": 0,
+        "sequence": 3
+      },
       {
         "change_count": 0,
         "changes": [],
@@ -123,13 +197,23 @@
     "omitted_observations": 0,
     "park_code": "zion",
     "schema_version": 1,
-    "snapshot_hash": "03bb6035680c7dfa3239896108c82ed724db56bfcdf5b6feefe6533f326efb61",
-    "total_changes": 0,
-    "total_observations": 2
+    "snapshot_hash": "24847c0e2e8e7ec5efb74d3a93422fe08ffde550f5bb7e2c1199283af96d468b",
+    "total_changes": 2,
+    "total_observations": 3
   },
   {
-    "head_observation_id": "0fc4d0802513f27956babe2c6c1225e376274f9baa2346ca0c44273fff8a955d",
+    "head_observation_id": "73537cecd6fc5b5d1bce7534cd608af02f4a99d2e6dbb84c821a50cc707cfe84",
     "observations": [
+      {
+        "change_count": 0,
+        "changes": [],
+        "checked_at": "2026-10-04T14:56:52.574947Z",
+        "collection_status": "success",
+        "comparison": "compared",
+        "observation_id": "73537cecd6fc5b5d1bce7534cd608af02f4a99d2e6dbb84c821a50cc707cfe84",
+        "omitted_changes": 0,
+        "sequence": 3
+      },
       {
         "change_count": 0,
         "changes": [],
@@ -155,8 +239,8 @@
     "omitted_observations": 0,
     "park_code": "grca",
     "schema_version": 1,
-    "snapshot_hash": "79b3093ce6371f952f8d494fc4f6028658eaf5f3e8d67eb527a45fac1419db10",
+    "snapshot_hash": "956a90526ba79dc9a868ba3e41606dee46d01c4fc7ab22e86dc03ed60805082b",
     "total_changes": 0,
-    "total_observations": 2
+    "total_observations": 3
   }
 ]
