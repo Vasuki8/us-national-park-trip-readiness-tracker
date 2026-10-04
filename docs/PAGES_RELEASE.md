@@ -219,4 +219,12 @@ Each retained live report matched **21 public files and 14 pages in one attempt*
 
 All pages retain meta `noindex, nofollow`; indexing and advertising remain disabled. Observed `X-Robots-Tag`, Content-Security-Policy, X-Content-Type-Options and Referrer-Policy headers were null in the current release report and all three original launch-drill reports. Do not infer those headers from `_headers`, or domain-root crawler policy from project-path `robots.txt`.
 
-The launch drill's older rollback artifact expires **2026-10-07T18:43:32Z**; the current PR #6 rollback candidate selected above remains eligible until **2026-10-09T22:35:29Z**. Refresh eligible default-branch artifacts deliberately before relying on a later rollback window. Source collection and public-data promotion remain separate manual operations; neither CI nor this release enables a recurring schedule. A later documentation-only handoff commit does not change the artifact already served at the live URL.
+The original launch drill's older rollback artifact was recorded to expire at
+**2026-10-07T18:43:32Z**. PR #7's then-selected PR #6 rollback artifact was
+recorded to expire at **2026-10-09T22:35:29Z**. These are historical selections;
+use the Current state section above for the current target and availability
+window. Refresh eligible default-branch artifacts deliberately before relying
+on a later rollback window. Source collection and public-data promotion remain
+separate manual operations; neither CI nor this release enables a recurring
+schedule. A later documentation-only handoff commit does not change the artifact
+already served at the live URL.
