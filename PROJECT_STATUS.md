@@ -1,8 +1,73 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after applying the owner-approved conditions refresh; the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after merging the approved conditions refresh and preparing its verified release; the PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+[PR #23](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/23)
+is merged at **`2434546303d62a5fcacd4fa5542e37d734a89774`**. Independent review
+found no issues. The reviewed head, PR CI checkout and actual merge have the
+same tree. [Verify pilot #247](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37216326613)
+and the exact default-branch push
+[Verify pilot #248](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37216789036)
+each passed **1,406 tests**: 404 Node, 800 Python, 34 for each generated hosting
+build, 117 root-browser and 17 project-browser tests. Astro has zero diagnostics;
+both 14-page builds and retention of three accessibility screenshots pass.
+
+Data/source work: the approved five-park alert/history pair contains **16 notices**
+(Yosemite 1, Rocky Mountain 0, Yellowstone 5, Zion 6 and Grand Canyon 4), with
+the original **`2026-10-04T14:56:52.574947Z`** collection clock. Only Zion changed:
+the highway wording identifies the closure from Canyon Junction to the East
+Entrance, and the fire notice is absent from the checked feed with its prior
+evidence retained. No reopening or ended-restriction conclusion follows. All
+15 unchanged records and original clocks remain exact. Guidance, profiles,
+activities and rights pairs are unchanged; unknown source/effective/publication
+times remain unknown. Private checkpoint upload, fresh recovery, complete
+archive replay and exact candidate/application checks are verified and retained
+outside the checkout.
+
+Release preparation: artifact **11308073698** from Verify #248 is downloaded and
+independently audited. Its ZIP digest is
+`19b5175eb38e0d491bacfba7646023611697b34fe4b9da3eb1ede7b99154b705`, and it expires
+**`2026-10-11T16:31:53Z`**. Both manifests bind the exact target above and
+**`pilot-b45391284d2e`**. Safe layout, all 28 noindex pages, paired source/history
+content, all 129 published activity views, three valid screenshots and the exact
+retained verifier/lockfile pass. Each output contains 25 files including
+`_headers`; hosted verification should check **24 public files and 14 pages**.
+Native inspection of the exact project artifact on localhost confirms Zion's
+current wording, both comparison disclosures, retained-notice focus and the
+19/20/1 Things to Do disclosure. This is local artifact verification.
+
+The current PR #7 release remains the rollback target: **`2fa4d4a` /
+`pilot-0609c66f7954`**, Verify #202 artifact **11257849120**. Fresh eligibility,
+downloaded digest, safe layout, manifests, screenshots and retained verifier
+were independently rechecked; its artifact expires **`2026-10-09T23:58:37Z`**.
+A read-only live recheck at **`2026-10-04T16:30:07.464Z`** matched all **22 public
+files and 14 pages in one attempt**. All four observed security/robots headers
+remain null. No new deployment, rollback drill or live-browser verification of
+the proposed build was performed.
+
+Integrated readiness reports **three required pass, zero blocked and two not
+checked; `release_ready: false`**. Review, backup and rights pass. Separate
+read-only NPS compatibility preflight at 16:32 UTC passed all five parks with
+matching counts; the 16:36 UTC injected-clock audit found alerts, guidance,
+profiles and activities fresh. The CLI does not ingest these external
+freshness/provider and hosting/rollback assessments. Do not invent a CLI pass.
+Noindex, ads-disabled and manual-operation safeguards remain intact.
+
+Next: obtain the separate deployment decision for **exact build `2434546` from
+Verify #248**, recheck identity and freshness, dispatch the existing verified
+artifact, then verify hosted bytes and actual browser behavior. This handoff is
+a documentation receipt; it does not change that selected release target.
+Alert freshness expires beyond **`2026-10-04T18:56:52.574947Z`** (14:56 Toronto).
+Review, backup, CI and preflight do not renew the source clock. Detailed current
+approval, recovery, artifact and preparation receipts remain in the private
+operator handoff. Publication remains pending.
+
+## Conditions promotion implementation — PR #23
+
+The following records the applied change before its final integration and
+release preparation; the current verified results above take precedence.
 
 Things to Do is integrated through [PR #22](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/22)
 at `f8222cf`. The reviewed head, PR CI checkout and actual merge share the
