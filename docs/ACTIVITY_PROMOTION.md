@@ -5,8 +5,10 @@ This source-specific offline workflow follows
 `data/park-activities.json` and `data/activity-source-rights.json` files. The
 contract implementation uses synthetic sources and truthful synthetic review
 metadata; its tests establish no real rights, approval, backup transfer or
-public-data application. A real private version 2 draft has since completed
-technical review and validation; the owner decision is pending. See
+public-data application. The real version 2 catalog has since received explicit
+owner approval, verified reviewed-bundle remote recovery and paired public-data
+promotion. Its 129 selected views and seven withheld source summaries preserve
+the original evidence clocks. See
 [the activity source review](ACTIVITY_SOURCE_REVIEW.md). Things to Do rendering
 is subsequent work. Profile and entry-guidance approvals cover different text
 scopes.
@@ -65,9 +67,10 @@ media or arbitrary URLs.
 Version 2 uses the same public pair paths and purpose names. It offers exact
 titles, safe official listing links and optionally the complete source category
 list. It omits descriptions, source credits, flags, related-park labels and
-embedded HTML. It does not reinterpret an existing version 1 approval. The first
-real checkpoint remains private and unapproved; synthetic contract tests do not
-establish rights or approval for any real listing.
+embedded HTML. It does not reinterpret an existing version 1 approval. The full
+real checkpoint remains private; its separately approved version 2 projection
+contains 129 public views and seven withheld listings. Synthetic contract tests
+do not establish rights or approval for any real listing.
 
 A private disposition file has exactly `schema_version: 1`, `purpose:
 private_activity_catalog_dispositions`, `checkpoint_id`, `reviewed_at` and
@@ -247,25 +250,27 @@ rights gate readiness; no profile or alert evidence covers activities. Matching
 local copies prove integrity, not actual remote transfer. See
 [RELEASE_READINESS.md](RELEASE_READINESS.md).
 
-The current real private draft has received complete technical model review of
+The retained real checkpoint received complete technical model review of
 all 136 retained contexts and a separate exact-view review. It selects 129
 listings (13 Yosemite, 11 Rocky Mountain, 84 Yellowstone, 19 Zion and 2 Grand
-Canyon), with complete source categories, and withholds seven. Draft
-dispositions, proposed rights assertions, projection and passive private HTML
+Canyon), with complete source categories, and withholds seven. Exact
+dispositions, narrowed rights assertions, projection and passive private HTML
 passed validation and independent audit without discrepancies. These results
-are not authenticated human approval or final owner rights assertions.
+establish technical consistency, not authenticated human reading or a blanket licence.
 
-Automatic approval review rejected the attempted approval-bundle operation:
-the instruction to continue did not explicitly authorize the new consequential
-rights/publication scope. The owner decision for the exact 129 title/link/category
-views and paired public-data promotion is pending. No approval bundle, new
-reviewed-bundle backup transfer, public-data application or deployment has
-occurred. See [the detailed review and seven hold categories](ACTIVITY_SOURCE_REVIEW.md).
+An initial approval attempt was rejected because "continue" alone did not cover
+the consequential source-use decision. The owner subsequently explicitly approved
+the presented 129 title/link/category views and public-repository promotion.
+The immutable reviewed bundle was recorded, verified, uploaded under standing
+private-backup authorization, freshly downloaded from the selected private
+GitHub repository and restored into a new private destination. Canonical bytes
+and identity match across working, transfer, downloaded and restored copies.
+Authenticated repository privacy and publication settings were checked before
+upload and recovery. Independent recovery and public-pair audits passed.
+The exact paired patch was prepared, rechecked and applied to the public files.
+No deployment occurred. See [the detailed review and seven hold categories](ACTIVITY_SOURCE_REVIEW.md).
 
-Next: obtain that explicit owner decision, create/verify the reviewed bundle if
-authorized, and use the existing private-backup authorization for fresh remote
-download and recovery verification. Then prepare/recheck and apply the reviewed
-public pair under the applicable authorization. Build Things to Do from
-validated reviewed listings afterward, with official links, unknown fields and
+Next: complete checked PR integration and build Things to Do from
+validated reviewed listings, with official links, unknown fields and
 original freshness. A live release still needs refreshed conditions, complete
 release checks and applicable deployment authorization.

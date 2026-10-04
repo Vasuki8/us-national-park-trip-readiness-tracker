@@ -81,6 +81,14 @@ These read-only options perform no approval, recovery or transfer. A matching
 local recovered copy proves integrity, not off-host backup. See
 [ACTIVITY_PROMOTION.md](ACTIVITY_PROMOTION.md).
 
+The current owner-approved version 2 pair contains **136 original source
+summaries, 129 published listings and seven withheld listings**, with rights
+coverage for 129 views. Its separately retained approved-bundle remote recovery
+has been verified. Repository-only reports still cannot infer that private
+evidence; supply the exact working review and fresh recovered bundle alongside
+the current ledger/profile evidence. Activity validity and backup do not prove
+availability, clear other release gates or authorize deployment.
+
 The CLI prints no supplied private path.
 
 Exit codes:
@@ -282,14 +290,16 @@ Successful profile validation contributes `profile_records_covered` to the
 existing rights gate and retains its commercial-notice and media safeguards.
 It does not turn an API response or a review-export flag into rights clearance.
 
-Active activities require `data/activity-source-rights.json`, covering every
-retained listing in pilot/record order by park code, activity ID, fixed unkeyed
-API source and content hash. The separate exact-activity policy review permits
-`normalized_activity_text_and_metadata` only, with all third-party/marks/media
-reproduction flags false. It covers every projected string, including long
-description text, relation labels and credit; a credit or API response alone
+Active activities require `data/activity-source-rights.json`, ordered by pilot
+park and record ID and binding park code, activity ID and the fixed unkeyed API
+source. Version 1 covers every retained listing's normalized content hash with
+`normalized_activity_text_and_metadata`, including every projected description,
+relation label and credit. Version 2 covers only selected listings with
+`activity_catalog_title_url_and_optional_categories`, binding original source
+and public-view hashes plus the complete projection digest. Both require false
+third-party/marks/media reproduction flags. A credit or API response alone
 cannot establish rights. The review clock follows every attempted inventory
-check, including confirmed empty inventories. Validation adds
+check, including confirmed empty or wholly withheld inventories. Validation adds
 `activity_records_covered` while preserving all existing notice/media safeguards.
 This is exact reviewed scope, not blanket NPS clearance or an invented licence
 expiry. Full details are in [ACTIVITY_PROMOTION.md](ACTIVITY_PROMOTION.md).
@@ -341,7 +351,7 @@ After the owner-approved public-data promotion, a repository-only report (withou
 - **3 not checked**
 - **release_ready: false**
 
-Those are counts across all seven gates. With the first public profile pair,
+Those are counts across all seven gates. With the public profile and activity pairs,
 the default pilot's repository-only required summary is **1 pass, 1 blocked,
 3 not checked**. No private evidence is implied by committed public JSON.
 
@@ -353,7 +363,8 @@ Two blocked statuses belong to later targets:
 Disabled indexing and ads remain visible as later-target gates, consistent with the approved ad-free pilot. They are still required for their respective later releases.
 
 The required backup gate is also blocked because a repository-only command
-does not supply the matching recovered reviewed-profile bundle. The three
+does not supply the matching recovered ledger, reviewed-profile and
+reviewed-activity bundles. The three
 not-checked gates are:
 
 1. durable source review, because a repository-only command does not receive the private ledger;
@@ -361,15 +372,16 @@ not-checked gates are:
 3. hosting/rollback, because the CLI does not ingest the verified external release/browser reports.
 
 The current source-rights gate is the one passing gate, limited to the exact six
-guidance uses in `data/source-rights.json` plus the five normalized profile text
-uses in `data/profile-source-rights.json`. Neither manifest covers images or marks.
+guidance uses in `data/source-rights.json`, the five normalized profile text
+uses in `data/profile-source-rights.json` and the 129 exact title/link/category
+views in `data/activity-source-rights.json`. These manifests cover no images or marks.
 
 Supplying the current reviewed private ledger and matching recovered backup,
-along with the matching reviewed profile bundle and its separately verified
-recovered copy, changes durable review and backup to `pass`: **3 pass, 2 blocked,
+along with matching reviewed profile/activity bundles and their separately verified
+recovered copies, changes durable review and backup to `pass`: **3 pass, 2 blocked,
 2 not checked** overall, with **3 pass, 0 blocked, 2 not checked** required for the
 pilot. The earlier owner-authorized launch separately verified its external
-requirements; that historical assessment is not new profile freshness or hosting
+requirements; that historical assessment is not new source freshness or hosting
 evidence. The automated report still returns `release_ready: false`. Retain each
 current external assessment alongside the report instead of inventing a pass.
 

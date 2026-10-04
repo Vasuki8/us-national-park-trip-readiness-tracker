@@ -1,8 +1,73 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after exact technical review prepared a 129-listing private activity catalog candidate; explicit source-use approval is pending and the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after explicit owner approval, verified private recovery and paired promotion of the 129-listing activity catalog; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+The owner explicitly approved the previously presented **129 exact NPS activity
+titles, official listing links and source categories**, including public-repository
+promotion. The immutable version 2 approval bundle was recorded and verified.
+Under standing launch-backup authorization, only that verified bundle was uploaded
+to the selected private repository, freshly downloaded directly from GitHub at
+the recorded commit and restored into a new private destination. All four copies
+have identical canonical bytes and bundle identity. Repository identity, privacy,
+write access, disabled Actions and absent Pages were checked before both operations.
+Independent read-only recovery and public-pair audits found no discrepancies.
+
+The paired public files now contain **136 source summaries, 129 selected views
+and seven withheld listings**. Published counts are Yosemite 13, Rocky Mountain
+11, Yellowstone 84, Zion 19 and Grand Canyon 2. Exact titles, safe official links
+and complete source categories match the approved bundle; descriptions, credits,
+quotations, embedded link metadata, media and marks remain excluded. Withholding
+does not mean source removal. Availability remains `not_verified`, geography
+`unconfirmed` and unsupported planning fields null. All source hashes and
+observations are preserved, with the original attempt/success clock
+**`2026-10-04T05:49:46.709637Z`**. Review, backup and promotion renewed no source age.
+
+Promotion used the existing paired patch preparer, exact candidate/base/patch
+recheck and native Git applicability check. Both public files retain `-text`.
+Two synthetic readiness fixtures now explicitly exclude the real activity pair,
+preserving their separate guidance/profile test scope. The Node catalog fixture
+also removes the copied pair before testing absent and synthetic inputs. Visitor rendering and
+build snapshot inputs are unchanged; Things to Do is not yet implemented.
+
+Read-only readiness with the current replayed ledger, matching downloaded ledger
+backup and exact profile/activity review and recovery bundles passes durable
+source review, storage backup and source rights: **three required gates pass,
+two remain not checked, `release_ready: false`**. Activity evidence confirms
+136 source / 129 published / seven withheld, 129 rights-covered views and exact
+review/backup matches. Alert freshness/provider compatibility and hosting/rollback
+still need release-time evidence. Repository-only readiness cannot infer the
+private evidence and remains one pass, one blocked and three not checked for
+the pilot target. Disabled indexing and advertising retain their later gates.
+
+Local verification passed **368 Node + 800 Python + 66 generated-site tests =
+1,234 tests**, zero Astro diagnostics across 36 files and both 14-page builds.
+Both builds retain **`pilot-a2056877d1e7`** because the activity consumer and its
+snapshot inputs are subsequent work. The readiness fixture first reproduced
+eight failures across 46 tests, then passed all 46 after isolation. The catalog
+fixture first reproduced one failure across 44 focused tests, then passed all 44.
+Independent exact public-pair and whole-diff reviews found no remaining findings;
+all six documents are valid UTF-8, all 40 local links resolve and diff checks pass.
+
+Local Chromium verification could not complete: the pinned browser is absent and
+its installer rejects this WSL Ubuntu 26.04 host. No local browser pass or
+screenshot-retention result is claimed. Required CI must verify both browser
+suites and all three accessibility screenshots before integration. Record exact
+CI and merge receipts in the associated PR and private operator handoff.
+
+No new NPS collection, deployment, live probe, schedule, indexing or advertising
+was performed. The last verified production build remains **`2fa4d4a` /
+`pilot-0609c66f7954`**; its 17 notices require refreshing before a future release.
+Private source evidence, approvals, recovery paths and transport receipts remain
+outside the public checkout and CI artifacts.
+
+Next: build Things to Do after required CI and reviewed PR integration,
+from the validated version 2 catalog with official links, distinct withholding,
+unknown planning fields and original-clock freshness. A live release still needs
+refreshed conditions, complete release checks and applicable deployment approval.
+
+## Preceding exact activity catalog review — PR #20
 
 All **136 retained activity listings** have now received technical model review
 of their complete contexts, with independent park assignments. The coordinating

@@ -53,7 +53,11 @@ function rights(data = dataset()): any {
 }
 function temporary(action: (directory: string) => void) {
   const directory = mkdtempSync(join(tmpdir(), 'catalog-public-test-'));
-  try { cpSync(join(root,'data'), directory, {recursive:true}); action(directory); }
+  try {
+    cpSync(join(root,'data'), directory, {recursive:true});
+    for (const file of ['park-activities.json','activity-source-rights.json']) rmSync(join(directory,file),{force:true});
+    action(directory);
+  }
   finally { rmSync(directory,{recursive:true,force:true}); }
 }
 function install(directory: string, data = dataset(), manifest = rights(data)) {

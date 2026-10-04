@@ -1,8 +1,9 @@
 # First real activity source review
 
 Operator collection and offline recovery verified October 4, 2026. This document
-records metadata and engineering implications; exact retained source material,
-record identities, repository identity and operator receipts remain private.
+records metadata and engineering implications; complete retained source contexts,
+private checkpoint/bundle identities, backup repository identity and operator
+receipts remain private. Approved activity IDs and scoped views are public.
 See the current [handoff](../PROJECT_STATUS.md) for integration status.
 
 ## Collected evidence
@@ -62,14 +63,14 @@ created no rights manifest, approval bundle or public pair, and no deployment
 occurred. Version 1 retains its complete-text meaning and has no field-omission
 mode; the later minimal review does not approve the omitted complete text.
 
-## Version 2 technical review and private draft
+## Version 2 technical review and approved catalog
 
 On October 4, 2026, Codex technical review read the complete retained contexts for
 all 136 listings. A separate final pass inspected every exact proposed title,
 official listing URL and source category view. This is technical model review,
 not authenticated human approval or an owner rights decision.
 
-The private minimal catalog draft selects 129 listings with their exact titles,
+The approved minimal catalog selects 129 listings with their exact titles,
 safe NPS listing URLs and complete source categories, and withholds seven
 listings and their categories:
 
@@ -90,8 +91,8 @@ is an editorial decision, not source removal, and resolves no reopening or
 availability question.
 
 Descriptions, attributed quotations, credits and HTML carrying tracking/link
-metadata are omitted from the proposed public views. Complete originals remain
-private. The draft reproduces no images or NPS marks. Original source hashes,
+metadata are omitted from the public views. Complete originals remain
+private. The catalog reproduces no images or NPS marks. Original source hashes,
 observations and collection clocks are preserved; availability remains
 unverified and unsupported fields remain null.
 
@@ -101,21 +102,24 @@ audit with no discrepancies. These checks establish consistency of the draft,
 not final source rights, owner approval, an authenticated human review or remote
 recovery of an approval bundle.
 
-## Pending decision and next step
+## Owner approval, recovery and next step
 
 Automatic approval review rejected the attempted approval-bundle operation
 because the instruction to continue did not explicitly cover this new
-consequential rights/publication scope. The pending owner decision concerns use
-of the 129 exact title/link/category views and paired public-data promotion.
-Existing private-backup authorization remains applicable once an approved
-bundle exists.
+consequential rights/publication scope. The owner subsequently explicitly
+approved the presented 129 exact title/link/category views and public-repository
+promotion. This decision does not approve the omitted complete text, imagery,
+marks, future source uses or a site deployment.
 
-No activity approval bundle, new reviewed-bundle backup transfer, public-data
-application or deployment has occurred. Checkpoint-only recovery still does not
-cover a reviewed activity bundle. Next obtain the explicit owner decision,
-create and verify the reviewed bundle if authorized, perform fresh remote
-download and recovery verification, then prepare/recheck and apply the reviewed
-public pair under that authorization. Build Things to Do from the validated
+The reviewed approval bundle is verified. Under standing private-backup
+authorization it was uploaded, freshly downloaded directly from the selected
+private GitHub repository at its recorded commit, verified and restored into a
+new private destination. All copies match canonical bytes and identity; private
+permissions and repository privacy were checked. Independent audit found no
+discrepancy. The public pair was applied after exact candidate, absent-base,
+patch-identity and Git applicability checks. No deployment occurred.
+Checkpoint-only recovery still cannot substitute for reviewed-bundle recovery.
+Next complete checked PR integration and build Things to Do from the validated
 catalog afterward, with official links, original freshness and honest
 uncertainty. A live release still needs refreshed conditions, complete release
 checks and applicable deployment authorization.
