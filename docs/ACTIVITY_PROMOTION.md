@@ -3,10 +3,13 @@
 This source-specific offline workflow follows
 [private activity collection](ACTIVITY_COLLECTION.md). It prepares the paired
 `data/park-activities.json` and `data/activity-source-rights.json` files. The
-engineering increment uses synthetic sources and truthful synthetic review
-metadata; no real listings, rights decisions, backup transfers or public-data
-application are established by its tests. Things to Do rendering is subsequent
-work. Profile and entry-guidance approvals cover different text scopes.
+contract implementation uses synthetic sources and truthful synthetic review
+metadata; its tests establish no real rights, approval, backup transfer or
+public-data application. A real private version 2 draft has since completed
+technical review and validation; the owner decision is pending. See
+[the activity source review](ACTIVITY_SOURCE_REVIEW.md). Things to Do rendering
+is subsequent work. Profile and entry-guidance approvals cover different text
+scopes.
 
 ## Exact projection and rights scope
 
@@ -244,9 +247,25 @@ rights gate readiness; no profile or alert evidence covers activities. Matching
 local copies prove integrity, not actual remote transfer. See
 [RELEASE_READINESS.md](RELEASE_READINESS.md).
 
-Next: review the retained real checkpoint into explicit selected/withheld
-catalog dispositions, resolve the exact published text-rights scope, verify
-approved-bundle remote recovery and prepare/recheck the reviewed public pair.
-Then build Things to Do from validated reviewed listings, with official links,
-unknown fields and original freshness. A live release still needs refreshed
-conditions, complete release checks and applicable deployment authorization.
+The current real private draft has received complete technical model review of
+all 136 retained contexts and a separate exact-view review. It selects 129
+listings (13 Yosemite, 11 Rocky Mountain, 84 Yellowstone, 19 Zion and 2 Grand
+Canyon), with complete source categories, and withholds seven. Draft
+dispositions, proposed rights assertions, projection and passive private HTML
+passed validation and independent audit without discrepancies. These results
+are not authenticated human approval or final owner rights assertions.
+
+Automatic approval review rejected the attempted approval-bundle operation:
+the instruction to continue did not explicitly authorize the new consequential
+rights/publication scope. The owner decision for the exact 129 title/link/category
+views and paired public-data promotion is pending. No approval bundle, new
+reviewed-bundle backup transfer, public-data application or deployment has
+occurred. See [the detailed review and seven hold categories](ACTIVITY_SOURCE_REVIEW.md).
+
+Next: obtain that explicit owner decision, create/verify the reviewed bundle if
+authorized, and use the existing private-backup authorization for fresh remote
+download and recovery verification. Then prepare/recheck and apply the reviewed
+public pair under the applicable authorization. Build Things to Do from
+validated reviewed listings afterward, with official links, unknown fields and
+original freshness. A live release still needs refreshed conditions, complete
+release checks and applicable deployment authorization.
