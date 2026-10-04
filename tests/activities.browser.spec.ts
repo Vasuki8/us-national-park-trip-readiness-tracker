@@ -145,7 +145,7 @@ test('activity microsecond expiry refreshes on every lifecycle event while evide
   const state = page.locator('[data-activity-state]');
   await expect(state).toHaveAttribute('data-activity-state', 'fresh');
   await page.getByLabel('Visit date', { exact: true }).fill('2026-09-30');
-  await page.getByLabel('Arrival time', { exact: true }).fill('08:00');
+  await page.getByLabel('Arrival time').fill('08:00');
   await page.getByLabel('Planned area', { exact: true }).selectOption('general');
   await page.locator('#special-case').check();
   await page.getByRole('button', { name: 'Check entry guidance', exact: true }).click();

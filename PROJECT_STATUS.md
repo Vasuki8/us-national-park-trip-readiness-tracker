@@ -44,10 +44,17 @@ with snapshot **`pilot-7bb1d6f859a6`**. The static integration regression first
 failed on the old build's absent activity section. Focused loader tests pass
 15/15 and clock/rendering tests pass 21/21 after their recorded red stages.
 Browser discovery registers 117 root and 17 project tests; discovery is not
-execution. Independent review and native visual verification are in progress.
+execution. Independent data/UI and whole-branch static reviews pass. Native
+visual verification confirms all 84 Yellowstone titles, links and categories,
+initially closed disclosure, keyboard toggles and 320/360px wrapping without
+overflow. It does not establish automated print, no-JavaScript or 200% text checks.
+The first PR CI run (#244) passed 116 root browser tests but exposed one new
+test selector that required an exact Arrival time label while the real label
+includes "(optional)"; project tests and screenshot retention were skipped.
+The test correction follows the existing form's accessible label contract.
 Required CI must pass both browser suites and retain all three accessibility
 screenshots before standing-authorized merge;
-record exact CI and integration results in the associated PR and private
+record exact CI and integration results in [PR #22](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/22) and private
 operator handoff. Verify pilot is pinned to Ubuntu 24.04 for its frozen
 Playwright installer. Local Chromium remains unavailable on WSL Ubuntu 26.04.
 
@@ -64,9 +71,9 @@ The last private-evidence release assessment passed review, backup and rights
 but left conditions/provider freshness and hosting/rollback not checked.
 Indexing and advertising remain disabled.
 
-Next: finish required checks and reviewed PR integration, then refresh the
-17 retained condition notices and assemble complete release evidence against
-reviewed main before requesting any new applicable deployment decision.
+Next: after required CI and reviewed PR integration, refresh the 17 retained
+condition notices and assemble complete release evidence against reviewed main
+before requesting any new applicable deployment decision.
 
 ## Preceding approved activity promotion — PR #21
 
