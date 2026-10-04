@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after implementing the versioned minimal activity catalog; integration checks are in progress, real catalog approval is pending and the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after checked PR #18 integrated the versioned minimal activity catalog; real catalog approval is pending and the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
@@ -32,8 +32,35 @@ files and both 14-page builds. The builds retain snapshot
 **`pilot-a2056877d1e7`**. New synthetic tests cover omission of private markers,
 rehash tampering, source/view/rights binding, Unicode and microsecond parity,
 version transitions, wholly withheld sources, private recovery, real paired Git
-patch application in disposable fixtures and exact readiness evidence. Independent
-reviews and required PR verification, including both Chromium suites, are pending.
+patch application in disposable fixtures and exact readiness evidence.
+
+Independent Python/catalog/lifecycle, TypeScript/documentation and whole-branch
+reviews passed with no actionable findings. All 43 local Markdown links resolve
+and diff checks pass. Repository-only readiness remains **1 pass, 3 blocked,
+3 not checked** overall; required pilot gates are **1 pass, 1 blocked,
+3 not checked**, with **`release_ready: false`** and no supplied private evidence.
+
+[PR #18](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/18)
+merged reviewed head **`08549288d080be4952224e471bcb00d9db959046`** as
+**`aa15df03cec5f18723ae6ffafa9473c5d76423d0`** under standing merge authorization.
+Fresh checks and unchanged-main verification passed immediately before merge.
+Native Windows Git confirms the actual merge, reviewed head and standard CI
+merge share tree **`a2379be8ee0547a911f8d7bb030af810bd19f88e`**; clean primary
+`main` was fast-forwarded to the actual merge. This documentation receipt changes
+the handoff and plan completion record only, preserving checked application files.
+
+[Verify pilot #236](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37185194589),
+job **111385556884**, passed **368 Node + 800 Python + 66 generated-site +
+126 Chromium = 1,360 tests**, zero Astro diagnostics across 36 files and both
+14-page builds. All **111 root + 15 project-path browser cases** passed and all
+three accessibility screenshots survived. CI checked standard PR merge
+**`4a0d1fd8fe4908c0c3356cc5343aefcf15dff8d9`**, combining reviewed head with
+unchanged main **`af5d99cc9d7619c1480f7bf93a86639350efc174`**. Complete job logs,
+checkout parents/tree, required checks, annotations and artifact metadata were
+inspected. Artifact **11296128758** uploaded successfully (4,661,210 bytes);
+it was not downloaded or deployed. PR verification is not a live release artifact.
+The existing high-severity npm advisory, Action Node-runtime and Ubuntu-runner
+migration notices remain; dependencies and workflows are unchanged.
 
 No real source collection, rights decision, activity approval, remote backup
 transfer, public-data application, visitor activity renderer or deployment

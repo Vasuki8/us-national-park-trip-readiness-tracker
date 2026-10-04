@@ -56,6 +56,13 @@ Files: docs/ACTIVITY_PROMOTION.md; docs/DEVELOPMENT.md; README.md; PROJECT_STATU
 - [x] Review all tasks against spec and record material rulings/fixes.
 - [x] Run full Python and Node suites, Astro check, both builds and generated-site suites; inspect all failures.
 - [x] Complete independent Python/lifecycle and TypeScript/documentation review; fix findings with regressions.
-- [ ] Create/attach PR, inspect exact CI head/base/tree, complete browser suites and artifact evidence.
-- [ ] Merge under standing authorization; update handoff through the checked PR path, verify local/remote main, preserve worktree deliverables before native archive.
-- [ ] Report actual data, tests, deployment limits, blockers and next concrete real catalog-review task.
+- [x] Create/attach PR, inspect exact CI head/base/tree, complete browser suites and artifact evidence.
+- [x] Merge under standing authorization; update handoff through the checked PR path, verify local/remote main, preserve worktree deliverables before native archive.
+- [x] Report actual data, tests, deployment limits, blockers and next concrete real catalog-review task.
+
+
+Completion evidence: checked PR #18 merged as aa15df03cec5f18723ae6ffafa9473c5d76423d0.
+Verify pilot #236 passed 1,360 tests, both builds and all browser checks.
+Current handoff records exact review, integration, source and deployment limits.
+No real activity approval, promotion or deployment was performed.
+Next: review the retained real checkpoint under the version 2 catalog contract.
