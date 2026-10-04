@@ -1,8 +1,80 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after implementing Things to Do from the approved activity catalog; the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after applying the owner-approved conditions refresh; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+Things to Do is integrated through [PR #22](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/22)
+at `f8222cf`. The reviewed head, PR CI checkout and actual merge share the
+verified tree. Verify pilot #245 passed **1,406 tests**, both browser suites,
+zero Astro diagnostics and retention of all three accessibility screenshots.
+The subsequent default-branch push [Verify pilot #246](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37202077785)
+succeeded for exact main `f8222cf`. Those checks describe the preceding build;
+this conditions increment needs its own successful default-branch artifact.
+
+Data/source work: the existing private five-park alert collector completed a
+successful new observation for every park at **`2026-10-04T14:56:52.574947Z`**,
+after a successful keyed read-only preflight. The frozen candidate contains
+**16 notices**: Yosemite 1, Rocky Mountain 0, Yellowstone 5, Zion 6 and Grand
+Canyon 4. Only Zion changed: one notice was edited and one was no longer present
+in the checked feed. Removal does not establish reopening or ended restrictions.
+All 15 unchanged notices retain their complete records and original observation
+clocks. Source-update, publication and effective-date fields remain unknown.
+No guidance, profile or activity source was requested or re-reviewed.
+
+The complete committed alert chains were replayed, selected into a new private
+checkpoint, uploaded under standing launch-backup approval, freshly downloaded
+directly from the selected private GitHub repository and replayed again. Exact
+working/copy/download bytes and all five heads/counts agree; independent
+candidate and recovery audits pass. Detailed identities, paths, source context,
+patch and receipts remain in the private operator handoff outside the checkout.
+
+The existing offline tools built an isolated candidate preview and prepared a
+six-file alert/history patch. After reviewing the concrete promotion scope,
+the owner instructed continuation. The private authorization binds that exact
+candidate and source-text scope. Its immediate read-only recheck confirmed the
+original candidate identity, exact patch bytes, all six public bases and complete archive
+continuity for all five parks. Native preview inspection verifies the new Zion
+wording, retained before/after evidence, removal warning and limited successful
+empty-feed state. The served bytes match the exact private preview on both WSL
+and Windows loopback. Native Git applied the checked patch without a bypass;
+all six outputs match its exact targets under the existing working-copy line
+ending policy. Guidance, profile, activity and rights files are unchanged.
+
+Verification: **404 Node tests, 800 Python tests and 34 tests for each generated
+hosting build pass locally**. Astro reports zero errors, warnings or hints across
+41 files; both builds emit 14 pages. The initial Node launch lacked the frozen
+Python executable; its rerun under `uv run --frozen` passed after Python finished.
+No application fix was needed. The supported Ubuntu 24.04 CI runner must verify
+both browser suites and retain all three accessibility screenshots before merge;
+no local automated browser success is claimed. The earlier 61 focused synthetic
+tests also passed. Independent review checks the exact public diff and rendered
+Zion evidence, including the absence of any reopening conclusion.
+
+Read-only readiness with the current ledger and exact reviewed profile/activity
+bundles, matched against today's fresh downloaded copies, reports **three
+required gates passed, zero blocked and two not checked; `release_ready: false`**.
+Current public alert freshness/provider evidence and hosting/rollback remain
+separate operator assessments. This report predates application; rerun it from
+the integrated checkout before proposing release. The separate exact source-use
+approval does not turn the conservative report into release readiness.
+
+The public alert pair now contains the approved 16 notices and original October 4
+collection clock. The removed Zion fire notice remains in history, and the
+highway notice says it is currently closed from Canyon Junction to the East
+Entrance. This source-use/public-data action follows
+[ALERT_DATA_PROMOTION.md](docs/ALERT_DATA_PROMOTION.md), separately from deployment.
+Last verified production remains **`2fa4d4a` /
+`pilot-0609c66f7954`**; indexing, ads and schedules remain disabled.
+
+Integration follows the owner's standing merge authorization after required
+checks and review. Next: prepare complete release and rollback evidence against
+this increment's successful verified-main artifact, then present the separate
+deployment decision. Alert freshness expires beyond **`2026-10-04T18:56:52.574947Z`**;
+review, backup, CI and provider preflight do not renew the source clock. Retain
+honest stale labels if that boundary passes.
+
+## Preceding Things to Do implementation — PR #22
 
 Park pages now expose **Things to Do** after Overview and When to Visit, with a
 native section-navigation target and initially collapsed activity inventory.
