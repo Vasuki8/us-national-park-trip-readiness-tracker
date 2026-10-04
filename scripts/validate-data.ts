@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { isCalendarDate } from '../src/lib/readiness.ts';
 import { validateSourceRights } from './validate-source-rights.ts';
 import { canonicalProfileJson, MAX_PROFILE_BYTES, validatePublicProfiles, validateProfileRights } from './validate-park-profiles.ts';
+import { validateActivityFiles } from './validate-park-activities.ts';
 const hosts = new Set(['www.nps.gov', 'nps.gov', 'home.nps.gov']);
 const required = (value: unknown) => assert.ok(typeof value === 'string' && value.trim().length > 0);
 const validTime = (value: unknown) => typeof value === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
@@ -142,6 +143,7 @@ export function validateData(root = 'data'): void {
     const profiles = validatePublicProfiles(readProfiles('park-profiles.json'));
     validateProfileRights(readProfiles('profile-source-rights.json'), profiles);
   }
+  validateActivityFiles(root);
   console.log(`Validated ${parks.length} parks, ${rules.length} reviewed rules and ${parks.length} alert snapshots.`);
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) validateData();
