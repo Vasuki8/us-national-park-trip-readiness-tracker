@@ -111,17 +111,15 @@ tooling is verified with synthetic sources. The separate
 complete inventories or a versioned minimal catalog to exact text-rights review
 and private approval/recovery,
 prepares and rechecks a paired public-file patch, and validates the pair at build
-and release-readiness boundaries. No real activity data has been promoted.
-The first real five-park checkpoint and fresh remote recovery are now verified;
-the private review identified unresolved text-use, link-metadata and availability
-concerns. See the [activity source review](docs/ACTIVITY_SOURCE_REVIEW.md) and
-current handoff. Exact technical review has prepared a private version 2
-candidate with 129 selected listings and seven explicitly withheld listings,
-preserving original source clocks. The proposed scope is exact NPS titles,
-official links and source categories; private prose, quotations, tracking links,
-media and marks are excluded. Explicit owner source-use/public-promotion approval
-is pending after automatic approval review rejected recording that decision
-from "continue" alone. Next record the authorized reviewed bundle, verify its
-fresh remote recovery and promote the public pair before Things to Do rendering.
+and release-readiness boundaries. The owner-approved version 2 public pair now
+contains 129 exact NPS titles, official links and source category views, with
+seven explicitly withheld listings among 136 retained source summaries.
+The reviewed bundle passed private upload, fresh remote download and restore
+verification before paired promotion. Original source clocks are preserved;
+private prose, quotations, tracking links, media and marks are excluded.
+See the [activity source review](docs/ACTIVITY_SOURCE_REVIEW.md) and current
+handoff. Availability and unsupported planning fields remain unverified or
+unknown. Next build Things to Do from the validated catalog; this data promotion
+adds no visitor renderer or live deployment.
 
 No blanket licence is assigned to source material. Source and media rights must be reviewed separately. No unreviewed photos or NPS arrowhead marks are included.

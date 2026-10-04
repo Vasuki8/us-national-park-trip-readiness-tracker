@@ -138,8 +138,13 @@ incomplete or invalid pairs fail. Release readiness extends existing review,
 rights and backup gates only downward with the matching private reviewed bundle
 and separately verified recovered copy. Local equality does not prove remote
 transfer. See [ACTIVITY_PROMOTION.md](ACTIVITY_PROMOTION.md) for commands, exact
-text scope and limits. No activity public pair or visitor consumer is present;
-existing build snapshot inputs and source clocks are unchanged.
+text scope and limits. The owner-approved version 2 public pair contains 129
+selected views and seven withheld listings among 136 source summaries, after
+verified reviewed-bundle remote download and restore. No visitor consumer is
+present; existing build snapshot inputs and source clocks are unchanged.
+Synthetic readiness fixtures explicitly remove both real activity files when
+testing guidance or profiles alone. Next implement Things to Do and include the
+validated catalog and rights digests in the build snapshot identity.
 
 Each park page has native "On this page" navigation after its introduction. Fragment links reach Overview, When to Visit, the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
 

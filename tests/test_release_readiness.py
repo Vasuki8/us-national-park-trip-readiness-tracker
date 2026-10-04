@@ -125,13 +125,14 @@ def synthetic_core_ready():
 class ReleaseReadinessTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Synthetic guidance/core-gate tests must not inherit real profile approval needs.
+        # Synthetic guidance/core-gate tests must not inherit real profile/activity approval needs.
         folder=tempfile.TemporaryDirectory(prefix='readiness-without-profiles-')
         cls.addClassCleanup(folder.cleanup)
         cls.profile_free_root=Path(folder.name)
         for name in ('data','src','public','.github'):
             shutil.copytree(ROOT/name,cls.profile_free_root/name)
-        for name in ('park-profiles.json','profile-source-rights.json'):
+        for name in ('park-profiles.json','profile-source-rights.json',
+                     'park-activities.json','activity-source-rights.json'):
             (cls.profile_free_root/'data'/name).unlink(missing_ok=True)
 
     def setUp(self):
@@ -617,6 +618,8 @@ class ReleaseReadinessTests(unittest.TestCase):
         root=Path(folder.name)
         for name in ('data','src','public','.github'):
             shutil.copytree(ROOT/name,root/name)
+        for name in ('park-activities.json','activity-source-rights.json'):
+            (root/'data'/name).unlink(missing_ok=True)
         bundle=profile_release_fixture() if bundle is None else bundle
         for name,key in [('park-profiles.json','public_profiles'),
                          ('profile-source-rights.json','rights')]:
