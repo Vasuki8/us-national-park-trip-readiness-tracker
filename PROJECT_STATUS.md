@@ -1,8 +1,59 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after PR #16 recorded the first real private activity checkpoint and remote recovery; public activity approval is pending and the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after implementing the versioned minimal activity catalog; integration checks are in progress, real catalog approval is pending and the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+The separately versioned minimal activity contract is implemented. Version 2
+publishes only selected exact titles, safe NPS listing links and optional source
+categories. Private dispositions explicitly select or withhold every original
+listing; public source summaries retain all original hashes and observations.
+Selected views have a narrower hash, and rights bind each view plus the complete
+projection. Descriptions, credits, embedded HTML and link metadata remain private.
+Geography stays unconfirmed, availability not verified and unsupported fields null.
+
+Private approval additionally binds dispositions and regenerates the complete
+catalog from the unchanged checkpoint. Disposition review precedes rights review,
+which precedes approval. The optional CLI input is strictly validated; a supplied
+JSON null file cannot silently fall back to version 1. Immutable verify/restore,
+all input/output/lock overlap guards, byte limits and paired CAS checks remain.
+Version 1 approvals retain their complete-text meaning and recovery compatibility.
+
+Promotion compares original source evidence independently of editorial selection
+when either side is version 2. Same-clock editorial review renews no source age;
+degraded retention, first/changed observations and the source half-drop guard
+apply to all source summaries. Readiness separates source, published and withheld
+counts, with rights coverage for selected listings only. Existing gates only
+become stricter; checkpoint-only recovery cannot cover a reviewed catalog bundle.
+
+Final local verification passed **368 Node + 800 Python + 66 generated-site =
+1,234 tests**, strict standalone TypeScript, zero Astro diagnostics across 36
+files and both 14-page builds. The builds retain snapshot
+**`pilot-a2056877d1e7`**. New synthetic tests cover omission of private markers,
+rehash tampering, source/view/rights binding, Unicode and microsecond parity,
+version transitions, wholly withheld sources, private recovery, real paired Git
+patch application in disposable fixtures and exact readiness evidence. Independent
+reviews and required PR verification, including both Chromium suites, are pending.
+
+No real source collection, rights decision, activity approval, remote backup
+transfer, public-data application, visitor activity renderer or deployment
+occurred in this engineering increment. The first real private checkpoint still
+contains 136 listings at its original October 4 source clock. Public profiles,
+guidance and 17 notices are unchanged; alerts remain stale by their four-hour
+policy. Indexing and advertising remain disabled, with no new schedule or service.
+The last verified live build is still **`2fa4d4a` / `pilot-0609c66f7954`**;
+local builds establish no new live result.
+
+Next: inspect the retained real checkpoint under the version 2 catalog contract,
+record explicit selected/withheld decisions, withhold unresolved availability
+conflicts and establish exact published text-use decisions. Verify approved-bundle
+remote recovery before paired public promotion, then build Things to Do with
+official links, original freshness and honest uncertainty. Refresh conditions
+and complete release checks before any separately authorized live deployment.
+See [ACTIVITY_PROMOTION.md](docs/ACTIVITY_PROMOTION.md) and the checked
+[design](docs/superpowers/specs/2026-10-04-reviewed-activity-catalog-design.md).
+
+## Preceding first real activity checkpoint and review — PR #16
 
 The existing tools collected the first real private NPS activity checkpoint for
 all five pilot parks. All collections succeeded, retaining **136 listings**:

@@ -20,7 +20,7 @@ The technical team inspects exact retained text and official terms; consequentia
 licence or unclear-rights decisions belong to the owner under the permanent
 policy. This workflow does not grant licences or authenticate reviewer identity.
 
-The public dataset has `schema_version: 1`, `purpose: public_park_activities`
+The legacy complete public dataset has `schema_version: 1`, `purpose: public_park_activities`
 and five `inventories` in pilot order. It preserves every normalized record,
 state, hash and original source/observation clock. Every park must have retained
 successful-fetch evidence; confirmed empty inventories are valid. An initial
@@ -57,6 +57,57 @@ partial-approval or omission mode. Images and NPS marks are outside this scope.
 A future renderer must escape retained text and never activate embedded HTML,
 media or arbitrary URLs.
 
+## Reviewed minimal catalog (version 2)
+
+Version 2 uses the same public pair paths and purpose names. It offers exact
+titles, safe official listing links and optionally the complete source category
+list. It omits descriptions, source credits, flags, related-park labels and
+embedded HTML. It does not reinterpret an existing version 1 approval. The first
+real checkpoint remains private and unapproved; synthetic contract tests do not
+establish rights or approval for any real listing.
+
+A private disposition file has exactly `schema_version: 1`, `purpose:
+private_activity_catalog_dispositions`, `checkpoint_id`, `reviewed_at` and
+`records`. Include one ordered row for every retained listing, in pilot then ID
+order, binding `park_code`, `activity_id`, `source_content_hash`, `decision:
+selected|withheld` and `categories: published|withheld`. Whole-record withholding
+requires categories withheld. Review must follow the checkpoint attempt.
+There is no default selection, rewritten text or free-form reason in this file.
+
+Every inventory retains all original source headers and clocks, with
+`schema_version: 2` and an additional `source_records` array. This lists every
+source ID, original normalized `content_hash`, its `hash_scope:
+normalized_record`, first/changed observation clocks and `publication_status:
+selected|withheld`. The original hash describes the private full record and
+cannot be recomputed from its smaller public view. Editorial withholding is
+distinct from source removal, confirmed empty and degraded source states.
+
+The public `records` array contains selected listings only. Title and URL are
+mandatory exact source values; categories are exact source values when published.
+`category_scope: withheld` requires null categories, while published categories
+preserve source null or an empty array. Titles/category names are nonempty plain
+text, at most 1,024 Unicode scalars, with no angle brackets or control characters.
+URLs must be official NPS links within the queried park or global `/thingstodo/`,
+with neither query nor fragment markers. Unsafe fields require withholding,
+not silent rewriting.
+
+Each view preserves the original observations and `source_content_hash`, and
+adds `view_hash` over all view fields except `view_hash` and `hash_scope`.
+`hash_scope: catalog_view` identifies the narrower digest. Geographic relationship
+stays unconfirmed, availability not verified, and responsible agency, difficulty,
+permit requirement and source update time null. The catalog asserts no current
+availability, reopening or permit exemption.
+
+Rights version 2 adds `projection_hash` over the complete public dataset.
+Each selected listing has one row binding park, activity ID, fixed unkeyed API
+source URL, `source_content_hash` and `view_hash`, with
+`classification: nps_government_text`,
+`use_scope: activity_catalog_title_url_and_optional_categories` and the same
+three false reproduction flags. The existing exact NPS policy and review method
+remain required. Rights review follows every attempted source check, including
+empty or wholly withheld inventories. This narrower assertion applies to the
+published title/URL/category view; it grants no rights to omitted private prose.
+
 ## Private approval and recovery
 
 Read [DURABLE_COLLECTION_SESSION.md](DURABLE_COLLECTION_SESSION.md) before a real
@@ -79,6 +130,23 @@ uv run --frozen python -m tracker.activity_release restore \
   --output /absolute/private/recovery/reviewed-activities.json
 ```
 
+For a separately reviewed version 2 catalog, add the private disposition input:
+
+```sh
+uv run --frozen python -m tracker.activity_release approve --approve \
+  --checkpoint /absolute/private/activities/checkpoint.json \
+  --dispositions /absolute/private/review/activity-dispositions.json \
+  --rights /absolute/private/review/activity-catalog-rights.json \
+  --output /absolute/private/review/reviewed-activity-catalog.json
+```
+
+Version 2 approval retains the unchanged checkpoint and exact dispositions.
+It additionally binds `dispositions_hash`; verification regenerates the entire
+public catalog and verifies its source/view/rights hashes. Disposition review
+must precede or equal rights review, which precedes or equals approval. Without
+dispositions, approval keeps the complete version 1 contract. Verify, restore,
+backup and paired patch commands accept either version.
+
 The immutable `private_reviewed_park_activities` bundle includes the checkpoint,
 exact `public_activities` projection, rights manifest and approval. Approval binds
 checkpoint ID, complete projection hash and rights hash; approval time follows
@@ -98,7 +166,7 @@ are not a target visitor payload.
 
 Neutral private-file primitives require canonical external paths, existing
 owner-only parents, single-link regular inputs, fresh output/lock names and
-0600 outputs. Checkpoint and rights inputs cannot coincide with the output or
+0600 outputs. Checkpoint, rights and optional disposition inputs cannot coincide with the output or
 its lock. No overwrite, parent creation, permission repair or lock stealing
 occurs. Interrupted execution after installation can leave completed evidence;
 preserve and verify it before retrying. Abandoned locks and uncertain multi-link
@@ -136,16 +204,21 @@ bytes on Windows. Only the public projection and manifest enter the patch;
 private checkpoint/approval envelopes remain private.
 
 Candidate identity binds the reviewed bundle, exact base bytes or absence, and
-exact patch bytes. Source attempt/success clocks cannot rewind. Equal attempted
-instants require exact snapshot equality. Retained IDs preserve first
+exact patch bytes. Source attempt/success clocks cannot rewind. For version
+1-to-1 replacement, equal attempted instants require exact snapshot equality.
+If either side is version 2, equal attempted instants require exact source
+headers and original source summaries; a newly reviewed catalog may change its
+selection/categories without renewing source clocks. Retained IDs preserve first
 observations; unchanged content preserves changed-observation clocks, while
 changed/new content needs observations strictly after public last success.
-Failed/quarantined candidates must preserve exact public last-good records and
-successful-fetch clocks. An unpublished intermediate success followed by failure
+Failed/quarantined candidates must preserve exact original last-good source
+hashes, observations and successful-fetch clocks. Version 1 retains its stricter
+complete-record equality. An unpublished intermediate success followed by failure
 cannot be inferred from one checkpoint's parent reference.
 
 The populated-inventory half-drop guard is also checked against public state,
-so a private fork cannot bypass it. A removed listing never proves reopening or
+so a private fork cannot bypass it. Version 2 checks all source summaries, not
+the smaller published selection. A removed listing never proves reopening or
 availability. There is no history replay or removal-approval override in this
 increment.
 
@@ -171,7 +244,8 @@ rights gate readiness; no profile or alert evidence covers activities. Matching
 local copies prove integrity, not actual remote transfer. See
 [RELEASE_READINESS.md](RELEASE_READINESS.md).
 
-Next: conduct a deliberate real collection and exact text-rights review, verify
+Next: review the retained real checkpoint into explicit selected/withheld
+catalog dispositions, resolve the exact published text-rights scope, verify
 approved-bundle remote recovery and prepare/recheck the reviewed public pair.
 Then build Things to Do from validated reviewed listings, with official links,
 unknown fields and original freshness. A live release still needs refreshed

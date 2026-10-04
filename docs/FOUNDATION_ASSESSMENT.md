@@ -83,16 +83,20 @@ not establish real profiles, text-use review, remote backup or public promotion.
 3. The separate [NPS `/thingstodo` foundation](ACTIVITY_FOUNDATION.md) now adds
    bounded individual listings, park attribution, unknown geography/agency/
    difficulty/permits and independent freshness. Synthetic tests cover complete
-   pagination and last-good retention; there is no real activity inventory.
+   pagination and last-good retention. The first real private checkpoint is now
+   verified; no real public activity inventory exists.
    The separate [private activity collection lifecycle](ACTIVITY_COLLECTION.md)
    now adds fixed-endpoint transport, all-five preflight, immutable checkpoints,
    offline verification, restore and private unapproved review export. Synthetic
    tests establish tools only. The separate
    [reviewed activity promotion contract](ACTIVITY_PROMOTION.md) now adds exact
    text-use bindings, complete public projection, private approval/recovery,
-   paired patch checks and build/readiness validation. Next collect and review
-   real listings, verify remote recovery and prepare the public pair before
-   Things to Do rendering.
+   paired patch checks and build/readiness validation. A separately versioned
+   minimal catalog adds exact title/link/category views and explicit editorial
+   withholding while preserving original source evidence. Next review the real
+   checkpoint under that narrower scope, verify approved-bundle remote recovery
+   and prepare the public pair before Things to Do rendering. Checkpoint-only
+   recovery cannot cover catalog approval.
 4. Select named weather locations from authoritative geographic evidence.
    NWS `/points/{lat},{lon}` discovers the grid forecast; periodically recheck
    that mapping. Validate issue/valid-period/check clocks and retain last-good
