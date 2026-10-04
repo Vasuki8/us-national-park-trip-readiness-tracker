@@ -119,6 +119,9 @@ The [private collection workflow](ACTIVITY_COLLECTION.md) now implements the
 separate bounded header-authenticated transport and immutable five-park
 checkpoint/recovery lifecycle using existing POSIX guards. It preflights every
 baseline before keys or factories. Synthetic checks establish tooling only.
-Next implement separate reviewed text-rights/public projection; real collection,
-verified remote backup, approval, promotion and Things to Do rendering remain
-subsequent steps.
+The separate [reviewed activity promotion layer](ACTIVITY_PROMOTION.md) now
+implements complete public projection, exact text-rights review bindings,
+private approval/recovery, paired patch checks and build/readiness validation.
+Synthetic verification establishes these tools only. Real collection, exact
+rights decisions, verified remote backup, approval, promotion and Things to Do
+rendering remain subsequent steps.

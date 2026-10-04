@@ -112,6 +112,25 @@ legacy defaults. Existing profile/release installers remain unchanged. See
 boundaries. No real activities, source rights, remote backup or public consumer
 are established by the synthetic engineering work.
 
+`tracker/activity_public.py` validates the complete five-inventory projection
+and exact per-record activity text-rights manifest, preserving every normalized
+field and original clock. `tracker/activity_release.py` binds checkpoint,
+projection, rights and explicit approval in an immutable private bundle; offline
+verification, fresh restore and paired Git patch preparation/recheck use explicit
+large-batch bounds and neutral POSIX storage helpers. Promotion rechecks the exact
+public base bytes and retained observation/drop guards. Parent references do not
+establish complete checkpoint history.
+
+`scripts/validate-park-activities.ts` validates the optional paired public files
+at the build boundary, with Python-compatible canonical hashes and strict file,
+JSON, source, clock and rights checks. Both files absent remains optional;
+incomplete or invalid pairs fail. Release readiness extends existing review,
+rights and backup gates only downward with the matching private reviewed bundle
+and separately verified recovered copy. Local equality does not prove remote
+transfer. See [ACTIVITY_PROMOTION.md](ACTIVITY_PROMOTION.md) for commands, exact
+text scope and limits. No activity public pair or visitor consumer is present;
+existing build snapshot inputs and source clocks are unchanged.
+
 Each park page has native "On this page" navigation after its introduction. Fragment links reach Overview, When to Visit, the conditions snapshot, entry check, checklist, stored guidance, notice history and official planning checks; the retained-notices item appears only when that collection exists. Destinations use `tabindex="-1"` for keyboard focus and subsequent Tab navigation. The collection link preserves current notice filters, while existing exact article links keep their reveal behavior. This menu works without JavaScript, wraps when text is enlarged and is hidden in print. It adds no script, storage or requests, and section jumps do not submit entry decisions, mark checklist items or change source metadata.
 
 The park directory applies the current search and state values on initialization and after page return (`pageshow`), as well as normal input/change events. Literal substring search trims, lowercases and collapses whitespace in both the query and card search text, so pasted multiword names match without rewriting visitor controls or metadata. The exact state filter still combines with the query. Page-return resync runs in a zero-delay timer because persisted form restoration can follow the event; see [the documented history-traversal ordering](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event). Cards, the result count and the empty state then follow restored controls without input events. Unchanged counts do not rewrite the live-region text. The application adds no storage, URL parameters or transmission of search selections.

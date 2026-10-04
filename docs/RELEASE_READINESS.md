@@ -63,6 +63,24 @@ serve as its own backup. Both complete bundles are independently verified
 before comparison. These options perform no collection, approval, restore,
 transfer or public-data write.
 
+When reviewed activities have deliberately been promoted, also supply their
+separate reviewed bundle and verified recovered copy:
+
+```sh
+uv run --frozen python -m tracker.release_readiness \
+  --format json \
+  --activity-review /absolute/private/activity-review/reviewed.json \
+  --activity-backup /absolute/private/downloaded-activity-backup/reviewed.json
+```
+
+Combine these options with the ledger/profile inputs above for complete current
+evidence. `--activity-backup` requires `--activity-review`; their canonical paths
+and immediate private parent directories must differ. Both complete bundles are
+independently verified with the explicit activity bounds before comparison.
+These read-only options perform no approval, recovery or transfer. A matching
+local recovered copy proves integrity, not off-host backup. See
+[ACTIVITY_PROMOTION.md](ACTIVITY_PROMOTION.md).
+
 The CLI prints no supplied private path.
 
 Exit codes:
@@ -121,6 +139,18 @@ file symlinks and special files are refused before reading. No profile
 validation result establishes provider compatibility,
 freshness or release authorization.
 
+The optional activity pair extends those same three gates only downward, with
+no new gate or schema change. Both `data/park-activities.json` and
+`data/activity-source-rights.json` absent preserves the existing report. Either
+file activates activity requirements; an incomplete or invalid pair blocks all
+three gates. Complete five-park inventories require a successful-fetch baseline,
+including confirmed empty inventories; retained failed/quarantined attempts keep
+their original clocks and records. Public files must be regular under ordinary
+nonsymlink ancestry, use strict canonical UTF-8 JSON with at most one final LF,
+and fit each explicit 42,008,576-byte canonical bound plus that optional LF.
+Duplicate keys, nonfinite values, unknown fields and incorrect rights bindings
+are refused. No validity result establishes activity availability or freshness.
+
 `release_ready` remains an evidence result for the named target, not deployment authorization. Target selection changes the report only; it does not change the site or activate features.
 
 ## Gates
@@ -165,6 +195,16 @@ the report emits no profile text, private paths or bundle/checkpoint hashes.
 The Python API validates supplied profile dictionaries again; a dictionary
 is not proof of authenticated human approval.
 
+Active activities similarly require a verified `private_reviewed_park_activities`
+bundle matching the complete public inventories and separate rights manifest.
+The bundle binds checkpoint, full projection, rights and explicit approval;
+attempted/successful/observation clocks are included. Missing activity review is
+`not_checked`; a supplied mismatched review is `blocked`. Evidence includes
+`activity_inventory_present`, `activity_inventory_valid`,
+`activity_records_total` and `public_activities_match_review`, without text,
+private paths or bundle hashes. Earlier guidance/profile reviews do not approve
+activity text, and existing unresolved requirements remain blocking.
+
 ### NPS alert API
 
 The read-only keyed provider integration has now been validated for all five pilot parks. Run **36628434444** returned `gate_passed:true` with successful normalization for Yosemite, Rocky Mountain, Yellowstone, Zion and Grand Canyon.
@@ -193,6 +233,14 @@ Neither field proves an off-host copy or remote recovery. Retain the separate
 private-repository upload, fresh-download and restore receipts under
 [GITHUB_PRIVATE_BACKUP.md](GITHUB_PRIVATE_BACKUP.md). Earlier ledger and alert
 backup receipts do not cover profiles.
+
+Active activities additionally require a separately verified recovered activity
+bundle matching the current reviewed bundle ID and full canonical bytes.
+Missing or different recovery blocks this gate; `activity_backup_verified` and
+`activity_backup_matches_review` distinguish integrity from current coverage.
+These fields do not prove off-host transfer or fresh authenticated download.
+Earlier ledger, alert and profile recovery receipts do not cover activities;
+retain the separate remote identity, upload, download and fresh-restore receipts.
 
 ### Source-rights review
 
@@ -224,6 +272,18 @@ forecast. A guidance rights manifest cannot provide this new coverage.
 Successful profile validation contributes `profile_records_covered` to the
 existing rights gate and retains its commercial-notice and media safeguards.
 It does not turn an API response or a review-export flag into rights clearance.
+
+Active activities require `data/activity-source-rights.json`, covering every
+retained listing in pilot/record order by park code, activity ID, fixed unkeyed
+API source and content hash. The separate exact-activity policy review permits
+`normalized_activity_text_and_metadata` only, with all third-party/marks/media
+reproduction flags false. It covers every projected string, including long
+description text, relation labels and credit; a credit or API response alone
+cannot establish rights. The review clock follows every attempted inventory
+check, including confirmed empty inventories. Validation adds
+`activity_records_covered` while preserving all existing notice/media safeguards.
+This is exact reviewed scope, not blanket NPS clearance or an invented licence
+expiry. Full details are in [ACTIVITY_PROMOTION.md](ACTIVITY_PROMOTION.md).
 
 Inventory validation precedes manifest coverage. Empty inventories, duplicate/conflicting IDs, invalid park/source bindings or a missing pilot source return `public_guidance_inventory_invalid`, even if the rights manifest was reduced or edited to match. A matching manifest cannot establish that its inputs are a valid pilot inventory. Record and manifest ordering remain immaterial; report schema and evidence fields are unchanged.
 

@@ -87,9 +87,12 @@ not establish real profiles, text-use review, remote backup or public promotion.
    The separate [private activity collection lifecycle](ACTIVITY_COLLECTION.md)
    now adds fixed-endpoint transport, all-five preflight, immutable checkpoints,
    offline verification, restore and private unapproved review export. Synthetic
-   tests establish tools only. Next implement separate activity text-rights/
-   public projection before real collection, verified remote backup, reviewed
-   promotion and visitor rendering.
+   tests establish tools only. The separate
+   [reviewed activity promotion contract](ACTIVITY_PROMOTION.md) now adds exact
+   text-use bindings, complete public projection, private approval/recovery,
+   paired patch checks and build/readiness validation. Next collect and review
+   real listings, verify remote recovery and prepare the public pair before
+   Things to Do rendering.
 4. Select named weather locations from authoritative geographic evidence.
    NWS `/points/{lat},{lon}` discovers the grid forecast; periodically recheck
    that mapping. Validate issue/valid-period/check clocks and retain last-good

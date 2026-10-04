@@ -1,8 +1,60 @@
 # Project status and handoff
 
-Updated: **October 3, 2026 (Toronto time), after PR #14 integrated private activity collection/recovery; the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), during reviewed activity promotion verification; the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
+
+The separate activity public contract, exact per-record text-rights manifest,
+immutable private approval/recovery and paired public-file patch preparation/
+recheck are implemented on **`codex/reviewed-activity-promotion`**, based on main
+**`e4659506847494d2b8c1d482a96a5f87eb92d34a`**. Build validation and release
+readiness accept the optional complete pair and refuse incomplete/invalid pairs;
+readiness extends existing review, rights and backup gates only downward. See
+[ACTIVITY_PROMOTION.md](docs/ACTIVITY_PROMOTION.md).
+
+Projection preserves every normalized field and original source clock in all
+five inventories, including confirmed empty and retained degraded inventories.
+Each requires a successful baseline. Rights bind every retained record's park,
+ID, fixed API source and content hash; the exact review covers all projected
+strings, including long description text and credit. API metadata does not
+establish rights. Private approval binds checkpoint, full projection and rights;
+fresh restore preserves identity. Explicit limits support large five-park batches
+without widening legacy defaults or trimming evidence. Paired promotion checks
+exact current base bytes, observation continuity and the severe-drop guard.
+
+Complete local verification passes **759 Python + 350 Node +
+66 generated-site = 1,175 tests**, zero Astro diagnostics across 36 files and
+both 14-page builds. Final affected Node/build/site runs include the reviewed
+TypeScript fixes; strict standalone TypeScript also passes. Both hosting bases
+retain **`pilot-a2056877d1e7`**. Independent Python/documentation reviews have no
+actionable findings; 44 internal links and diff checks pass. TypeScript review
+reproduced Unicode credential-pattern, neutral Unicode-fragment and ancestor-
+symlink parity gaps. Four failing regressions established the defects before
+fixes; all 55 focused activity/profile/build-gate cases now pass. Independent
+TypeScript re-review confirms 14 URL and nine ancestry cases with no remaining
+findings. Local Chromium remains unavailable, so both supported CI browser suites
+remain required. No PR/CI/integration or deployment success is claimed by this
+in-progress handoff.
+
+This increment uses synthetic sources only. No real activity collection, rights
+decision, private backup transfer, public-data application, dependency/workflow
+change or deployment occurred. No public activity pair or visitor consumer is
+present. Existing public profiles, guidance, alerts and source clocks are
+unchanged. The last verified live build remains **`2fa4d4a`** /
+**`pilot-0609c66f7954`**, with stale alerts and noindex/ad-free safeguards.
+No new live-site check occurred. Synthetic engineering and equal local copies
+clear no actual rights, remote-backup, freshness or deployment requirements.
+The repository-only readiness report remains **1 pass, 3 blocked, 3 not checked**
+overall and **1 pass, 1 blocked, 3 not checked** required for the pilot, with
+`release_ready: false` and no supplied private evidence.
+
+Next: complete required CI and checked PR integration. Then collect and review
+exact real activity listings, verify remote
+recovery and prepare the public pair before Things to Do rendering. A live
+release still needs deliberate alert refresh, complete release checks and
+applicable deployment authorization.
+
+## Preceding private activity collection integration — PR #14
 
 The separate private `/thingstodo` transport, immutable five-park activity
 checkpoints and `tracker.activity_stage` commands now support collection,

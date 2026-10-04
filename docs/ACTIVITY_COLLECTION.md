@@ -153,7 +153,10 @@ artifacts; preserve earlier ledger, alert and profile checkpoints. Verify the
 downloaded file, fresh restore, identity and canonical bytes, and retain receipts
 privately. No off-host transfer or real recovery is claimed here.
 
-Next, implement the separate reviewed activity text-rights/public-projection
-contract before real collection and public promotion. Things to Do rendering
+The separate [reviewed activity promotion contract](ACTIVITY_PROMOTION.md)
+now implements complete public projection, exact per-record text-use review,
+immutable approval/recovery and paired patch preparation/recheck. Its synthetic
+tests establish tools only. Next collect and review the exact real listings,
+verify remote recovery and prepare the public pair. Things to Do rendering
 will consume only validated reviewed public data. Image publication, named
 weather, schedules, indexing, ads and live deployment retain their own gates.

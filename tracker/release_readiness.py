@@ -12,6 +12,12 @@ import stat
 import sys
 from pathlib import Path
 
+from .activity_public import (ActivityPublicError, MAX_PUBLIC_BYTES, MAX_RIGHTS_BYTES,
+                              canonical_activity_json, read_public_activity_pair)
+from .activity_checkpoints import ActivityCheckpointError
+from .activity_release import (ActivityReleaseError, MAX_BUNDLE_BYTES,
+                               validate_release_bundle as validate_activity_bundle,
+                               verify_release_bundle as verify_activity_bundle)
 from .entry_review_backup import verify_backup
 from .entry_review_io import (MAX_INPUT_BYTES, REPO_ROOT, ReviewStoreError,
                               check_path, parse_json)
@@ -521,10 +527,77 @@ def _profile_publication(root: Path, gates: list, review: dict | None,
                         else 'profile_backup_does_not_match_current_review')
 
 
+def _activity_publication(root: Path, gates: list, review: dict | None,
+                          backup: dict | None) -> None:
+    """Bind complete activity source state, exact rights and recovered review.
+
+    A matching local copy proves integrity only. It does not establish off-host
+    transfer, renew a successful source check or clear another release blocker.
+    """
+    try:
+        review = None if review is None else validate_activity_bundle(review)
+        backup = None if backup is None else validate_activity_bundle(backup)
+    except (ActivityReleaseError, ActivityPublicError, ActivityCheckpointError):
+        raise ReviewStoreError('invalid_release_readiness_activity_evidence') from None
+    try:
+        pair = read_public_activity_pair(root)
+        valid = True
+    except ActivityPublicError:
+        pair, valid = None, False
+    if valid and pair['dataset'] is None:
+        return
+
+    selected = {gate['id']: gate for gate in gates if gate['id'] in (
+        'durable_source_review', 'storage_backup', 'source_rights')}
+    for gate in selected.values():
+        gate['evidence'].update(activity_inventory_present=True,
+                                activity_inventory_valid=False,
+                                activity_records_total=None)
+    review_gate = selected['durable_source_review']
+    backup_gate = selected['storage_backup']
+    rights_gate = selected['source_rights']
+    review_gate['evidence']['public_activities_match_review'] = False
+    backup_gate['evidence'].update(activity_backup_verified=backup is not None,
+                                   activity_backup_matches_review=False)
+    rights_gate['evidence']['activity_records_covered'] = 0
+    if not valid:
+        for gate in selected.values():
+            _profile_status(gate, 'blocked', 'public_activity_inventory_invalid')
+        return
+
+    public, rights = pair['dataset'], pair['rights']
+    count = sum(len(inventory['records']) for inventory in public['inventories'])
+    for gate in selected.values():
+        gate['evidence'].update(activity_inventory_valid=True, activity_records_total=count)
+    rights_gate['evidence']['activity_records_covered'] = len(rights['records'])
+    matches = (review is not None
+               and canonical_activity_json(review['public_activities'], max_bytes=MAX_PUBLIC_BYTES)
+               == canonical_activity_json(public, max_bytes=MAX_PUBLIC_BYTES)
+               and canonical_activity_json(review['rights'], max_bytes=MAX_RIGHTS_BYTES)
+               == canonical_activity_json(rights, max_bytes=MAX_RIGHTS_BYTES))
+    review_gate['evidence']['public_activities_match_review'] = matches
+    if review is None:
+        _profile_status(review_gate, 'not_checked', 'activity_review_not_supplied')
+    elif not matches:
+        _profile_status(review_gate, 'blocked', 'public_activities_differ_from_reviewed_bundle')
+
+    recovered = (matches and backup is not None
+                 and backup['bundle_id'] == review['bundle_id']
+                 and canonical_activity_json(backup, max_bytes=MAX_BUNDLE_BYTES)
+                 == canonical_activity_json(review, max_bytes=MAX_BUNDLE_BYTES))
+    backup_gate['evidence']['activity_backup_matches_review'] = recovered
+    if not recovered:
+        _profile_status(backup_gate, 'blocked',
+                        'verified_activity_backup_not_supplied' if backup is None
+                        else 'activity_backup_does_not_match_current_review')
+
+
 def evaluate_readiness(root: Path = REPO_ROOT, *, private_state: dict | None = None,
                        backup_manifest: dict | None = None, release_target: str = 'pilot',
                        profile_review: dict | None = None,
-                       profile_backup: dict | None = None) -> dict:
+                       profile_backup: dict | None = None,
+                       activity_review: dict | None = None,
+                       activity_backup: dict | None = None) -> dict:
     """Return a deterministic report. This function performs no network or writes."""
     if release_target not in RELEASE_TARGETS:
         raise ReviewStoreError('invalid_release_readiness_arguments')
@@ -539,6 +612,7 @@ def evaluate_readiness(root: Path = REPO_ROOT, *, private_state: dict | None = N
         _advertising(root),
     ]
     _profile_publication(root, gates, profile_review, profile_backup)
+    _activity_publication(root, gates, activity_review, activity_backup)
     if [gate['id'] for gate in gates] != list(GATE_ORDER):
         raise ReviewStoreError('invalid_release_readiness_state')
     for gate in gates:
@@ -608,6 +682,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.add_argument('--backup', type=Path)
         parser.add_argument('--profile-review', type=Path)
         parser.add_argument('--profile-backup', type=Path)
+        parser.add_argument('--activity-review', type=Path)
+        parser.add_argument('--activity-backup', type=Path)
         args = parser.parse_args(argv)
         if args.backup is not None and args.store is None:
             raise ReviewStoreError('invalid_release_readiness_arguments')
@@ -615,6 +691,12 @@ def main(argv: list[str] | None = None) -> int:
             raise ReviewStoreError('invalid_release_readiness_arguments')
         if args.profile_review is not None and args.profile_backup is not None:
             review_path, backup_path = check_path(args.profile_review), check_path(args.profile_backup)
+            if review_path == backup_path or review_path.parent == backup_path.parent:
+                raise ReviewStoreError('invalid_release_readiness_arguments')
+        if args.activity_backup is not None and args.activity_review is None:
+            raise ReviewStoreError('invalid_release_readiness_arguments')
+        if args.activity_review is not None and args.activity_backup is not None:
+            review_path, backup_path = check_path(args.activity_review), check_path(args.activity_backup)
             if review_path == backup_path or review_path.parent == backup_path.parent:
                 raise ReviewStoreError('invalid_release_readiness_arguments')
         private = EntryReviewStore(args.store).read() if args.store is not None else None
@@ -626,9 +708,19 @@ def main(argv: list[str] | None = None) -> int:
                               if args.profile_backup is not None else None)
         except (ProfileReleaseError, ProfileCheckpointError, ReviewStoreError, OSError):
             raise ReviewStoreError('invalid_release_readiness_profile_evidence') from None
+        activity_review = activity_backup = None
+        if args.activity_review is not None:
+            try:
+                activity_review = verify_activity_bundle(args.activity_review)
+                activity_backup = (verify_activity_bundle(args.activity_backup)
+                                   if args.activity_backup is not None else None)
+            except (ActivityReleaseError, ActivityPublicError, ActivityCheckpointError,
+                    ReviewStoreError, OSError):
+                raise ReviewStoreError('invalid_release_readiness_activity_evidence') from None
         report = evaluate_readiness(REPO_ROOT, private_state=private, backup_manifest=backup,
                                     release_target=args.target, profile_review=profile_review,
-                                    profile_backup=profile_backup)
+                                    profile_backup=profile_backup, activity_review=activity_review,
+                                    activity_backup=activity_backup)
         if args.format == 'json':
             sys.stdout.write(json.dumps(report,sort_keys=True,separators=(',',':'))+'\n')
         else:

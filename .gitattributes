@@ -1,3 +1,7 @@
 # Profile promotion and validation bind exact canonical UTF-8 JSON bytes.
 /data/park-profiles.json -text
 /data/profile-source-rights.json -text
+
+# Activity promotion and validation bind exact canonical UTF-8 JSON bytes.
+/data/park-activities.json -text
+/data/activity-source-rights.json -text
