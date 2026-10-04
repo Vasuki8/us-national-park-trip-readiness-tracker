@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after the first real private activity checkpoint and remote recovery; public activity approval is pending and the verified PR #7 live release is unchanged**.
+Updated: **October 4, 2026 (Toronto time), after PR #16 recorded the first real private activity checkpoint and remote recovery; public activity approval is pending and the verified PR #7 live release is unchanged**.
 
 ## Current development handoff
 
@@ -60,14 +60,41 @@ fresh-clone execution establish remote provenance. Documentation review found
 one stale synthetic-only opening, now corrected; no other actionable findings.
 All 34 local Markdown links resolve and diff checks pass.
 
-Current branch: **`codex/activity-review-checkpoint`**. PR checks/integration are
-pending. No unrelated local application test run was needed for these documentation
-changes; the prior checked application suite remains the PR #15 evidence below.
+[PR #16](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/16)
+merged checked head **`8663d06673c555db3c6d5baa740ad41f60331318`** as
+**`242c579452019dad3458b07e4dd40719b06a8c89`** under the owner's standing merge
+authorization. Fresh checks and unchanged-main verification passed immediately
+before merge. Native Windows Git confirms the actual merge, checked head and
+standard CI merge share tree **`5e2426dbd670c301b8cddec50f5b997b7639beb9`**;
+local `main` was fast-forwarded to that merge.
 
-Next: design and verify a separately reviewed public activity projection that
-preserves private originals, withholds unresolved text and link metadata and
-handles unknown/conflicting availability. The existing complete projection has
-no omission mode. Exact rights decisions, activity approval, reviewed-bundle
+[Verify pilot #232](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37182497872),
+job **111377715907**, passed **350 Node + 759 Python + 66 generated-site +
+126 Chromium = 1,301 tests**, zero Astro diagnostics across 36 files and both
+14-page builds. All **111 root + 15 project-path browser cases** passed and all
+three accessibility screenshots survived. CI checked standard PR merge
+**`442abf2ade8bde12920d58475b9063f923ddec9b`**, combining the reviewed head with
+unchanged main **`2accf21f3c96873e26de06bb3a076683471df03d`**. Complete job-log,
+checkout-parent/tree, fresh-check and artifact metadata inspection passed.
+Artifact **11295502914** uploaded successfully (4,660,941 bytes); it was not
+downloaded or deployed. PR-only verification is not a live release artifact.
+CI installation reports one high-severity npm advisory with unchanged
+dependencies; existing Action Node-runtime and Ubuntu-runner notices remain.
+
+Current branch: **`main`**, after checked PR #16 integration. This documentation-only
+receipt records integration without changing the checked application files.
+No unrelated local application test run was needed for these documentation
+changes; the complete required PR suite passed as recorded above.
+
+Next: implement a separately versioned minimal public activity catalog with
+reviewed titles, safe NPS listing URLs and selected category metadata. Bind an
+explicit selected/withheld disposition for every retained listing to the exact
+public view and its rights/approval; preserve private source records/hashes and
+original clocks. Distinguish editorial withholding from source removal and
+source null/empty fields; retain v1 verification/recovery compatibility. Withhold
+unresolved availability conflicts initially and describe published activity
+availability as unverified. The existing complete projection has no omission
+mode. Exact rights decisions, activity approval, reviewed-bundle
 remote recovery and public-pair preparation must precede Things to Do rendering.
 A live release still needs deliberate alert refresh, complete release checks and
 applicable deployment authorization.
