@@ -1,0 +1,42 @@
+---
+import ThingsToDo from '../../../../src/components/ThingsToDo.astro';
+import type { CatalogActivityInventory, CatalogActivityRecord, CatalogSourceRecord } from '../../../../scripts/validate-park-activities';
+import { activityDigest } from '../../../../scripts/validate-park-activities';
+export function getStaticPaths() {
+  return ['absent', 'published', 'category-null', 'category-empty', 'category-withheld', 'empty', 'wholly-withheld', 'failed', 'quarantined', 'stale', 'large']
+    .map(scenario => ({ params: { scenario }, props: { scenario } }));
+}
+const { scenario } = Astro.props;
+const clock = scenario === 'stale' ? '2020-01-01T10:00:00.123456Z' : '2026-10-04T05:49:46.709637Z';
+const count = scenario === 'large' ? 84 : scenario === 'empty' || scenario === 'wholly-withheld' ? 0 : 1;
+const records: CatalogActivityRecord[] = Array.from({ length: count }, (_, index) => {
+  const semantic = {
+    id: `synthetic-${String(index).padStart(3, '0')}`, park_code: 'yose',
+    title: index === 0 ? 'Synthetic café & "quoted" 🌲 listing' : `Synthetic listing ${index + 1}`,
+    url: `https://www.nps.gov/yose/synthetic-${index + 1}.htm`,
+    activity_categories: scenario === 'category-null' || scenario === 'category-withheld' ? null
+      : scenario === 'category-empty' ? [] : [{ id: 'synthetic-category', name: 'Synthetic & "exact" category' }],
+    category_scope: scenario === 'category-withheld' ? 'withheld' as const : 'published' as const,
+    geographic_relationship: 'unconfirmed' as const, responsible_agency: null, difficulty: null, permit_required: null,
+    availability_status: 'not_verified' as const, source_updated_at: null,
+    observed_first_at: clock, observed_changed_at: clock, source_content_hash: 'a'.repeat(64),
+  };
+  return { ...semantic, view_hash: activityDigest(semantic), hash_scope: 'catalog_view' };
+});
+const status = scenario === 'failed' || scenario === 'quarantined' ? scenario : 'success';
+const sourceRecords: CatalogSourceRecord[] = records.map(record => ({ id: record.id, content_hash: record.source_content_hash,
+  hash_scope: 'normalized_record' as const, observed_first_at: clock, observed_changed_at: clock, publication_status: 'selected' as const }));
+if (scenario !== 'empty') sourceRecords.push({ id: 'withheld-PRIVATE_SOURCE_ID', content_hash: 'b'.repeat(64),
+  hash_scope: 'normalized_record', observed_first_at: clock, observed_changed_at: clock, publication_status: 'withheld' });
+const inventory: CatalogActivityInventory | null = scenario === 'absent' ? null : {
+  schema_version: 2, park_code: 'yose', provider: 'NPS', source_url: 'https://developer.nps.gov/api/v1/thingstodo?parkCode=yose',
+  collection_status: status, coverage_status: status === 'success' ? 'checked_activity_feed_only' : 'incomplete',
+  last_checked_at: status === 'success' ? clock : '2026-10-04T05:49:46.709638Z', last_successful_fetch_at: clock,
+  source_issued_at: null, source_updated_at: null, published_at: null, records, source_records: sourceRecords,
+  error_code: status === 'failed' ? 'provider_request_failed' : status === 'quarantined' ? 'response_requires_review' : null,
+};
+---
+<!doctype html><html lang="en"><head><meta name="robots" content="noindex, nofollow" /><title>Synthetic activity rendering</title></head>
+<body><main><h1>Synthetic view fixture — not actual park evidence</h1>
+<ThingsToDo inventory={inventory} officialUrl="https://www.nps.gov/yose/index.htm" />
+</main></body></html>

@@ -1,0 +1,24 @@
+---
+import { describeActivities, type ActivityClock } from '../lib/park-activities';
+interface Props { clock: ActivityClock | null; sourceUrl: string | null }
+const { clock, sourceUrl } = Astro.props;
+const state = describeActivities(clock, new Date());
+---
+<div class="activity-check" data-activity-clock={JSON.stringify(clock)}>
+  <p class="small"><strong data-activity-state={state.state}>{state.title}</strong> <span data-activity-detail>{state.detail}</span></p>
+  {clock && <p class="small muted">Last successful activity check: <time data-activity-success datetime={clock.last_successful_fetch_at}>{clock.last_successful_fetch_at}</time>.</p>}
+  <details>
+    <summary>Source and check times</summary>
+    <p>Source issue/update time: Not supplied.</p>
+    {clock && <p>Last attempted check: <time datetime={clock.last_checked_at}>{clock.last_checked_at}</time>. A check time is not a publisher update time.</p>}
+    {sourceUrl && <a data-activity-source href={sourceUrl}>Stored listing source: NPS activity feed <span aria-hidden="true">↗</span></a>}
+  </details>
+  <noscript><p class="small">Freshness labels reflect the build without JavaScript. Use the original check times and verify official sources before travel.</p></noscript>
+</div>
+<style>
+  .activity-check{border-top:1px solid var(--line);margin-top:22px;padding-top:16px;overflow-wrap:anywhere}
+  .activity-check p{margin-bottom:10px}.activity-check details{margin-bottom:0}
+  [data-activity-state]{display:block;color:var(--forest)}
+  [data-activity-state="stale"],[data-activity-state="failed"],[data-activity-state="quarantined"],[data-activity-state="invalid"]{color:var(--amber)}
+</style>
+<script>import '../scripts/activities';</script>

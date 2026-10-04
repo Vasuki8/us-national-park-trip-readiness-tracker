@@ -630,3 +630,86 @@ test('project-path directories normalize pasted and restored multiword searches 
   }
   expect(requests.every(url => new URL(url).origin === 'http://127.0.0.1:4324')).toBe(true);
 });
+
+const publicActivities = JSON.parse(readFileSync(new URL('../data/park-activities.json', import.meta.url), 'utf8')) as import('../scripts/validate-park-activities.ts').PublicActivityCatalog;
+const activityReference = new Date(Math.max(...publicActivities.inventories.map(item => Date.parse(item.last_checked_at))) + 1000);
+
+test('project-path Things to Do navigation focuses native inventories and keeps exact listing destinations and source clocks', async ({ page }) => {
+  await page.clock.setFixedTime(activityReference);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const failures: string[] = [], external: string[] = [];
+  page.on('pageerror', error => failures.push(error.message));
+  page.on('response', response => { if (response.status() >= 400) failures.push(response.url()); });
+  page.on('request', request => { if (new URL(request.url()).origin !== 'http://127.0.0.1:4324') external.push(request.url()); });
+  await page.route('**/*', route => new URL(route.request().url()).origin === 'http://127.0.0.1:4324' ? route.continue() : route.abort());
+  for (const park of publicParks) {
+    const snapshot = publicActivities.inventories.find(item => item.park_code === park.code)!;
+    const route = `${base}parks/${park.slug}/`;
+    await page.goto(route);
+    const section = page.locator('#things-to-do');
+    const link = page.getByRole('navigation', { name: 'On this page', exact: true }).getByRole('link', { name: 'Things to Do', exact: true });
+    await expect(link).toHaveAttribute('href', '#things-to-do');
+    await link.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#things-to-do`);
+    await expect(section).toBeFocused();
+    await expect(section).toBeInViewport();
+    await expect(section).toHaveAttribute('aria-labelledby', 'things-to-do-title');
+    await expect(section.locator('[data-activity-state]')).toHaveAttribute('data-activity-state', 'fresh');
+    const metadata = await section.locator('[data-activity-clock]').getAttribute('data-activity-clock');
+    expect(JSON.parse(metadata!)).toEqual({
+      collection_status: snapshot.collection_status,
+      last_checked_at: snapshot.last_checked_at,
+      last_successful_fetch_at: snapshot.last_successful_fetch_at,
+    });
+    await expect(section.locator('[data-activity-success]')).toHaveAttribute('datetime', snapshot.last_successful_fetch_at);
+    await expect(section.locator('[data-activity-success]')).toHaveText(snapshot.last_successful_fetch_at);
+    const inventory = section.locator('details[data-activity-inventory]');
+    await expect(inventory).not.toHaveAttribute('open');
+    await inventory.locator('summary').focus();
+    await page.keyboard.press('Enter');
+    await expect(inventory).toHaveAttribute('open', '');
+    await page.keyboard.press('Tab');
+    await expect(inventory.locator('[data-activity-link]').first()).toBeFocused();
+    expect(await inventory.locator('[data-activity-link]').evaluateAll(elements => elements.map(element => ({ title: element.textContent, url: element.getAttribute('href') }))))
+      .toEqual(snapshot.records.map(record => ({ title: record.title, url: record.url })));
+    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+    await expect(inventory).toHaveAttribute('open', '');
+    await expect(section.locator('[data-activity-clock]')).toHaveAttribute('data-activity-clock', metadata!);
+  }
+  expect(external).toEqual([]);
+  expect(failures).toEqual([]);
+});
+
+test('without JavaScript project-path Yellowstone retains native activity navigation and all 84 approved listing links', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, reducedMotion: 'reduce', baseURL: 'http://127.0.0.1:4324' });
+  try {
+    const page = await context.newPage();
+    const external: string[] = [];
+    page.on('request', request => { if (new URL(request.url()).origin !== 'http://127.0.0.1:4324') external.push(request.url()); });
+    await page.route('**/*', route => new URL(route.request().url()).origin === 'http://127.0.0.1:4324' ? route.continue() : route.abort());
+    const snapshot = publicActivities.inventories.find(item => item.park_code === 'yell')!;
+    const route = `${base}parks/yellowstone/`;
+    await page.goto(route);
+    const section = page.locator('#things-to-do');
+    const originalClock = await section.locator('[data-activity-clock]').getAttribute('data-activity-clock');
+    const link = page.getByRole('navigation', { name: 'On this page', exact: true }).getByRole('link', { name: 'Things to Do', exact: true });
+    await link.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(`http://127.0.0.1:4324${route}#things-to-do`);
+    await expect(section).toBeFocused();
+    await expect(section.locator('noscript p')).toContainText('Freshness labels reflect the build without JavaScript.');
+    await expect(section.locator('[data-activity-success]')).toHaveText(snapshot.last_successful_fetch_at);
+    const inventory = section.locator('details[data-activity-inventory]');
+    await inventory.locator('summary').focus();
+    await page.keyboard.press('Enter');
+    await expect(inventory).toHaveAttribute('open', '');
+    await page.keyboard.press('Tab');
+    await expect(inventory.locator('[data-activity-link]').first()).toBeFocused();
+    await expect(inventory.locator('[data-activity-record]:visible')).toHaveCount(snapshot.records.length);
+    expect(await inventory.locator('[data-activity-link]').evaluateAll(elements => elements.map(element => ({ title: element.textContent, url: element.getAttribute('href') }))))
+      .toEqual(snapshot.records.map(record => ({ title: record.title, url: record.url })));
+    await expect(section.locator('[data-activity-clock]')).toHaveAttribute('data-activity-clock', originalClock!);
+    expect(external).toEqual([]);
+  } finally { await context.close(); }
+});
