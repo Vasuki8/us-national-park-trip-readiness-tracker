@@ -150,9 +150,55 @@ Advertising/analytics remain disabled.
 
 ## Current state
 
-The owner-authorized pilot is live at [ParkReadiness](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/). Pages uses `build_type: workflow` with HTTPS enforced.
+The owner-authorized pilot is live at [ParkReadiness](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/), with workflow-based Pages and HTTPS enforced.
 
-The current release is **`2434546303d62a5fcacd4fa5542e37d734a89774`** /
+Current production is **`b9fa7354d11833208c495d2419b3e505bd0baba8`** /
+**`pilot-6658c7c2668e`**, the reviewed PR #26 unchanged-content conditions
+refresh. Successful default-branch [Verify pilot #255](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37248340998)
+passed all **1,406 tests**, both 14-page builds, zero Astro diagnostics and three
+retained accessibility screenshots. Artifact **11319838432** has digest
+`sha256:8ea08b6a351dbcf66b53a18df6d24b472c58f4a103820044b86e28fee17f9759`
+and expires **`2026-10-12T00:44:07Z`**. Independent audit verified its ZIP digest,
+57 regular entries, both manifests, all 28 noindex pages, source/history clock
+and exact retained verifier/lockfile. The owner's standing authorization covers
+this routine verified publication within the existing approved content scope.
+
+[Deployment #8](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37248918183),
+job **111572328349**, downloaded and published that exact retained artifact.
+Workflow head, validated target and report all bind `b9fa735` / Verify #255.
+The workflow report at **`2026-10-05T00:48:29.480Z`** and independent recheck at
+**`2026-10-05T00:49:41.888Z`** each matched **24 public files and 14 pages in one
+attempt**. Report artifact **11320226002** has digest
+`sha256:b2f679ee65971fd3e127f669ee7b75e2c4af087d2805db304f52a6b3ad9d27f4`
+and expires **`2026-10-12T00:48:30Z`**; downloaded digest, safe one-file layout,
+exact commit/snapshot/URL/base, success and counts pass. Observed HTTP headers
+remain null; page-level noindex, no ads/tracking and schedules disabled remain.
+
+The successful NPS source clock is **`2026-10-05T00:09:01.984222Z`**, with the same
+16 full notices and original record clocks. Five new zero-change observations
+retain all previous history, including Zion's earlier two changes. Private
+backup/fresh recovery and exact archive/base/patch checks pass. Existing exact-
+content approval is reused without inventing a new human review or rights scope;
+see [the promotion contract](ALERT_DATA_PROMOTION.md). Final provider preflight
+at about 00:47 UTC succeeded with counts 1/0/5/6/4 and renewed no evidence.
+Publication performs no rebuild, collection or retimestamping. Actual browser
+checks confirm all five new clocks, recent/limited labels, four-check histories,
+notice counts and Zion before/after/native-focus behavior. Full hosted-byte
+verification covers all 14 pages; browser checks have their stated scope in the
+[current handoff](../PROJECT_STATUS.md).
+
+The current rollback candidate is the previous **`2434546`** release below,
+Verify #248 artifact **11308073698**, available until
+**`2026-10-11T16:31:53Z`**. Eligibility, ZIP/extracted bytes/manifests and a read-only
+24-file/14-page live match were verified before dispatch. No new rollback drill
+was performed. Detailed source, authorization, backup, artifact and hosted
+receipts remain private. The readiness CLI still does not ingest external
+provider/hosting receipts and retains its documented `release_ready: false`.
+
+## Previous release — Deployment #7, current rollback target
+
+The previous production release, now the current rollback target, is
+**`2434546303d62a5fcacd4fa5542e37d734a89774`** /
 **`pilot-b45391284d2e`**, including the integrated park Overview, When to Visit,
 Things to Do and approved 16-notice refresh. Exact default-branch
 [Verify pilot #248](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37216789036)
@@ -179,21 +225,21 @@ headers remain null. Actual live-browser checks cover all 14 pages, the original
 five-park clocks and stale warnings, integrated activities, Zion comparisons and
 retained-article focus, directory/notice filters and checklist controls. See the
 [current handoff](../PROJECT_STATUS.md) for scope and limitations. No new rollback
-drill was performed. The current rollback target is the previous **`2fa4d4a`**
-release below, whose eligibility, digest, extracted bytes and manifests were
-rechecked before dispatch.
+drill was performed. Its then-selected rollback target was the earlier
+**`2fa4d4a`** release below, whose eligibility, digest, extracted bytes and
+manifests were rechecked before that dispatch.
 
 Publishing did not collect or retimestamp source data. The approved **16 notices**
 remain historical, with clock **`2026-10-04T14:56:52.574947Z`** and visible stale
 warnings. A separate 23:33 UTC read-only preflight passed with counts 1/0/5/7/4;
-it does not replace the published 1/0/5/6/4 inventory. Fresh collection/review is
-the next data task. Standing permission covers routine Git and verified
+it does not replace the published 1/0/5/6/4 inventory. That pending fresh
+collection was completed by the unchanged-content update in Deployment #8 above. Standing permission covers routine Git and verified
 publication through this existing manual process; source rights, costs, major
 access changes, schedules, indexing, ads and tracking retain their own decisions.
 
-## Previous release — PR #7, current rollback target
+## Earlier release — PR #7 (historical)
 
-The previous live release, now the rollback target, is the integrated [PR #7](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/7) alert refresh, pinned to main commit **`2fa4d4abd5c78b5ebf4bb77a9360f5d99f073ffc`**. It passed **906 tests**, both 14-page builds, zero Astro diagnostics and screenshot retention in successful **push/main** [Verify pilot #202](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37079690695), job **111077480589**. Artifact **11257849120** has digest `sha256:f061fbd24aa7c86d34edadcb45b0438899ac167231454803e640f8b4e793f8c5` and expires **2026-10-09T23:58:37Z**. Its downloaded ZIP independently passed digest, safe public layout, exact commit/snapshot/base, noindex and retained-verifier checks. Snapshot **`pilot-0609c66f7954`** contains the approved October 2 feed check and one successful zero-change comparison per park; all 17 notice records, original record clocks, guidance, excerpts and nullable publication fields remain unchanged.
+The PR #7 release was the rollback target for Deployment #7. It is the integrated [PR #7](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/7) alert refresh, pinned to main commit **`2fa4d4abd5c78b5ebf4bb77a9360f5d99f073ffc`**. It passed **906 tests**, both 14-page builds, zero Astro diagnostics and screenshot retention in successful **push/main** [Verify pilot #202](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37079690695), job **111077480589**. Artifact **11257849120** has digest `sha256:f061fbd24aa7c86d34edadcb45b0438899ac167231454803e640f8b4e793f8c5` and expires **2026-10-09T23:58:37Z**. Its downloaded ZIP independently passed digest, safe public layout, exact commit/snapshot/base, noindex and retained-verifier checks. Snapshot **`pilot-0609c66f7954`** contains the approved October 2 feed check and one successful zero-change comparison per park; all 17 notice records, original record clocks, guidance, excerpts and nullable publication fields remain unchanged.
 
 After the owner's explicit approval, [Deployment #6](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37081311751), job **111082232975**, published that exact artifact and verified **22 public files and 14 pages in one attempt** at **2026-10-03T00:16:02.844Z**. The dispatch workflow head was documentation receipt **`e19528058d3e89d62c6268409b286626b3f5fdc5`**; the validated target, downloaded artifact and hosted report all bind to the approved **`2fa4d4abd5c78b5ebf4bb77a9360f5d99f073ffc`**. Report artifact **11258402197** has digest `sha256:082b1df13c9e5cba4970e58006def370d6197cea8214aadf9acf1a9417fc9aa2` and expires **2026-10-10T00:16:04Z**. Independent audit passed its digest, safe one-file layout, exact commit/snapshot/project URL/base, success and counts, and the job log's target/run/artifact digest. All four observed headers remain null. The existing workflow reused the retained build and did not rebuild, recollect or retimestamp it.
 

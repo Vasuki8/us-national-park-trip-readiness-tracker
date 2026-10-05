@@ -45,7 +45,25 @@ Never-checked, failed, quarantined and stale evidence stays unchanged in meaning
 
 ## Deliberate review and application
 
-Before applying real data, the owner must review the exact private patch and matching preview, source-content/rights scope, archive backup and remaining trust gates. No preparation flag or hash substitutes for that review. Raw captures, ledger events, packets, archive files, pending receipts and credentials must never be included in the public change.
+Before applying a new real source-content scope, the owner must review the exact
+private patch and matching preview, source-content/rights scope, archive backup
+and remaining trust gates. No preparation flag or hash substitutes for that
+review. Raw captures, ledger events, packets, archive files, pending receipts and
+credentials must never be included in the public change.
+
+The owner's later standing Git and verified-publication authorization is recorded
+in [the permanent policy](PROJECT_INSTRUCTIONS.md). For a successful refresh in
+which every full notice record, its original observation clocks and the approved
+source/rights scope remain exact, reuse the existing content approval and that
+standing authorization. Verify the new frozen candidate, all six public base
+files, exact patch, complete archive continuity and backup/recovery, then complete
+required tests and immutable review. Record reused approval and the new technical
+review separately; do not invent a new human patch or source-rights review. The
+preparer's `human_review_required` flag describes its inability to establish
+approval and does not erase a recorded owner authorization. Added, edited or
+removed notice records require reassessing the applicable exact-content review
+and source-rights scope. Standing Git/publication permission does not approve a
+new rights scope, degraded evidence, recurring operations, indexing or ads.
 
 Retain the `candidate_id` printed during preparation alongside the operator's review record. Immediately before a separately authorized application, check that exact candidate against the current checkout:
 
