@@ -1,96 +1,94 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after preparing the next fresh, unchanged-content five-park alert checkpoint**.
+Updated: **October 4, 2026 (Toronto time), after publishing and verifying the fresh alert checkpoint through Deployment #8**.
 
 ## Current development handoff
 
-The integrated park Overview, When to Visit, Things to Do and approved conditions
-refresh are live at [ParkReadiness](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/).
-The owner explicitly authorized merging, pulling, pushing and publishing.
-That standing authorization is recorded in `AGENTS.md` and the permanent owner
-policy; required checks, review and the existing manual release process remain.
-Do not ask again for these routine actions within the recorded scope.
+[ParkReadiness](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/)
+is live at exact **`b9fa7354d11833208c495d2419b3e505bd0baba8`** /
+**`pilot-6658c7c2668e`**, including Overview, When to Visit, Things to Do and the
+fresh five-park conditions check. [PR #26](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/26)
+is merged. The reviewed head, PR CI checkout and actual merge have the same tree;
+independent immutable review found no issues. The owner's standing merge, pull,
+push and verified-publication authorization remains recorded in `AGENTS.md` and
+the permanent policy; do not ask again for routine actions within that scope.
 
+Data/source work: the successful private NPS collection clock is
+**`2026-10-05T00:09:01.984222Z`** (October 4 in Toronto), with **16 notices**
+(Yosemite 1, Rocky Mountain 0, Yellowstone 5, Zion 6, Grand Canyon 4). Every full
+notice record and original record clock is identical to the approved previous
+release. Only snapshot check/success clocks advance, with one successful
+sequence-4 zero-change observation per park. All earlier observations and Zion's
+two previous changes remain exact. A zero-change comparison does not establish
+unchanged conditions; an empty or missing notice is not an all-clear or reopening.
+The separate earlier Zion count-seven preflight never entered archive history.
 
-A fresh five-park alert/history refresh is prepared for integration. The actual
-successful collection clock is **`2026-10-05T00:09:01.984222Z`** (October 4 in
-Toronto), with the same **16 notices** (1/0/5/6/4). Every full notice record and
-its original observation clocks match the approved public snapshot exactly.
-Only snapshot check/success clocks advance, with one sequence-4 zero-change
-observation per park. All earlier evidence remains exact, including Zion's two
-previous changes; unchanged feed records do not establish unchanged conditions.
+The new committed alert archive has a verified private backup, fresh direct
+GitHub recovery and complete five-park chain/byte replay. Exact archive-backed
+promotion checks bound the frozen candidate, all six public base files and patch
+bytes immediately before native Git application; committed LF targets match.
+Prior exact-content approval and current standing publication authorization are
+reused within this unchanged text/rights scope; no new human patch or rights
+review is claimed. [The promotion contract](docs/ALERT_DATA_PROMOTION.md) now
+explains that distinction. Six guidance records, five profiles, 129 published
+activity views, rights manifests and their original clocks are unchanged.
+Detailed real approvals, checkpoint identities and recovery receipts stay private.
 
-Private archive backup, authenticated fresh GitHub download and all five complete
-chain/byte replays pass. Exact archive-backed promotion checks bind the frozen
-candidate, all six current public base files and patch bytes. Prior exact-content
-approval and the owner's current standing verified-publication authorization are
-reused within this unchanged scope; no new human patch review or rights review
-is claimed. The later direct owner instruction and permanent policy govern this
-routine update; preparation alone still never establishes approval. Detailed
-real checkpoint identities and authorization/recovery receipts stay private.
+Successful [Verify pilot #254](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37247946974)
+(PR) and exact push/main [Verify pilot #255](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37248340998)
+each passed **1,406 tests**: 404 Node, 800 Python, 34 per generated-site build,
+117 root-browser and 17 project-browser. Astro checks 41 files with zero errors,
+warnings or hints; both builds contain 14 pages and retain all three accessibility
+screenshots. Local non-browser checks passed 1,272 tests. Local browser launch
+was unavailable because pinned Playwright's missing Chromium cannot be installed
+on this WSL Ubuntu 26.04 system; both required suites passed on the unchanged
+supported Ubuntu 24.04 CI runner. No local automated browser pass is claimed.
 
-The six public targets are applied on the isolated integration branch. Local
-Python and Node suites plus both generated-site suites pass (**1,272 tests**),
-with zero Astro diagnostics and both 14-page builds. Local browser verification
-is unavailable: the pinned Playwright browser is absent and its installer does
-not support this WSL Ubuntu 26.04 environment. The existing Ubuntu 24.04 CI job
-must pass both browser suites and screenshot retention before merge.
-Independent immutable review, required PR/default-branch CI and verified-
-artifact publication remain pending. The live release
-below is unchanged until those steps complete.
+[Deployment #8](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37248918183),
+job **111572328349**, published the exact Verify #255 artifact **11319838432**:
+`sha256:8ea08b6a351dbcf66b53a18df6d24b472c58f4a103820044b86e28fee17f9759`,
+expiring **`2026-10-12T00:44:07Z`**. Its digest, 57 regular entries, both manifests,
+all 28 noindex pages, exact retained verifier/lockfile and three PNG screenshots
+passed independent audit. The manual workflow downloaded the retained build and
+did not rebuild, collect or retimestamp sources. A final read-only provider
+preflight around 00:47 UTC passed all five parks with counts 1/0/5/6/4; it did not
+renew the archived clock.
 
-[Deployment #7](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37244227142),
-job **111558808343**, published exact **`2434546303d62a5fcacd4fa5542e37d734a89774`**
-from successful default-branch [Verify pilot #248](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37216789036).
-Its **1,406 tests**, both 14-page builds, zero Astro diagnostics and screenshot
-retention passed. Deployment downloaded the existing artifact **11308073698**
-with the verified digest and did not rebuild, collect or retimestamp source data.
-The dispatch workflow head was documentation receipt **`0d6a7fb`**; the validated
-release target and hosted report bind **`2434546` / `pilot-b45391284d2e`**.
+The workflow report at **`2026-10-05T00:48:29.480Z`** and independent read-only
+recheck at **`2026-10-05T00:49:41.888Z`** each matched **24 public files and 14
+pages in one attempt**, binding the exact commit, snapshot, URL and project base.
+Report artifact **11320226002** has digest
+`sha256:b2f679ee65971fd3e127f669ee7b75e2c4af087d2805db304f52a6b3ad9d27f4`,
+expires **`2026-10-12T00:48:30Z`**, and passed downloaded digest, safe one-file
+layout and exact report checks. All four observed security/robots headers remain
+null. Every page retains meta `noindex, nofollow`; indexing, ads, tracking and
+recurring operations remain disabled.
 
-The workflow report at **`2026-10-04T23:34:29.174Z`** and an independent read-only
-recheck at **`2026-10-04T23:38:09.732Z`** each matched **24 public files and 14
-pages in one attempt**. Report artifact **11318596324** has digest
-`sha256:f476fa38ebad407c44835d34bf0160d21bb711953e49d04483670f1abf57050a`,
-expires **`2026-10-11T23:34:31Z`**, and passed downloaded digest, safe single-file
-layout, identity, URL/base and count checks. All four observed security/robots
-headers remain null; every page retains meta `noindex, nofollow`. Indexing,
-advertising, tracking and recurring operations remain disabled.
+Actual live-browser checks confirm all five park pages show the new clock,
+exact snapshot, 1/0/5/6/4 retained notices and four-check histories with recent-
+feed/limited-coverage labels. Rocky Mountain preserves explicit empty-feed
+uncertainty. Zion's earlier before/after evidence and native retained-notice focus
+pass. An already-open page initially kept its older document during a fragment
+navigation; a full navigation loaded and verified the new release. These checks
+do not establish every browser's restoration/print behavior or screen-reader
+announcements. Freshness still expires four hours after the actual source check;
+manual publication does not provide ongoing live conditions.
 
-Data/source work: publication preserves the approved **16 notices** (1/0/5/6/4),
-paired histories, six guidance records, five profiles and 129 published activity
-views. The alert clock remains **`2026-10-04T14:56:52.574947Z`** and is now stale.
-All five live park pages and their histories display fresh-check warnings;
-publishing and preflight do not renew evidence. The 23:33 UTC read-only provider
-preflight passed all five parks with counts **1/0/5/7/4**. That diagnostic is not a
-new durable snapshot or a public-data promotion; the Zion count differs from the
-published historical snapshot. No all-clear, reopening or ended-restriction
-conclusion follows from missing notices.
+The current rollback target is previous production **`2434546` /
+`pilot-b45391284d2e`**, Verify #248 artifact **11308073698**, expiring
+**`2026-10-11T16:31:53Z`**. Its eligibility, digest, extracted bytes and manifests
+were rechecked; the retained verifier matched its 24 hosted files/14 pages before
+publication. No new rollback drill was performed. The unchanged readiness CLI
+still reports three required pass, zero blocked and two not checked, with
+`release_ready: false`, because provider/hosting receipts are reviewed separately.
+The current handoff and detailed private operator handoff record the distinction.
 
-Live-browser checks completed on October 4 around 19:40 Toronto: all 14 pages
-loaded with noindex metadata; all five park pages preserve source clocks,
-snapshot identity, stale alert warnings and Things to Do. Zion activity
-expansion, both before/after comparisons and native retained-article focus
-passed. Park-directory whitespace/state/no-match/reset controls and a real back
-return, retained-notice search/reset, section focus with checklist preservation,
-and checklist toggle/reset passed. The light layout is visually checked; no
-console warnings/errors were captured. These checks do not establish every
-browser's restoration/print behavior or screen-reader announcements.
-
-The previous live **`2fa4d4a` / `pilot-0609c66f7954`** release is the rollback
-target, Verify #202 artifact **11257849120**, expiring **`2026-10-09T23:58:37Z`**.
-Its eligibility, ZIP digest, extracted bytes and manifests were rechecked before
-dispatch. No new rollback drill was performed. The unchanged readiness CLI does
-not ingest these external receipts; its last integrated report remains three
-required pass, zero blocked and two not checked, with `release_ready: false`.
-Detailed approval, provider, artifact, hosted-report, recovery and engineering
-receipts remain in the owner-only private operator handoff.
-
-Next: complete review and verification of this unchanged-content refresh,
-integrate its PR, publish its exact successful default-branch artifact and verify
-the hosted pages. Then implement the separate named-location NWS forecast
-foundation in the owner's phase order, with honest issue/check/period metadata
-and safe last-good retention. Recurring collection remains a separate decision.
+Next: implement the separate named-location NWS forecast foundation from
+verified geographic evidence, with point/grid mapping, distinct issue/check/
+valid-period clocks and safe last-good retention. Add NWS alerts separately in
+the owner's phase order. Recurring collection, photo rights, indexing and ads
+retain their deliberate decisions; current manual freshness and screen-reader
+review limits remain visible.
 
 ## Conditions release preparation — PR #24 (historical)
 
