@@ -73,6 +73,9 @@ hash. This binds retained forecasts to their original grid even if a later
 point lookup changes the grid and the new forecast fails. Validate complete
 previous state, hash, identities and clocks before invoking any transport.
 Return defensive copies and refuse collection-clock rewinds.
+On the same grid, older generation or update times also quarantine the new
+response and preserve newer evidence; timestamps on different grids are not
+ordered as if they came from the same forecast stream.
 
 ## State, retention and freshness
 
