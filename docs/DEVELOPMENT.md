@@ -41,6 +41,17 @@ hours, independent of alert freshness. The normalizer has no default HTTP
 transport or persistence; the transport, checkpoint and public-consumer layers
 remain separate.
 
+`tracker/park_forecasts.py` adds the separate pure named-location NWS source
+contract. It validates NPS coordinate provenance containers, rounded point/grid
+identity, forecast Polygon coverage, generation/update/check/period clocks, bounded
+nullable unit-bearing periods and normalized hashes. A seven-day point mapping
+cache and six-hour source-aware forecast policy remain independent of alerts
+and seasonal guidance. Failed or invalid responses retain dated last-good
+forecasts with their original mapping, including after a changed-grid lookup;
+same-grid source-clock replays cannot replace newer evidence. There is no real
+location inventory, HTTP implementation, private lifecycle, public exporter or
+weather UI yet. See [WEATHER_FOUNDATION.md](WEATHER_FOUNDATION.md).
+
 `tracker/profile_transport.py` adds the separate bounded, header-authenticated
 fixed-endpoint request. `tracker/profile_checkpoints.py` retains explicit
 immutable all-five checkpoints using existing POSIX private-file guards; no

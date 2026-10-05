@@ -1,8 +1,42 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after publishing and verifying the fresh alert checkpoint through Deployment #8**.
+Updated: **October 4, 2026 (Toronto time), after implementing the pure named-location NWS forecast foundation; the verified live release remains Deployment #8 below**.
 
 ## Current development handoff
+
+The [named-location weather foundation](docs/WEATHER_FOUNDATION.md) is implemented
+as a separate pure Python adapter with injected requests. It validates location
+provenance containers, rounded point/grid identity, forecast geometry, original
+generation/update/check/period clocks, nullable units and canonical hashes.
+Mapping checks have a 168-hour cache; forecasts have a six-hour source-aware age
+policy plus distinct expired/uncovered states. Failed responses retain the
+last-good forecast's own mapping and successful clock, including after a newly
+discovered grid. Older same-grid source clocks cannot replace newer evidence.
+
+Data/source work is synthetic only: **33 new weather tests**, with **833 tests
+passing in the complete local Python suite**. The frozen Node baseline passes
+404 tests. Astro checks 41 files with zero errors, warnings or hints; both local
+builds contain 14 pages and pass 34 generated-site tests each. Independent
+whole-branch review found one envelope-size issue; three regression tests
+reproduced it, and the consolidated fix passes all 33 weather tests and the
+complete Python suite. Bounded records now reserve room for later failure
+metadata, and complete candidates are validated before replacing evidence.
+[PR #28](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/28)
+records final integration and required CI evidence. Official NWS API
+documentation and its OpenAPI schema were consulted;
+no real location inventory, park forecast, NWS transport, private checkpoint,
+public weather data, weather UI or schedule is introduced. Existing public data,
+rights manifests, original clocks and visitor snapshot remain unchanged. Full
+required integration checks include both supported CI browser suites; local
+Playwright installation has the previously recorded Ubuntu 26.04 limitation.
+
+Next: verify named forecast locations using authoritative NPS geographic
+evidence, then implement the separate bounded private NWS transport and immutable
+checkpoint/recovery lifecycle. Reviewed public weather export and rendering
+follow those prerequisites; NWS alerts remain separate. Ordinary technical
+decisions use the owner's engineering delegation, with a documented design,
+inline implementation and independent whole-branch review. Native Windows Git
+and WSL tests preserve the established managed-worktree operating boundary.
 
 [ParkReadiness](https://vasuki8.github.io/us-national-park-trip-readiness-tracker/)
 is live at exact **`b9fa7354d11833208c495d2419b3e505bd0baba8`** /
@@ -83,12 +117,10 @@ still reports three required pass, zero blocked and two not checked, with
 `release_ready: false`, because provider/hosting receipts are reviewed separately.
 The current handoff and detailed private operator handoff record the distinction.
 
-Next: implement the separate named-location NWS forecast foundation from
-verified geographic evidence, with point/grid mapping, distinct issue/check/
-valid-period clocks and safe last-good retention. Add NWS alerts separately in
-the owner's phase order. Recurring collection, photo rights, indexing and ads
-retain their deliberate decisions; current manual freshness and screen-reader
-review limits remain visible.
+Next weather work is the verified geographic evidence and private collection
+layer described above. Add NWS alerts separately in the owner's phase order.
+Recurring collection, photo rights, indexing and ads retain their deliberate
+decisions; current manual freshness and screen-reader review limits remain visible.
 
 ## Conditions release preparation — PR #24 (historical)
 

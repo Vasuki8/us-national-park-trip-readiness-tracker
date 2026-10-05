@@ -101,6 +101,11 @@ not establish real profiles, text-use review, remote backup or public promotion.
    NWS `/points/{lat},{lon}` discovers the grid forecast; periodically recheck
    that mapping. Validate issue/valid-period/check clocks and retain last-good
    forecasts with their own freshness/expiry policy. Add NWS alerts separately.
+   The [pure forecast foundation](WEATHER_FOUNDATION.md) now validates named
+   location provenance containers, rounded point mappings, grid geometry,
+   source/period clocks, nullable units, safe retention and independent mapping/
+   forecast freshness. Its tests are synthetic; actual geographic evidence,
+   bounded private transport/checkpoints and reviewed publication remain next.
 5. Expand planning datasets, six-section park navigation and device-local trip
    tools in the owner's phase order. Photo publication requires per-asset rights
    review. Indexing, ads and recurring operations retain their deliberate gates.
