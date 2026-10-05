@@ -29,7 +29,9 @@ A location has exactly `id`, `park_code`, `name`, `latitude`, `longitude`,
 slugs, names are nonempty, coordinates are finite numbers in geographic bounds,
 and the coordinate source is a same-park NPS HTTPS page without credentials,
 query, fragment or traversal. The evidence URL/check time establishes a
-provenance container, not proof that the coordinates/name were reviewed. No
+provenance container. Coordinate-source URLs are bounded to 2,048 characters;
+the full constructor envelope is validated. The evidence container is
+not proof that the coordinates/name were reviewed. No
 actual location is added in this increment; future collection must retain and
 verify the geographic evidence, rather than substitute park centroids.
 
@@ -76,6 +78,10 @@ Return defensive copies and refuse collection-clock rewinds.
 On the same grid, older generation or update times also quarantine the new
 response and preserve newer evidence; timestamps on different grids are not
 ordered as if they came from the same forecast stream.
+Received JSON and complete snapshots are bounded to 1 MiB; normalized records
+reserve 8,192 bytes below that limit for location/mapping/failure envelopes.
+Validate complete candidates inside the response-refusal boundary before
+replacing accepted evidence, so expansion during normalization is quarantined.
 
 ## State, retention and freshness
 

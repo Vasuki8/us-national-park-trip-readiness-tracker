@@ -21,6 +21,8 @@ from .park_profiles import PILOT_CODES
 FORECAST_MAX_AGE = timedelta(hours=6)
 MAPPING_MAX_AGE = timedelta(hours=168)
 MAX_BYTES = 1024 * 1024
+# Leave room for bounded location, current mapping and success/failure metadata.
+MAX_RECORD_BYTES = MAX_BYTES - 8192
 LOCATION_FIELDS = {'id', 'park_code', 'name', 'latitude', 'longitude',
                    'coordinate_source_url', 'coordinate_checked_at'}
 MAPPING_FIELDS = {'source_url', 'grid_id', 'grid_x', 'grid_y', 'forecast_url', 'checked_at'}
@@ -58,9 +60,9 @@ def _time(value: object):
         raise ForecastError('invalid_timestamp') from None
 
 
-def _json(value: object) -> None:
+def _json(value: object, *, max_bytes: int = MAX_BYTES) -> None:
     try:
-        canonical(value, max_bytes=MAX_BYTES)
+        canonical(value, max_bytes=max_bytes)
     except HistoryError:
         raise ForecastError('invalid_encoding_or_size') from None
 
@@ -99,7 +101,7 @@ def _location(value: object) -> dict:
     _require(_number(value['latitude']) and -90 <= value['latitude'] <= 90
              and _number(value['longitude']) and -180 <= value['longitude'] <= 180, 'invalid_coordinates')
     url = value['coordinate_source_url']
-    _require(isinstance(url, str) and re.fullmatch(
+    _require(isinstance(url, str) and len(url) <= 2048 and re.fullmatch(
         rf'https://(?:www\.)?nps\.gov/{value["park_code"]}/[A-Za-z0-9/_.-]+', url) is not None,
         'invalid_coordinate_source')
     path = urlsplit(url).path
@@ -284,6 +286,7 @@ def _normalize_period(raw: object) -> dict:
 
 def _validate_record(value: object, loc: dict, successful) -> None:
     _require(isinstance(value, dict) and set(value) == RECORD_FIELDS, 'invalid_record')
+    _json(value, max_bytes=MAX_RECORD_BYTES)
     _require(value['kind'] == 'forecast' and value['units'] == 'us'
              and value['hash_scope'] == 'normalized_forecast', 'unsupported_forecast')
     _mapping(value['mapping'], loc, successful)
@@ -324,10 +327,10 @@ def _normalize_forecast(payload: object, loc: dict, mapping: dict, now: str) -> 
 def initial_forecast(location: dict) -> dict:
     """Unknown forecast for a named location; provenance is not approval."""
     loc = _location(location)
-    return {'schema_version': 1, 'location': loc, 'provider': 'NWS', 'source_url': _point_url(loc),
+    return validate_forecast({'schema_version': 1, 'location': loc, 'provider': 'NWS', 'source_url': _point_url(loc),
             'collection_status': 'never_checked', 'coverage_status': 'not_collected',
             'last_checked_at': None, 'last_successful_fetch_at': None, 'mapping': None,
-            'forecast': None, 'published_at': None, 'error_code': None, 'error_stage': None}
+            'forecast': None, 'published_at': None, 'error_code': None, 'error_stage': None})
 
 
 def validate_forecast(snapshot: dict) -> dict:
@@ -401,6 +404,9 @@ last-good forecast to a new grid. Validation precedes all injected requests.
         if previous_forecast is not None and previous_forecast['source_url'] == forecast['source_url']:
             _require(all(_time(previous_forecast[field]) <= _time(forecast[field]) for field in
                          ('source_generated_at', 'source_updated_at')), 'source_clock_rewind')
+        candidate = {**result, 'collection_status': 'success', 'coverage_status': 'checked_named_grid_only',
+                     'forecast': forecast, 'last_successful_fetch_at': now, 'error_code': None, 'error_stage': None}
+        return validate_forecast(candidate)
     except ForecastError:
         result.update(collection_status='quarantined', coverage_status='incomplete',
                       error_code='response_requires_review', error_stage=stage)
@@ -409,9 +415,6 @@ last-good forecast to a new grid. Validation precedes all injected requests.
         result.update(collection_status='failed', coverage_status='incomplete',
                       error_code='provider_request_failed', error_stage=stage)
         return validate_forecast(result)
-    result.update(collection_status='success', coverage_status='checked_named_grid_only',
-                  forecast=forecast, last_successful_fetch_at=now, error_code=None, error_stage=None)
-    return validate_forecast(result)
 
 
 def forecast_freshness(snapshot: dict, now: str) -> str:

@@ -43,7 +43,7 @@ remain separate.
 
 `tracker/park_forecasts.py` adds the separate pure named-location NWS source
 contract. It validates NPS coordinate provenance containers, rounded point/grid
-identity, forecast Polygon coverage, issue/update/check/period clocks, bounded
+identity, forecast Polygon coverage, generation/update/check/period clocks, bounded
 nullable unit-bearing periods and normalized hashes. A seven-day point mapping
 cache and six-hour source-aware forecast policy remain independent of alerts
 and seasonal guidance. Failed or invalid responses retain dated last-good

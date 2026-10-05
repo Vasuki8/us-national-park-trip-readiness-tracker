@@ -62,7 +62,11 @@ remain null, including quantitative null values. Zero precipitation remains
 zero; null never becomes zero or clear weather. Icons, elevation, unused fields
 and diagnostics are excluded. Canonical normalized hashes and strict exact-key
 schemas detect altered prior evidence. Received JSON and normalized state are
-bounded to 1 MiB; extreme integers that cannot be finite numeric values are
+bounded to 1 MiB. Coordinate-source URLs are bounded to 2,048 characters and
+normalized forecast records to **1 MiB minus 8,192 bytes**, reserving space for
+the location, current mapping and subsequent failure metadata. Complete success
+envelopes are validated before replacing retained forecasts. Initial states are
+also validated in full. Extreme integers that cannot be finite numeric values are
 safe refusals rather than uncaught conversion errors.
 
 ## Independent mapping, attempts and freshness

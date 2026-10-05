@@ -13,9 +13,17 @@ policy plus distinct expired/uncovered states. Failed responses retain the
 last-good forecast's own mapping and successful clock, including after a newly
 discovered grid. Older same-grid source clocks cannot replace newer evidence.
 
-Data/source work is synthetic only: **30 new weather tests**, with **830 tests
+Data/source work is synthetic only: **33 new weather tests**, with **833 tests
 passing in the complete local Python suite**. The frozen Node baseline passes
-404 tests. Official NWS API documentation and its OpenAPI schema were consulted;
+404 tests. Astro checks 41 files with zero errors, warnings or hints; both local
+builds contain 14 pages and pass 34 generated-site tests each. Independent
+whole-branch review found one envelope-size issue; three regression tests
+reproduced it, and the consolidated fix passes all 33 weather tests and the
+complete Python suite. Bounded records now reserve room for later failure
+metadata, and complete candidates are validated before replacing evidence.
+[PR #28](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/pull/28)
+records final integration and required CI evidence. Official NWS API
+documentation and its OpenAPI schema were consulted;
 no real location inventory, park forecast, NWS transport, private checkpoint,
 public weather data, weather UI or schedule is introduced. Existing public data,
 rights manifests, original clocks and visitor snapshot remain unchanged. Full

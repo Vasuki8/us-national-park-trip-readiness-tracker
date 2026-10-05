@@ -55,6 +55,17 @@ def independent_hash(record):
                                     separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
+def large_forecast(short_length=856, detailed_length=65000):
+    raw = forecast()
+    raw['properties']['periods'] = [period(n + 1, f'2026-10-04T{n:02}:00:00Z',
+                                         f'2026-10-04T{n + 1:02}:00:00Z') for n in range(16)]
+    raw['properties']['validTimes'] = '2026-10-04T00:00:00Z/P2D'
+    for p in raw['properties']['periods']:
+        p['detailedForecast'] = 'x' * detailed_length
+    raw['properties']['periods'][0]['shortForecast'] = 'x' * short_length
+    return raw
+
+
 class ForecastTests(unittest.TestCase):
     def adapter(self):
         self.assertIsNotNone(importlib.util.find_spec('tracker.park_forecasts'),
@@ -401,6 +412,33 @@ class ForecastTests(unittest.TestCase):
         for value in (-1, True, '0'):
             raw = forecast(); raw['properties']['periods'][0]['probabilityOfPrecipitation']['value'] = value
             self.assert_retained(self.collect(previous=old, at=T1, fc=raw)[0], old)
+
+    def test_full_normalized_envelope_overflow_quarantines_and_retains_last_good(self):
+        old = self.collect()[0]; raw = large_forecast()
+        encoded = json.dumps(raw, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
+        self.assertEqual(len(encoded), 1048201)
+        self.assert_retained(self.collect(previous=old, at=T1, fc=raw)[0], old)
+
+    def test_accepted_record_reserves_space_for_later_failure_metadata(self):
+        a = self.adapter()
+        # This previously made an exactly 1MiB success that could not hold failure metadata.
+        oversized = self.collect(fc=large_forecast(855))[0]
+        self.assertEqual(oversized['collection_status'], 'quarantined')
+        self.assertIsNone(oversized['forecast'])
+        # This record is only 14 bytes below the documented reserved-record budget.
+        old = self.collect(fc=large_forecast(856, 64538))[0]
+        self.assertEqual(old['collection_status'], 'success')
+        def fail(_): raise TimeoutError('synthetic-secret')
+        result = a.collect_forecast(location(), old, T1, fail)
+        self.assert_retained(result, old, 'failed')
+        self.assertLessEqual(len(json.dumps(result, ensure_ascii=False, sort_keys=True,
+                                           separators=(',', ':')).encode()), 1048576)
+
+    def test_location_constructor_refuses_url_that_cannot_fit_safe_envelopes(self):
+        a = self.adapter(); loc = location()
+        loc['coordinate_source_url'] += 'a' * (1048576 - len(json.dumps(
+            loc, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()))
+        with self.assertRaises(a.ForecastError): a.initial_forecast(loc)
 
 
 if __name__ == '__main__':
