@@ -1,6 +1,6 @@
 # Project status and handoff
 
-Updated: **October 4, 2026 (Toronto time), after publishing and verifying build `2434546` through Deployment #7**.
+Updated: **October 4, 2026 (Toronto time), after preparing the next fresh, unchanged-content five-park alert checkpoint**.
 
 ## Current development handoff
 
@@ -10,6 +10,34 @@ The owner explicitly authorized merging, pulling, pushing and publishing.
 That standing authorization is recorded in `AGENTS.md` and the permanent owner
 policy; required checks, review and the existing manual release process remain.
 Do not ask again for these routine actions within the recorded scope.
+
+
+A fresh five-park alert/history refresh is prepared for integration. The actual
+successful collection clock is **`2026-10-05T00:09:01.984222Z`** (October 4 in
+Toronto), with the same **16 notices** (1/0/5/6/4). Every full notice record and
+its original observation clocks match the approved public snapshot exactly.
+Only snapshot check/success clocks advance, with one sequence-4 zero-change
+observation per park. All earlier evidence remains exact, including Zion's two
+previous changes; unchanged feed records do not establish unchanged conditions.
+
+Private archive backup, authenticated fresh GitHub download and all five complete
+chain/byte replays pass. Exact archive-backed promotion checks bind the frozen
+candidate, all six current public base files and patch bytes. Prior exact-content
+approval and the owner's current standing verified-publication authorization are
+reused within this unchanged scope; no new human patch review or rights review
+is claimed. The later direct owner instruction and permanent policy govern this
+routine update; preparation alone still never establishes approval. Detailed
+real checkpoint identities and authorization/recovery receipts stay private.
+
+The six public targets are applied on the isolated integration branch. Local
+Python and Node suites plus both generated-site suites pass (**1,272 tests**),
+with zero Astro diagnostics and both 14-page builds. Local browser verification
+is unavailable: the pinned Playwright browser is absent and its installer does
+not support this WSL Ubuntu 26.04 environment. The existing Ubuntu 24.04 CI job
+must pass both browser suites and screenshot retention before merge.
+Independent immutable review, required PR/default-branch CI and verified-
+artifact publication remain pending. The live release
+below is unchanged until those steps complete.
 
 [Deployment #7](https://github.com/Vasuki8/us-national-park-trip-readiness-tracker/actions/runs/37244227142),
 job **111558808343**, published exact **`2434546303d62a5fcacd4fa5542e37d734a89774`**
@@ -58,10 +86,11 @@ required pass, zero blocked and two not checked, with `release_ready: false`.
 Detailed approval, provider, artifact, hosted-report, recovery and engineering
 receipts remain in the owner-only private operator handoff.
 
-Next: collect a fresh five-park alert checkpoint through the existing private
-staging/archive path, verify its separate backup/recovery, review the new Zion
-inventory and prepare the exact paired alert/history promotion. Retain current
-public data and stale warnings until a validated, reviewed replacement is ready.
+Next: complete review and verification of this unchanged-content refresh,
+integrate its PR, publish its exact successful default-branch artifact and verify
+the hosted pages. Then implement the separate named-location NWS forecast
+foundation in the owner's phase order, with honest issue/check/period metadata
+and safe last-good retention. Recurring collection remains a separate decision.
 
 ## Conditions release preparation — PR #24 (historical)
 
